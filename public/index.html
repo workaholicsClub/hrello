@@ -1,10 +1,347 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Воронка HR</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/assets/style.css">
 </head>
+
 <body>
-    Привет, ад!
+
+<section id="board" class="d-flex flex-column">
+    <navmenu :title="title" :items="menuItems" @minimize="minimizeAllStatuses" @maximize="maximizeAllStatuses"></navmenu>
+    <div class="task-board flex-fill" v-on:mousemove.self="dragScroll" v-on:mousedown.self="dragStart" v-on:mouseup.self="dragEnd">
+        <status v-for="(status, index) in statuses"
+                :status="status"
+                :candidate_fields="getCandidateFields()"
+                :cards="status.cards"
+                :next_status="statuses[index+1] || false"
+                :next_status_cards="statuses[index+1] ? statuses[index+1].cards : false"
+                :key="status.id + '_' + index"
+                :all_statuses="statuses"
+                @cards_changed="replaceCards"
+        ></status>
+    </div>
+</section>
+
+<script type="text/x-template" id="menu-template">
+    <nav class="navbar navbar-dark bg-secondary align-items-stretch">
+        <button class="navbar-toggler navbar-brand dropdown-toggle mr-2" type="button" data-toggle="collapse" data-target="#navbarMenu">
+            {{title}}
+        </button>
+        <button class="navbar-toggler mr-2">
+            <i class="fas fa-cog"></i>
+        </button>
+        <button class="navbar-toggler mr-2">
+            <i class="fas fa-plus"></i>
+        </button>
+
+        <span class="flex-fill"></span>
+
+        <button v-if="minimized" class="navbar-toggler mr-2" v-on:click="toggleMaximize()">
+            <i class="fas fa-expand-arrows-alt"></i>
+        </button>
+        <button v-else class="navbar-toggler mr-2" v-on:click="toggleMinimize()">
+            <i class="fas fa-compress-arrows-alt"></i>
+        </button>
+        <button class="navbar-toggler">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarMenu">
+            <ul class="navbar-nav mr-auto nav nav-tabs" role="tablist">
+                <li v-for="item in items" class="nav-item" :class="{show: item.active, active: item.active}">
+                    <a class="nav-link" v-on:click="updateActiveMenu(item.code)" href="#">{{item.title}}</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</script>
+<script type="text/x-template" id="status-template">
+    <div class="status-card" :class="{hidden: hidden, minimized: status.minimized}">
+        <div class="status-card-header d-flex justify-content-between">
+            <span class="status-card-header-text flex-fill">{{status.title}} ({{cardsCount}})</span>
+            <span class="status-icons d-flex justify-content-between">
+                <button v-if="status.minimized" class="btn btn-link btn-maximize" v-on:click="maximize()"><i class="fas fa-expand-arrows-alt"></i></button>
+                <button v-else class="btn btn-link btn-minimize" v-on:click="minimize()"><i class="fas fa-compress-arrows-alt"></i></button>
+                <button class="btn btn-link btn-filter"><i class="fas fa-filter"></i></button>
+                <button class="btn btn-link btn-hide" v-on:click="toggleHide()"><i class="fas fa-eye-slash"></i></button>
+            </span>
+        </div>
+        <ul class="sortable" :class="{empty: isEmpty}" :id="'sort' + status.id">
+            <draggable v-model="currentCards" group="cards" draggable=".card-container">
+                <card v-for="(card, index) in currentCards"
+                        :card="card"
+                        :fields="status.fields"
+                        :candidate_fields="candidate_fields"
+                        :minimized="status.minimized"
+                        :next_status="next_status"
+                        :all_statuses="all_statuses"
+                        :key="card.id + '_' + index"
+                        @move="moveCardToNextStatus(card)"
+                ></card>
+            </draggable>
+            <button @click="addNewCard" class="btn btn-add-card btn-outline-secondary btn-block">&plus; Добавить</button>
+        </ul>
+    </div>
+</script>
+<script type="text/x-template" id="card-template">
+    <li class="card-container">
+        <div class="card minimized" v-if="currentMinimized">
+            <div class="card-body">
+                <div class="card-title mb-0 d-flex justify-content-between">
+                    <h6 class="flex-fill mb-0" @click="openModalEdit()">{{card.name}}</h6>
+                    <span class="status-icons d-flex justify-content-end">
+                        <button class="btn btn-link btn-maximize" v-on:click="maximize()"><i class="fas fa-expand-arrows-alt"></i></button>
+                        <button class="btn btn-link btn-archive"><i class="fas fa-archive"></i></button>
+                        <button class="btn btn-link btn-next" :class="{'text-success': isCompleted}" v-show="next_status" @click="moveToNextStatus()">
+                            <i class="fas fa-arrow-circle-right"></i>
+                        </button>
+                    </span>
+                </div>
+                <p class="card-text mb-0">{{card.position}}</p>
+                <p class="card-text mb-0">
+                    <field v-if="activeField" :field="activeField" :value="activeValue" :onlyValue="true"></field>
+                    <span v-else>Обработка не начата</span>
+                </p>
+            </div>
+        </div>
+        <div class="card" v-else>
+            <div class="card-body">
+                <div class="card-title mb-1 d-flex justify-content-between">
+                    <h5 class="flex-fill mb-0" @click="openModalEdit()">{{card.name}}</h5>
+                    <span class="status-icons d-flex justify-content-end">
+                        <button class="btn btn-link btn-share-form"><i class="fas fa-share-alt"></i></button>
+                        <button class="btn btn-link btn-minimize" v-on:click="minimize()"><i class="fas fa-compress-arrows-alt"></i></button>
+                        <button class="btn btn-link btn-archive"><i class="fas fa-archive"></i></button>
+                    </span>
+                </div>
+                <p class="card-text mb-0">{{card.position}}</p>
+                <p v-show="card.comment" class="card-text">{{card.comment}}</p>
+            </div>
+            <ul class="list-group list-group-flush">
+                <field v-for="(field, index) in fields" :field="field" :value="card[field.code]" :key="field.code + '_' + index" @update="onFieldUpdate"></field>
+            </ul>
+            <button class="btn btn-next" :class="{'btn-success': isCompleted}" v-on:click="moveToNextStatus()" v-if="next_status">
+                {{next_status.title}}
+                <i class="fas fa-arrow-circle-right"></i>
+            </button>
+            <button class="btn btn-next" :class="{'btn-success': isCompleted}" v-else>Готово</button>
+        </div>
+        <modal @close="closeModalEdit()" :id="modalEditId">
+            <h3 slot="header">Редактирование</h3>
+            <div slot="body">
+                <editfield v-for="(field, index) in candidate_fields"
+                        :field="field"
+                        :value="card[field.code]"
+                        :is_inline="false"
+                        :key="field.code + '_' + index"
+                        @update="onFieldUpdate"
+                ></editfield>
+                <fieldset v-for="status in all_statuses" class="form-group" v-show="status.fields">
+                    <div class="row">
+                        <legend class="col-form-label col-sm-4 pt-0">{{status.title}}</legend>
+                        <div class="col-sm-8">
+                            <editfield v-for="(field, index) in status.fields"
+                                    :field="field"
+                                    :value="card[field.code]"
+                                    :is_inline="true"
+                                    :key="field.code + '_' + index"
+                                    @update="onFieldUpdate"
+                            ></editfield>
+                        </div>
+                    </div>
+                </fieldset>
+
+            </div>
+            <div slot="footer">
+                <button class="btn btn-success" @click="closeModalEdit()">
+                    Готово
+                </button>
+            </div>
+        </modal>
+    </li>
+</script>
+<script type="text/x-template" id="fieldedit-template">
+    <div v-if="field.type === 'checkbox'" class="form-check" :class="{'form-group': !is_inline, 'row': !is_inline}">
+        <input type="checkbox" class="form-check-input" :id="_uid + '_' + field.code" :name="field.code" v-model="savedValue" true-value="1" false-value="0" v-if="is_inline">
+        <label class="form-check-label" :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline}" :for="_uid + '_' + field.code">{{field.title}}</label>
+        <div class="col-sm-8" v-if="!is_inline">
+            <input type="checkbox" class="form-check-input" :id="_uid + '_' + field.code" :name="field.code" v-model="savedValue" true-value="1" false-value="0">
+        </div>
+    </div>
+    <div v-else-if="field.type === 'color'" :class="{'form-group': !is_inline, 'row': !is_inline, 'd-flex': is_inline, 'justify-content-between': is_inline, 'mb-2': is_inline}">
+        <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline}">{{field.title}}</label>
+        <div :class="{'col-sm-8': !is_inline}">
+            <span class="color-selector color-red" :class="{active: savedValue === 'red'}" v-on:click="save('red')"></span>
+            <span class="color-selector color-yellow" :class="{active: savedValue === 'yellow'}" v-on:click="save('yellow')"></span>
+            <span class="color-selector color-green" :class="{active: savedValue === 'green'}" v-on:click="save('green')"></span>
+        </div>
+    </div>
+    <div v-else-if="field.type === 'text'" :class="{'form-group': !is_inline, 'row': !is_inline, 'd-flex': is_inline, 'justify-content-between': is_inline, 'mb-2': is_inline}">
+        <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline}">{{field.title}}</label>
+        <div :class="{'col-sm-8': !is_inline}">
+            <input type="text" class="form-control" v-model="savedValue">
+        </div>
+    </div>
+    <div v-else-if="field.type === 'longtext'" :class="{'form-group': !is_inline, 'row': !is_inline, 'd-flex': is_inline, 'justify-content-between': is_inline, 'mb-2': is_inline}">
+        <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline}">{{field.title}}</label>
+        <div :class="{'col-sm-8': !is_inline}">
+            <textarea class="form-control" rows="3" v-model="savedValue"></textarea>
+        </div>
+    </div>
+    <div v-else-if="field.type === 'date'" :class="{'form-group': !is_inline, 'row': !is_inline, 'd-flex': is_inline, 'justify-content-between': is_inline, 'mb-2': is_inline}">
+        <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline}">{{field.title}}</label>
+        <div :class="{'col-sm-8': !is_inline}">
+            <input type="date" class="form-control" v-model="savedValue">
+        </div>
+    </div>
+    <div v-else-if="field.type === 'datetime'" :class="{'form-group': !is_inline, 'row': !is_inline, 'd-flex': is_inline, 'justify-content-between': is_inline, 'mb-2': is_inline}">
+        <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline}">{{field.title}}</label>
+        <div :class="{'col-sm-8': !is_inline}">
+            <input type="datetime-local" class="form-control" v-model="savedValue">
+        </div>
+    </div>
+</script>
+<script type="text/x-template" id="field-template">
+    <component :is="onlyValue ? 'div' : 'li'" v-if="field.type === 'checkbox'" class="card-input-item checkbox-card-input-item" :class="{'list-group-item': fullView, 'bg-success': isFilled && fullView}">
+        <label class="card-input-label">{{field.title}}</label>
+        <input v-if="fullView" type="checkbox" class="card-input" :name="field.code" v-model="savedValue" true-value="1" false-value="0">
+        <span v-else>{{savedValue === "1"? '&checkmark;' : '&times;'}}</span>
+    </component>
+    <component :is="onlyValue ? 'div' : 'li'" v-else-if="field.type === 'color'" class="card-input-item color-card-input-item" :class="{'list-group-item': fullView, 'bg-success': isFilled && fullView}">
+        <label class="card-input-label">{{field.title}}</label>
+        <div v-if="fullView" class="card-input">
+            <span class="color-selector color-red" :class="{active: savedValue === 'red'}" v-on:click="save('red')"></span>
+            <span class="color-selector color-yellow" :class="{active: savedValue === 'yellow'}" v-on:click="save('yellow')"></span>
+            <span class="color-selector color-green" :class="{active: savedValue === 'green'}" v-on:click="save('green')"></span>
+        </div>
+        <div v-else>
+            <span :class="'color-selector color-'+savedValue"></span>
+        </div>
+    </component>
+    <component :is="onlyValue ? 'div' : 'li'" v-else-if="field.type === 'text'" :class="{'list-group-item': fullView, 'bg-success': isFilled && fullView}">
+        <div v-if="!isEditing" class="card-input-item text-card-input-item">
+            <label class="card-input-label flex-fill">{{field.title}}</label>
+            <div class="card-input text-right">
+                {{value}}
+            </div>
+            <div v-if="fullView" class="btn-edit-field" v-on:click="toggleEditing()">
+                <i class="fas fa-edit"></i>
+            </div>
+        </div>
+        <div v-else class="card-input-item text-card-input-item edit-view">
+            <label class="card-input-label flex-fill in-edit-view">{{field.title}}</label>
+            <div class="card-input-field in-edit-view">
+                <input type="text" class="form-control" v-model="editingValue">
+            </div>
+            <div class="edit-buttons in-edit-view py-2">
+                <button class="btn btn-primary btn-save-field mr-2 flex-fill" v-on:click="save()">Сохранить</button>
+                <button class="btn btn-outline-secondary btn-edit-field" v-on:click="toggleEditing()"><i class="fas fa-ban"></i></button>
+            </div>
+        </div>
+    </component>
+    <component :is="onlyValue ? 'div' : 'li'" v-else-if="field.type === 'longtext'" :class="{'list-group-item': fullView, 'bg-success': isFilled && fullView}">
+        <div v-if="!isEditing" class="card-input-item text-card-input-item">
+            <label class="card-input-label flex-fill">{{field.title}}</label>
+            <div class="card-input text-right">
+                {{value}}
+            </div>
+            <div v-if="fullView" class="btn-edit-field" v-on:click="toggleEditing()">
+                <i class="fas fa-edit"></i>
+            </div>
+        </div>
+        <div v-else class="card-input-item text-card-input-item edit-view">
+            <label class="card-input-label flex-fill in-edit-view">{{field.title}}</label>
+            <div class="card-input-field in-edit-view">
+                <textarea class="form-control" v-model="editingValue"></textarea>
+            </div>
+            <div class="edit-buttons in-edit-view py-2">
+                <button class="btn btn-primary btn-save-field mr-2 flex-fill" v-on:click="save()">Сохранить</button>
+                <button class="btn btn-outline-secondary btn-edit-field" v-on:click="toggleEditing()"><i class="fas fa-ban"></i></button>
+            </div>
+        </div>
+    </component>
+    <component :is="onlyValue ? 'div' : 'li'" v-else-if="field.type === 'date'" :class="{'list-group-item': fullView, 'bg-success': isFilled && fullView}">
+        <div v-if="!isEditing" class="card-input-item date-card-input-item">
+            <label class="card-input-label flex-fill">{{field.title}}</label>
+            <div class="card-input">
+                {{formattedDate}}
+            </div>
+            <div v-if="fullView" class="btn-edit-field" v-on:click="toggleEditing()">
+                <i class="fas fa-edit"></i>
+            </div>
+        </div>
+        <div v-else class="card-input-item date-card-input-item edit-view">
+            <label class="card-input-label flex-fill in-edit-view">{{field.title}}</label>
+            <div class="card-input-field in-edit-view">
+                <input type="date" class="form-control" v-model="editingValue">
+            </div>
+            <div class="edit-buttons in-edit-view py-2">
+                <button class="btn btn-primary btn-save-field mr-2 flex-fill" v-on:click="save()">Сохранить</button>
+                <button class="btn btn-outline-secondary btn-edit-field" v-on:click="toggleEditing()"><i class="fas fa-ban"></i></button>
+            </div>
+        </div>
+    </component>
+    <component :is="onlyValue ? 'div' : 'li'" v-else-if="field.type === 'datetime'" :class="{'list-group-item': fullView, 'bg-success': isFilled && fullView}">
+        <div v-if="!isEditing" class="card-input-item date-card-input-item">
+            <label class="card-input-label flex-fill">{{field.title}}</label>
+            <div class="card-input">
+                {{formattedDateTime}}
+            </div>
+            <div v-if="fullView" class="btn-edit-field" v-on:click="toggleEditing()">
+                <i class="fas fa-edit"></i>
+            </div>
+        </div>
+        <div v-else class="card-input-item date-card-input-item edit-view">
+            <label class="card-input-label flex-fill in-edit-view">{{field.title}}</label>
+            <div class="card-input-field in-edit-view">
+                <input type="datetime-local" class="form-control" v-model="editingValue">
+            </div>
+            <div class="edit-buttons in-edit-view py-2">
+                <button class="btn btn-primary btn-save-field mr-2 flex-fill" v-on:click="save()">Сохранить</button>
+                <button class="btn btn-outline-secondary btn-edit-field" v-on:click="toggleEditing()"><i class="fas fa-ban"></i></button>
+            </div>
+        </div>
+    </component>
+</script>
+<script type="text/x-template" id="modal-template">
+    <div class="modal fade" :id="id" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">
+                        <slot name="header"></slot>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" @click="$emit('close')"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <slot name="body"></slot>
+                </div>
+                <div class="modal-footer">
+                    <slot name="footer">
+                        <button class="btn btn-primary" @click="$emit('close')">
+                            Закрыть
+                        </button>
+                    </slot>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.8.4/Sortable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.20.0/vuedraggable.umd.min.js"></script>
+<script src="/app/main.js"></script>
+
 </body>
+
 </html>
