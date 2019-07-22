@@ -236,7 +236,13 @@ ul {
 
 
 .modal-dialog {
-    max-width: initial;
+    max-width: 700px;
     min-width: 300px;
     width: 70%;
+}
+
+.fieldset-group {
+  border: 1px solid #ced4da;
+  border-radius: .25rem;
+  padding: .375rem .75rem;
 }

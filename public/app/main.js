@@ -8,75 +8,83 @@ function getRandom(array, count) {
 
     return records;
 }
+function getTestCandidates() {
+    return {
+        1: [
+            {id: 1, name: 'Николюк Остап', position: '1С Программист'},
+            {id: 2, name: 'Ярков Антон', position: 'Аналитик'},
+            {id: 3, name: 'Сапалёв Виктор', position: '1С Программист'},
+            {id: 4, name: 'Караваев Эдуард', position: 'Помощник бухгалтера'},
+            {id: 5, name: 'Кулигин Степан', position: 'Стажер'},
+            {id: 6, name: 'Уманов Константин', position: 'Стажер'}
+        ],
+        2: [
+            {id: 7, name: 'Звягин Захар', comment: 'Настойчив'},
+            {id: 8, name: 'Ярославцев Иван', position: 'Стажер'},
+            {id: 9, name: 'Ошурков Павел', position: 'Бухгалтер'},
+            {id: 10, name: 'Ячменцев Тарас', position: 'Стажер'}
+        ],
+        3: [
+            {id: 11, name: 'Бабкина Елена', comment: 'Вторая попытка'},
+            {id: 12, name: 'Кривова Ника', position: 'Аналитик'},
+            {id: 13, name: 'Репина Дарья', position: '1С Программист'},
+        ],
+        4: [
+            {id: 14, name: 'Веретёнова Виктория', comment: 'Нужно уточнить про паспорт'},
+            {id: 15, name: 'Курдина Яна', position: 'Стажер'},
+        ],
+        5: [
+            {id: 16, name: 'Ерофеева Ирина', position: 'Помощник бухгалтера'},
+            {id: 17, name: 'Чекудаева Лидия', position: 'Помощник бухгалтера'},
+            {id: 18, name: 'Ковпак Вера', position: 'Бухгалтер'},
+            {id: 19, name: 'Кравец Регина', position: 'Бухгалтер'},
+            {id: 20, name: 'Гнусарева Анна', position: 'Аналитик'}
+        ]
+    };
+}
 function getTestStatuses() {
-    let allCandidates = [
-        {id: 1, name: 'Николюк Остап', position: '1С Программист'},
-        {id: 2, name: 'Ярков Антон', position: 'Аналитик'},
-        {id: 3, name: 'Сапалёв Виктор', position: '1С Программист'},
-        {id: 4, name: 'Караваев Эдуард', position: 'Помощник бухгалтера'},
-        {id: 5, name: 'Кулигин Степан', position: 'Стажер'},
-        {id: 6, name: 'Уманов Константин', position: 'Стажер'},
-        {id: 7, name: 'Звягин Захар', comment: 'Настойчив'},
-        {id: 8, name: 'Ярославцев Иван', position: 'Стажер'},
-        {id: 9, name: 'Ошурков Павел', position: 'Бухгалтер'},
-        {id: 10, name: 'Ячменцев Тарас', position: 'Стажер'},
-        {id: 11, name: 'Бабкина Елена', comment: 'Вторая попытка'},
-        {id: 12, name: 'Кривова Ника', position: 'Аналитик'},
-        {id: 13, name: 'Репина Дарья', position: '1С Программист'},
-        {id: 14, name: 'Веретёнова Виктория', comment: 'Нужно уточнить про паспорт'},
-        {id: 15, name: 'Курдина Яна', position: 'Стажер'},
-        {id: 16, name: 'Ерофеева Ирина', position: 'Помощник бухгалтера'},
-        {id: 17, name: 'Чекудаева Лидия', position: 'Помощник бухгалтера'},
-        {id: 18, name: 'Ковпак Вера', position: 'Бухгалтер'},
-        {id: 19, name: 'Кравец Регина', position: 'Бухгалтер'},
-        {id: 20, name: 'Гнусарева Анна', position: 'Аналитик'}
-    ];
     let testStatuses = [
         {
             id: 1,
             title: 'Входящие',
-            cards: getRandom(allCandidates, 6)
+            fields: []
         },
         {
             id: 2,
             title: 'Интервью',
             fields: [
-                {'title': 'Телефонное интервью', 'type': 'checkbox', 'code': 'i0', sort: 1},
-                {'title': 'Тестирование', 'type': 'checkbox', 'code': 'i1', sort: 2}
-            ],
-            cards: getRandom(allCandidates, 4)
+                {'title': 'Телефонное интервью', 'type': 'checkbox', 'id': 'i0', sort: 1},
+                {'title': 'Тестирование', 'type': 'checkbox', 'id': 'i1', sort: 2}
+            ]
         },
         {
             id: 3,
             title: 'Собеседование',
             fields: [
-                {'title': 'HR', 'type': 'color', 'code': 'i2', sort: 1},
-                {'title': 'Дата команды', 'type': 'datetime', 'code': 'i21', sort: 2},
-                {'title': 'С командой', 'type': 'color', 'code': 'i3', sort: 3}
-            ],
-            cards: getRandom(allCandidates, 3)
+                {'title': 'HR', 'type': 'color', 'id': 'i2', sort: 1},
+                {'title': 'Дата команды', 'type': 'datetime', 'id': 'i21', sort: 2},
+                {'title': 'С командой', 'type': 'color', 'id': 'i3', sort: 3}
+            ]
         },
         {
             id: 4,
             title: 'Оффер',
             fields: [
-                {'title': 'Подтверждение руководителем', 'type': 'color', 'code': 'i4', sort: 1},
-                {'title': 'Проверка СБ', 'type': 'color', 'code': 'i5', sort: 2},
-                {'title': 'Подтверждение кандидатом', 'type': 'checkbox', 'code': 'i6', sort: 3},
-                {'title': 'Оповещение группы', 'type': 'checkbox', 'code': 'i7', sort: 4}
-            ],
-            cards: getRandom(allCandidates, 2)
+                {'title': 'Подтверждение руководителем', 'type': 'color', 'id': 'i4', sort: 1},
+                {'title': 'Проверка СБ', 'type': 'color', 'id': 'i5', sort: 2},
+                {'title': 'Подтверждение кандидатом', 'type': 'checkbox', 'id': 'i6', sort: 3},
+                {'title': 'Оповещение группы', 'type': 'checkbox', 'id': 'i7', sort: 4}
+            ]
         },
         {
             id: 5,
             title: 'Выход на работу',
             fields: [
-                {'title': 'Дата выхода', 'type': 'date', 'code': 'i8', sort: 1},
-                {'title': 'Документы кандидата', 'type': 'checkbox', 'code': 'i9', sort: 2},
-                {'title': '«Buddy»', 'type': 'text', 'code': 'i10', sort: 3},
-                {'title': 'Выход', 'type': 'checkbox', 'code': 'i12', sort: 4}
-            ],
-            cards: getRandom(allCandidates, 1)
+                {'title': 'Дата выхода', 'type': 'date', 'id': 'i8', sort: 1},
+                {'title': 'Документы кандидата', 'type': 'checkbox', 'id': 'i9', sort: 2},
+                {'title': '«Buddy»', 'type': 'text', 'id': 'i10', sort: 3},
+                {'title': 'Выход', 'type': 'checkbox', 'id': 'i12', sort: 4}
+            ]
         },
     ];
 
@@ -117,13 +125,19 @@ Vue.component('status', {
             Vue.set(this.status, 'minimized', false);
         },
         deleteCard(card) {
-            this.cards.splice(this.cards.indexOf(card), 1);
+            this.currentCards.splice(this.currentCards.indexOf(card), 1);
         },
         addCardToNextStatus(card) {
-            this.next_status_cards.unshift(card);
+            let newNextStatusCards = this.next_status_cards;
+            newNextStatusCards.unshift(card);
+
+            this.$emit('cards_changed', {
+                status: this.next_status,
+                cards: newNextStatusCards
+            });
         },
         addNewCard() {
-            this.cards.unshift({});
+            this.currentCards.unshift({});
         },
         moveCardToNextStatus(card) {
             this.deleteCard(card);
@@ -132,7 +146,7 @@ Vue.component('status', {
     },
     computed: {
         cardsCount() {
-            return this.cards ? this.cards.length : 0;
+            return this.currentCards ? this.currentCards.length : 0;
         },
         isEmpty() {
             return this.cardsCount === 0;
@@ -164,8 +178,8 @@ Vue.component('card', {
         onFieldUpdate(dto) {
             let field = dto.field;
             let value = dto.value;
-            Vue.set(this.card, field.code, value);
-            console.log(this.card.id, field.code, value);
+            Vue.set(this.card, field.id, value);
+            console.log(this.card.id, field.id, value);
         },
         moveToNextStatus() {
             if (!this.next_status) {
@@ -188,7 +202,7 @@ Vue.component('card', {
             }
 
             let lastFieldWithData = this.fields.reduce((foundField, currentField) => {
-                let currentValueDefined = typeof (this.card[currentField.code]) !== 'undefined';
+                let currentValueDefined = typeof (this.card[currentField.id]) !== 'undefined';
                 if (currentValueDefined) {
                     foundField = currentField;
                 }
@@ -203,16 +217,16 @@ Vue.component('card', {
                 return false;
             }
 
-            return this.card[this.activeField.code];
+            return this.card[this.activeField.id];
         },
         isCompleted() {
-            if (!this.fields) {
+            if (!this.fields || this.fields.length === 0) {
                 return true;
             }
 
             let lastField = this.fields[ this.fields.length - 1 ];
-            let isLastField = this.activeField.code === lastField.code;
-            let hasValue = typeof (this.card[lastField.code]) != 'undefined';
+            let isLastField = this.activeField.id === lastField.id;
+            let hasValue = typeof (this.card[lastField.id]) != 'undefined';
             return isLastField && hasValue;
         },
         modalEditId() {
@@ -342,10 +356,16 @@ new Vue({
     data: {
         dragStartPosition: false,
         dragStartElLeft: false,
-        boards: [
-            {id: '5d1f63f55f725d8d26ef3e13', title: 'Доска 1'}
-        ],
-        statuses: getTestStatuses()
+        currentBoardId: false,
+        /*boards: [
+            {id: '5d1f63f55f725d8d26ef3e13', title: 'Доска 1'},
+        ],*/
+        statuses: getTestStatuses(),
+        cards: getTestCandidates(),
+        activeSettingsStatusId: false,
+
+        loadedUserId: false,
+        loadedBoards: false
     },
     methods: {
         minimizeAllStatuses() {
@@ -384,44 +404,129 @@ new Vue({
             let remoteStatus = dto.status;
             let cards = dto.cards;
 
-            let localStatus = this.statuses.reduce((found, current) => {
-                if (current.id == remoteStatus.id) {
-                    return current;
-                }
+            Vue.set(this.cards, remoteStatus.id, cards);
+        },
+        openModalSettings() {
+            $('#' + this.modalBoardSettingsId).modal('show');
+        },
+        closeModalSettings() {
+            $('#' + this.modalBoardSettingsId).modal('hide');
+        },
+        addNewBoard() {
+            let nextBoardNumber = this.boards.length + 1;
+            let boardTemplate = {
+                title: 'Доска ' + nextBoardNumber,
+                userId: this.userId
+            };
 
-                return found;
-            }, false);
+            return axios.post('/api/board/add', boardTemplate)
+                .then(response => {
+                    console.log(response);
 
-            if (localStatus) {
-                Vue.set(localStatus, 'cards', cards);
-            }
+                    this.statuses = response.data.statuses;
+                    this.boards.push(response.data.board);
+                    this.cards = {};
+                    this.currentBoardId = response.data.board.id;
+
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+        },
+        getStatusCards(statusId) {
+            return this.cards[statusId] || [];
         },
         getCandidateFields() {
             return [
-                {'title': 'Полное имя', 'type': 'text', 'code': 'name', sort: 1},
-                {'title': 'Должность', 'type': 'text', 'code': 'position', sort: 2},
-                {'title': 'Почта', 'type': 'text', 'code': 'email', sort: 3},
-                {'title': 'Телефон', 'type': 'text', 'code': 'phone', sort: 4},
-                {'title': 'Ссылка на резюме', 'type': 'text', 'code': 'resumeUrl', sort: 5},
-                {'title': 'Вуз', 'type': 'text', 'code': 'university', sort: 6},
-                {'title': 'Комментарий', 'type': 'longtext', 'code': 'comment', sort: 7},
+                {'title': 'Полное имя', 'type': 'text', 'id': 'name', sort: 1},
+                {'title': 'Должность', 'type': 'text', 'id': 'position', sort: 2},
+                {'title': 'Почта', 'type': 'text', 'id': 'email', sort: 3},
+                {'title': 'Телефон', 'type': 'text', 'id': 'phone', sort: 4},
+                {'title': 'Ссылка на резюме', 'type': 'text', 'id': 'resumeUrl', sort: 5},
+                {'title': 'Вуз', 'type': 'text', 'id': 'university', sort: 6},
+                {'title': 'Комментарий', 'type': 'longtext', 'id': 'comment', sort: 7},
             ];
+        },
+        isStatusActiveInSettings(status) {
+            return status.id === this.activeSettingsStatus.id;
         }
     },
     computed: {
         title() {
-            return this.menuItems[0].title;
+            let currentItem = this.menuItems.filter(item => item.active)[0] || false;
+            return currentItem ? currentItem.title : 'Доска не выбрана';
         },
         menuItems() {
-            let menuItems = this.boards.map(board => {
+            if (!this.boards) {
+                return [];
+            }
+
+            let menuItems = this.boards.map((board, index) => {
                 return {
                     code: board.id,
                     title: board.title,
-                    active: false
+                    active: this.currentBoardId ? (board.id === this.currentBoardId) : (index === 0),
                 };
             });
-            menuItems[0].active = true;
             return menuItems;
+        },
+        modalBoardSettingsId() {
+            return 'board_settings_modal_'+this.currentBoardId;
+        },
+        activeSettingsStatus() {
+            if (!this.activeSettingsStatusId) {
+                return this.statuses[0] || false;
+            }
+
+            return this.statuses.reduce((found, current) => {
+                return current.id === this.activeSettingsStatusId ? current : found;
+            });
+        }
+    },
+    asyncComputed: {
+        userId: {
+            async get() {
+                if (this.loadedUserId) {
+                    return this.loadedUserId;
+                }
+
+                this.loadedUserId = localStorage.getItem('userId') || false;
+
+                if (!this.loadedUserId) {
+                    let response = await axios.post('/api/user/add', {});
+                    let newUserId = response.data.user.id;
+
+                    this.loadedUserId = newUserId;
+                    localStorage.setItem('userId', newUserId);
+                }
+
+                return this.loadedUserId;
+            },
+            set(newValue) {
+                this.loadedUserId = newValue;
+                localStorage.setItem('userId', newValue);
+            }
+        },
+        boards: {
+            async get() {
+                if (this.loadedBoards) {
+                    return this.loadedBoards;
+                }
+
+                if (!this.userId) {
+                    return [];
+                }
+
+                let response = await axios.get('/api/board/list', {
+                    params: {
+                        userId: this.userId
+                    }
+                });
+                this.loadedBoards = response.data.boards;
+            },
+            set(newValue) {
+                this.loadedBoards = newValue;
+            }
         }
     }
 });

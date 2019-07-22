@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Воронка HR</title>
+    <title>HRello</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/css/all.min.css">
@@ -14,19 +14,83 @@
 <body>
 
 <section id="board" class="d-flex flex-column">
-    <navmenu :title="title" :items="menuItems" @minimize="minimizeAllStatuses" @maximize="maximizeAllStatuses"></navmenu>
+    <navmenu :title="title"
+            :items="menuItems"
+            @minimize="minimizeAllStatuses"
+            @maximize="maximizeAllStatuses"
+            @add_board="addNewBoard"
+            @settings="openModalSettings"
+    ></navmenu>
     <div class="task-board flex-fill" v-on:mousemove.self="dragScroll" v-on:mousedown.self="dragStart" v-on:mouseup.self="dragEnd">
         <status v-for="(status, index) in statuses"
                 :status="status"
                 :candidate_fields="getCandidateFields()"
-                :cards="status.cards"
+                :cards="getStatusCards(status.id)"
                 :next_status="statuses[index+1] || false"
-                :next_status_cards="statuses[index+1] ? statuses[index+1].cards : false"
+                :next_status_cards="statuses[index+1] ? getStatusCards(statuses[index+1].id) : false"
                 :key="status.id + '_' + index"
                 :all_statuses="statuses"
                 @cards_changed="replaceCards"
         ></status>
     </div>
+    <modal @close="closeModalSettings()" :id="modalBoardSettingsId">
+        <h3 slot="header">Настройки доски</h3>
+        <div slot="body">
+            <button class="btn btn-outline-primary btn-item-add-status mb-4">
+                <i class="fas fa-plus"></i> Добавить статус
+            </button>
+            <ul class="nav nav-pills">
+                <li v-for="status in statuses" class="nav-item">
+                    <a class="nav-link"
+                            :class="{active: isStatusActiveInSettings(status)}"
+                            href="#"
+                            @click="activeSettingsStatusId = status.id"
+                    >{{status.title}}</a>
+                </li>
+            </ul>
+            <form class="mt-4">
+                <div class="form-group row">
+                    <div class="col-sm-12">
+                        <input type="text" class="form-control" v-model="activeSettingsStatus.title" placeholder="Название статуса">
+                    </div>
+                </div>
+                <div v-for="field in activeSettingsStatus.fields" class="form-group row">
+                    <div class="col-sm-4">
+                        <input type="text" v-model="field.title" class="form-control">
+                    </div>
+                    <div class="col-sm-4">
+                        <select v-model="field.type" class="form-control">
+                            <option value="checkbox">Галочка</option>
+                            <option value="color">Светофор</option>
+                            <option value="date">Дата</option>
+                            <option value="datetime">Дата и время</option>
+                            <option value="text">Текст</option>
+                            <option value="longtext">Длинный текст</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-4 d-flex justify-content-end">
+                        <button class="btn btn-outline-danger">
+                            <i class="fas fa-trash"></i> Удалить поле
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <div class="mt-4 d-flex">
+                <button class="btn btn-outline-primary mr-4">
+                    <i class="fas fa-plus"></i> Добавить поле
+                </button>
+                <span class="flex-fill"></span>
+                <button class="btn btn-outline-danger">
+                    <i class="fas fa-trash"></i> Удалить статус
+                </button>
+            </div>
+        </div>
+        <div slot="footer">
+            <button class="btn btn-success" @click="closeModalSettings()">
+                Готово
+            </button>
+        </div>
+    </modal>
 </section>
 
 <script type="text/x-template" id="menu-template">
@@ -34,10 +98,10 @@
         <button class="navbar-toggler navbar-brand dropdown-toggle mr-2" type="button" data-toggle="collapse" data-target="#navbarMenu">
             {{title}}
         </button>
-        <button class="navbar-toggler mr-2">
+        <button class="navbar-toggler mr-2" @click="$emit('settings')">
             <i class="fas fa-cog"></i>
         </button>
-        <button class="navbar-toggler mr-2">
+        <button class="navbar-toggler mr-2" @click="$emit('add_board')">
             <i class="fas fa-plus"></i>
         </button>
 
@@ -56,7 +120,7 @@
         <div class="collapse navbar-collapse" id="navbarMenu">
             <ul class="navbar-nav mr-auto nav nav-tabs" role="tablist">
                 <li v-for="item in items" class="nav-item" :class="{show: item.active, active: item.active}">
-                    <a class="nav-link" v-on:click="updateActiveMenu(item.code)" href="#">{{item.title}}</a>
+                    <a class="nav-link" v-on:click="updateActiveMenu(item.id)" href="#">{{item.title}}</a>
                 </li>
             </ul>
         </div>
@@ -125,7 +189,7 @@
                 <p v-show="card.comment" class="card-text">{{card.comment}}</p>
             </div>
             <ul class="list-group list-group-flush">
-                <field v-for="(field, index) in fields" :field="field" :value="card[field.code]" :key="field.code + '_' + index" @update="onFieldUpdate"></field>
+                <field v-for="(field, index) in fields" :field="field" :value="card[field.id]" :key="field.id + '_' + index" @update="onFieldUpdate"></field>
             </ul>
             <button class="btn btn-next" :class="{'btn-success': isCompleted}" v-on:click="moveToNextStatus()" v-if="next_status">
                 {{next_status.title}}
@@ -138,20 +202,20 @@
             <div slot="body">
                 <editfield v-for="(field, index) in candidate_fields"
                         :field="field"
-                        :value="card[field.code]"
+                        :value="card[field.id]"
                         :is_inline="false"
-                        :key="field.code + '_' + index"
+                        :key="field.id + '_' + index"
                         @update="onFieldUpdate"
                 ></editfield>
-                <fieldset v-for="status in all_statuses" class="form-group" v-show="status.fields">
+                <fieldset v-for="status in all_statuses" class="form-group fieldset-group bg-white" v-show="status.fields">
                     <div class="row">
                         <legend class="col-form-label col-sm-4 pt-0">{{status.title}}</legend>
                         <div class="col-sm-8">
                             <editfield v-for="(field, index) in status.fields"
                                     :field="field"
-                                    :value="card[field.code]"
+                                    :value="card[field.id]"
                                     :is_inline="true"
-                                    :key="field.code + '_' + index"
+                                    :key="field.id + '_' + index"
                                     @update="onFieldUpdate"
                             ></editfield>
                         </div>
@@ -168,11 +232,10 @@
     </li>
 </script>
 <script type="text/x-template" id="fieldedit-template">
-    <div v-if="field.type === 'checkbox'" class="form-check" :class="{'form-group': !is_inline, 'row': !is_inline}">
-        <input type="checkbox" class="form-check-input" :id="_uid + '_' + field.code" :name="field.code" v-model="savedValue" true-value="1" false-value="0" v-if="is_inline">
-        <label class="form-check-label" :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline}" :for="_uid + '_' + field.code">{{field.title}}</label>
-        <div class="col-sm-8" v-if="!is_inline">
-            <input type="checkbox" class="form-check-input" :id="_uid + '_' + field.code" :name="field.code" v-model="savedValue" true-value="1" false-value="0">
+    <div v-if="field.type === 'checkbox'" :class="{'form-group': !is_inline, 'row': !is_inline, 'd-flex': is_inline, 'justify-content-between': is_inline, 'mb-2': is_inline}">
+        <label :for="_uid + '_' + field.id" :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline}">{{field.title}}</label>
+        <div :class="{'col-sm-8': !is_inline}">
+            <input type="checkbox" class="form-check-input" :id="_uid + '_' + field.id" :name="field.id" v-model="savedValue" true-value="1" false-value="0">
         </div>
     </div>
     <div v-else-if="field.type === 'color'" :class="{'form-group': !is_inline, 'row': !is_inline, 'd-flex': is_inline, 'justify-content-between': is_inline, 'mb-2': is_inline}">
@@ -211,7 +274,7 @@
 <script type="text/x-template" id="field-template">
     <component :is="onlyValue ? 'div' : 'li'" v-if="field.type === 'checkbox'" class="card-input-item checkbox-card-input-item" :class="{'list-group-item': fullView, 'bg-success': isFilled && fullView}">
         <label class="card-input-label">{{field.title}}</label>
-        <input v-if="fullView" type="checkbox" class="card-input" :name="field.code" v-model="savedValue" true-value="1" false-value="0">
+        <input v-if="fullView" type="checkbox" class="card-input" :name="field.id" v-model="savedValue" true-value="1" false-value="0">
         <span v-else>{{savedValue === "1"? '&checkmark;' : '&times;'}}</span>
     </component>
     <component :is="onlyValue ? 'div' : 'li'" v-else-if="field.type === 'color'" class="card-input-item color-card-input-item" :class="{'list-group-item': fullView, 'bg-success': isFilled && fullView}">
@@ -313,7 +376,7 @@
 <script type="text/x-template" id="modal-template">
     <div class="modal fade" :id="id" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
-            <div class="modal-content">
+            <div class="modal-content bg-light">
                 <div class="modal-header">
                     <div class="modal-title">
                         <slot name="header"></slot>
@@ -337,7 +400,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://unpkg.com/vue-async-computed"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.8.4/Sortable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.20.0/vuedraggable.umd.min.js"></script>
 <script src="/app/main.js"></script>
