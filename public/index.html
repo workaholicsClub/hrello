@@ -30,7 +30,8 @@
                 :next_status_cards="statuses[index+1] ? getStatusCards(statuses[index+1].id) : false"
                 :key="status.id + '_' + index"
                 :all_statuses="statuses"
-                @cards_changed="replaceCards"
+                @delete_card="deleteCard"
+                @add_card="addCard(status)"
         ></status>
     </div>
     <modal @close="closeModalSettings()" :id="modalBoardSettingsId">
@@ -150,7 +151,7 @@
                         @move="moveCardToNextStatus(card)"
                 ></card>
             </draggable>
-            <button @click="addNewCard" class="btn btn-add-card btn-outline-secondary btn-block">&plus; Добавить</button>
+            <button @click="$emit('add_card')" class="btn btn-add-card btn-outline-secondary btn-block">&plus; Добавить</button>
         </ul>
     </div>
 </script>
@@ -189,7 +190,7 @@
                 <p v-show="card.comment" class="card-text">{{card.comment}}</p>
             </div>
             <ul class="list-group list-group-flush">
-                <field v-for="(field, index) in fields" :field="field" :value="card[field.id]" :key="field.id + '_' + index" @update="onFieldUpdate"></field>
+                <field v-for="(field, index) in fields" :field="field" :value="getFieldValue(field)" :key="field.id + '_' + index" @update="onFieldUpdate"></field>
             </ul>
             <button class="btn btn-next" :class="{'btn-success': isCompleted}" v-on:click="moveToNextStatus()" v-if="next_status">
                 {{next_status.title}}
@@ -202,10 +203,10 @@
             <div slot="body">
                 <editfield v-for="(field, index) in candidate_fields"
                         :field="field"
-                        :value="card[field.id]"
+                        :value="getCandidateFieldValue(field)"
                         :is_inline="false"
                         :key="field.id + '_' + index"
-                        @update="onFieldUpdate"
+                        @update="onCandidateFieldUpdate"
                 ></editfield>
                 <fieldset v-for="status in all_statuses" class="form-group fieldset-group bg-white" v-show="status.fields">
                     <div class="row">
@@ -213,7 +214,7 @@
                         <div class="col-sm-8">
                             <editfield v-for="(field, index) in status.fields"
                                     :field="field"
-                                    :value="card[field.id]"
+                                    :value="getFieldValue(field)"
                                     :is_inline="true"
                                     :key="field.id + '_' + index"
                                     @update="onFieldUpdate"
@@ -241,9 +242,9 @@
     <div v-else-if="field.type === 'color'" :class="{'form-group': !is_inline, 'row': !is_inline, 'd-flex': is_inline, 'justify-content-between': is_inline, 'mb-2': is_inline}">
         <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline}">{{field.title}}</label>
         <div :class="{'col-sm-8': !is_inline}">
-            <span class="color-selector color-red" :class="{active: savedValue === 'red'}" v-on:click="save('red')"></span>
-            <span class="color-selector color-yellow" :class="{active: savedValue === 'yellow'}" v-on:click="save('yellow')"></span>
             <span class="color-selector color-green" :class="{active: savedValue === 'green'}" v-on:click="save('green')"></span>
+            <span class="color-selector color-yellow" :class="{active: savedValue === 'yellow'}" v-on:click="save('yellow')"></span>
+            <span class="color-selector color-red" :class="{active: savedValue === 'red'}" v-on:click="save('red')"></span>
         </div>
     </div>
     <div v-else-if="field.type === 'text'" :class="{'form-group': !is_inline, 'row': !is_inline, 'd-flex': is_inline, 'justify-content-between': is_inline, 'mb-2': is_inline}">
@@ -280,9 +281,9 @@
     <component :is="onlyValue ? 'div' : 'li'" v-else-if="field.type === 'color'" class="card-input-item color-card-input-item" :class="{'list-group-item': fullView, 'bg-success': isFilled && fullView}">
         <label class="card-input-label">{{field.title}}</label>
         <div v-if="fullView" class="card-input">
-            <span class="color-selector color-red" :class="{active: savedValue === 'red'}" v-on:click="save('red')"></span>
-            <span class="color-selector color-yellow" :class="{active: savedValue === 'yellow'}" v-on:click="save('yellow')"></span>
             <span class="color-selector color-green" :class="{active: savedValue === 'green'}" v-on:click="save('green')"></span>
+            <span class="color-selector color-yellow" :class="{active: savedValue === 'yellow'}" v-on:click="save('yellow')"></span>
+            <span class="color-selector color-red" :class="{active: savedValue === 'red'}" v-on:click="save('red')"></span>
         </div>
         <div v-else>
             <span :class="'color-selector color-'+savedValue"></span>
@@ -401,6 +402,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 <script src="https://unpkg.com/vue-async-computed"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.8.4/Sortable.min.js"></script>

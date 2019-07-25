@@ -9,45 +9,39 @@ function getRandom(array, count) {
     return records;
 }
 function getTestCandidates() {
-    return {
-        1: [
-            {id: 1, name: 'Николюк Остап', position: '1С Программист'},
-            {id: 2, name: 'Ярков Антон', position: 'Аналитик'},
-            {id: 3, name: 'Сапалёв Виктор', position: '1С Программист'},
-            {id: 4, name: 'Караваев Эдуард', position: 'Помощник бухгалтера'},
-            {id: 5, name: 'Кулигин Степан', position: 'Стажер'},
-            {id: 6, name: 'Уманов Константин', position: 'Стажер'}
-        ],
-        2: [
-            {id: 7, name: 'Звягин Захар', comment: 'Настойчив'},
-            {id: 8, name: 'Ярославцев Иван', position: 'Стажер'},
-            {id: 9, name: 'Ошурков Павел', position: 'Бухгалтер'},
-            {id: 10, name: 'Ячменцев Тарас', position: 'Стажер'}
-        ],
-        3: [
-            {id: 11, name: 'Бабкина Елена', comment: 'Вторая попытка'},
-            {id: 12, name: 'Кривова Ника', position: 'Аналитик'},
-            {id: 13, name: 'Репина Дарья', position: '1С Программист'},
-        ],
-        4: [
-            {id: 14, name: 'Веретёнова Виктория', comment: 'Нужно уточнить про паспорт'},
-            {id: 15, name: 'Курдина Яна', position: 'Стажер'},
-        ],
-        5: [
-            {id: 16, name: 'Ерофеева Ирина', position: 'Помощник бухгалтера'},
-            {id: 17, name: 'Чекудаева Лидия', position: 'Помощник бухгалтера'},
-            {id: 18, name: 'Ковпак Вера', position: 'Бухгалтер'},
-            {id: 19, name: 'Кравец Регина', position: 'Бухгалтер'},
-            {id: 20, name: 'Гнусарева Анна', position: 'Аналитик'}
-        ]
-    };
+    return [
+        {id: 1, name: 'Николюк Остап', position: '1С Программист', statusId: 1, boardId: '5d1f63f55f725d8d26ef3e13',
+            statusData: {},
+            additionalFields: []
+        },
+        {id: 2, name: 'Ярков Антон', position: 'Аналитик', statusId: 1, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 3, name: 'Сапалёв Виктор', position: '1С Программист', statusId: 1, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 4, name: 'Караваев Эдуард', position: 'Помощник бухгалтера', statusId: 1, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 5, name: 'Кулигин Степан', position: 'Стажер', statusId: 1, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 6, name: 'Уманов Константин', position: 'Стажер', statusId: 1, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 7, name: 'Звягин Захар', comment: 'Настойчив', statusId: 2, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 8, name: 'Ярославцев Иван', position: 'Стажер', statusId: 2, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 9, name: 'Ошурков Павел', position: 'Бухгалтер', statusId: 2, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 10, name: 'Ячменцев Тарас', position: 'Стажер', statusId: 2, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 11, name: 'Бабкина Елена', comment: 'Вторая попытка', statusId: 3, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 12, name: 'Кривова Ника', position: 'Аналитик', statusId: 3, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 13, name: 'Репина Дарья', position: '1С Программист', statusId: 3, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 14, name: 'Веретёнова Виктория', comment: 'Нужно уточнить про паспорт', statusId: 4, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 15, name: 'Курдина Яна', position: 'Стажер', statusId: 4, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 16, name: 'Ерофеева Ирина', position: 'Помощник бухгалтера', statusId: 5, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 17, name: 'Чекудаева Лидия', position: 'Помощник бухгалтера', statusId: 5, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 18, name: 'Ковпак Вера', position: 'Бухгалтер', statusId: 5, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 19, name: 'Кравец Регина', position: 'Бухгалтер', statusId: 5, boardId: '5d1f63f55f725d8d26ef3e13'},
+        {id: 20, name: 'Гнусарева Анна', position: 'Аналитик', statusId: 5, boardId: '5d1f63f55f725d8d26ef3e13'}
+    ];
 }
 function getTestStatuses() {
     let testStatuses = [
         {
             id: 1,
             title: 'Входящие',
-            fields: []
+            fields: [],
+            boardId: '5d1f63f55f725d8d26ef3e13'
         },
         {
             id: 2,
@@ -55,7 +49,8 @@ function getTestStatuses() {
             fields: [
                 {'title': 'Телефонное интервью', 'type': 'checkbox', 'id': 'i0', sort: 1},
                 {'title': 'Тестирование', 'type': 'checkbox', 'id': 'i1', sort: 2}
-            ]
+            ],
+            boardId: '5d1f63f55f725d8d26ef3e13'
         },
         {
             id: 3,
@@ -64,7 +59,8 @@ function getTestStatuses() {
                 {'title': 'HR', 'type': 'color', 'id': 'i2', sort: 1},
                 {'title': 'Дата команды', 'type': 'datetime', 'id': 'i21', sort: 2},
                 {'title': 'С командой', 'type': 'color', 'id': 'i3', sort: 3}
-            ]
+            ],
+            boardId: '5d1f63f55f725d8d26ef3e13'
         },
         {
             id: 4,
@@ -74,7 +70,8 @@ function getTestStatuses() {
                 {'title': 'Проверка СБ', 'type': 'color', 'id': 'i5', sort: 2},
                 {'title': 'Подтверждение кандидатом', 'type': 'checkbox', 'id': 'i6', sort: 3},
                 {'title': 'Оповещение группы', 'type': 'checkbox', 'id': 'i7', sort: 4}
-            ]
+            ],
+            boardId: '5d1f63f55f725d8d26ef3e13'
         },
         {
             id: 5,
@@ -84,7 +81,8 @@ function getTestStatuses() {
                 {'title': 'Документы кандидата', 'type': 'checkbox', 'id': 'i9', sort: 2},
                 {'title': '«Buddy»', 'type': 'text', 'id': 'i10', sort: 3},
                 {'title': 'Выход', 'type': 'checkbox', 'id': 'i12', sort: 4}
-            ]
+            ],
+            boardId: '5d1f63f55f725d8d26ef3e13'
         },
     ];
 
@@ -107,12 +105,6 @@ Vue.component('status', {
         cards: function () {
             this.currentCards = this.cards;
         },
-        currentCards: function () {
-            this.$emit('cards_changed', {
-                status: this.status,
-                cards: this.currentCards
-            });
-        }
     },
     methods: {
         toggleHide() {
@@ -124,24 +116,8 @@ Vue.component('status', {
         maximize() {
             Vue.set(this.status, 'minimized', false);
         },
-        deleteCard(card) {
-            this.currentCards.splice(this.currentCards.indexOf(card), 1);
-        },
-        addCardToNextStatus(card) {
-            let newNextStatusCards = this.next_status_cards;
-            newNextStatusCards.unshift(card);
-
-            this.$emit('cards_changed', {
-                status: this.next_status,
-                cards: newNextStatusCards
-            });
-        },
-        addNewCard() {
-            this.currentCards.unshift({});
-        },
         moveCardToNextStatus(card) {
-            this.deleteCard(card);
-            this.addCardToNextStatus(card);
+            Vue.set(card, 'statusId', this.next_status.id);
         }
     },
     computed: {
@@ -164,6 +140,12 @@ Vue.component('card', {
         }
     },
     watch: {
+        card: {
+            handler: _.debounce(function (card) {
+                axios.post('/api/card/update', card);
+            }, 1500),
+            deep: true
+        },
         minimized: function () {
             this.currentMinimized = Boolean(this.minimized);
         }
@@ -178,8 +160,18 @@ Vue.component('card', {
         onFieldUpdate(dto) {
             let field = dto.field;
             let value = dto.value;
-            Vue.set(this.card, field.id, value);
+            if (!this.card.statusData) {
+                Vue.set(this.card, 'statusData', {});
+            }
+
+            Vue.set(this.card['statusData'], field.id, value);
             console.log(this.card.id, field.id, value);
+        },
+        onCandidateFieldUpdate(dto) {
+            let field = dto.field;
+            let value = dto.value;
+            Vue.set(this.card, field.id, value);
+            console.log('candidate', this.card.id, field.id, value);
         },
         moveToNextStatus() {
             if (!this.next_status) {
@@ -193,6 +185,26 @@ Vue.component('card', {
         },
         closeModalEdit() {
             $('#' + this.modalEditId).modal('hide');
+        },
+        getFieldValue(field) {
+            if (!field) {
+                return undefined;
+            }
+
+            let hasValue =
+                typeof (this.card['statusData']) != 'undefined' &&
+                typeof (this.card.statusData[field.id]) != 'undefined';
+
+            return hasValue ? this.card.statusData[field.id] : undefined;
+        },
+        getCandidateFieldValue(field) {
+            if (!field) {
+                return undefined;
+            }
+
+            let hasValue = typeof (this.card[field.id]) != 'undefined';
+
+            return hasValue ? this.card[field.id] : undefined;
         }
     },
     computed: {
@@ -202,7 +214,9 @@ Vue.component('card', {
             }
 
             let lastFieldWithData = this.fields.reduce((foundField, currentField) => {
-                let currentValueDefined = typeof (this.card[currentField.id]) !== 'undefined';
+                let currentValueDefined =
+                    typeof (this.card['statusData']) !== 'undefined' &&
+                    typeof (this.card.statusData[currentField.id]) !== 'undefined';
                 if (currentValueDefined) {
                     foundField = currentField;
                 }
@@ -217,7 +231,11 @@ Vue.component('card', {
                 return false;
             }
 
-            return this.card[this.activeField.id];
+            if (!this.card['statusData']) {
+                return false;
+            }
+
+            return this.card.statusData[this.activeField.id];
         },
         isCompleted() {
             if (!this.fields || this.fields.length === 0) {
@@ -226,7 +244,9 @@ Vue.component('card', {
 
             let lastField = this.fields[ this.fields.length - 1 ];
             let isLastField = this.activeField.id === lastField.id;
-            let hasValue = typeof (this.card[lastField.id]) != 'undefined';
+            let hasValue =
+                typeof (this.card['statusData']) != 'undefined' &&
+                typeof (this.card.statusData[lastField.id]) != 'undefined';
             return isLastField && hasValue;
         },
         modalEditId() {
@@ -283,7 +303,7 @@ let FieldComponent = Vue.extend({
             return '';
         },
         isFilled() {
-            return typeof (this.value) != 'undefined';
+            return typeof (this.value) != 'undefined' && this.value !== null;
         },
         fullView() {
             return !this.onlyValue;
@@ -357,9 +377,6 @@ new Vue({
         dragStartPosition: false,
         dragStartElLeft: false,
         currentBoardId: false,
-        /*boards: [
-            {id: '5d1f63f55f725d8d26ef3e13', title: 'Доска 1'},
-        ],*/
         statuses: getTestStatuses(),
         cards: getTestCandidates(),
         activeSettingsStatusId: false,
@@ -400,12 +417,6 @@ new Vue({
             let shiftX = (x - this.dragStartPosition ) * speed;
             scrollableAreaEl.scrollLeft = this.dragStartElLeft - shiftX;
         },
-        replaceCards(dto) {
-            let remoteStatus = dto.status;
-            let cards = dto.cards;
-
-            Vue.set(this.cards, remoteStatus.id, cards);
-        },
         openModalSettings() {
             $('#' + this.modalBoardSettingsId).modal('show');
         },
@@ -425,7 +436,7 @@ new Vue({
 
                     this.statuses = response.data.statuses;
                     this.boards.push(response.data.board);
-                    this.cards = {};
+                    this.cards = [];
                     this.currentBoardId = response.data.board.id;
 
                 })
@@ -433,8 +444,23 @@ new Vue({
                     console.log(error);
                 });
         },
-        getStatusCards(statusId) {
-            return this.cards[statusId] || [];
+        deleteCard(card) {
+            Vue.set(card, 'statusId', false);
+            this.cards.splice(this.cards.indexOf(card), 1);
+        },
+        async addCard(status) {
+            let newCard = {
+                statusId: status.id,
+                boardId: status.boardId
+            };
+
+            let response = await axios.post('/api/card/add', newCard);
+            let createdCard = response.data.card;
+
+            this.cards.unshift(createdCard);
+        },
+        getStatusCards(searchedStatusId) {
+            return this.cards.filter(card => card.statusId === searchedStatusId) || [];
         },
         getCandidateFields() {
             return [
