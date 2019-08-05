@@ -5,6 +5,8 @@ const MongoClient = require('mongodb').MongoClient;
 const boardRoutes = require('./routes/board');
 const userRoutes = require('./routes/user');
 const cardRoutes = require('./routes/card');
+const statusRoutes = require('./routes/status');
+const shortid = require('shortid');
 
 const PORT = 3000;
 const HOST = '0.0.0.0';
@@ -26,12 +28,23 @@ async function connectToDatabase (host, port, dbName) {
 
     app.get('/api/board/list', boardRoutes.list(db));
     app.post('/api/board/add', boardRoutes.add(db));
+    app.post('/api/board/update', boardRoutes.update(db));
+
+    app.get('/api/status/list', statusRoutes.list(db));
+    app.get('/api/status/archive', statusRoutes.archive(db));
+    app.post('/api/status/add', statusRoutes.add(db));
+    app.post('/api/status/update', statusRoutes.update(db));
 
     app.get('/api/card/list', cardRoutes.list(db));
+    app.get('/api/card/archive', cardRoutes.archive(db));
     app.post('/api/card/add', cardRoutes.add(db));
     app.post('/api/card/update', cardRoutes.update(db));
 
     app.post('/api/user/add', userRoutes.add(db));
+
+    app.get('/api/id/generate', function (request, response) {
+        response.send({id: shortid.generate()});
+    });
 
     app.listen(PORT, HOST);
 })();

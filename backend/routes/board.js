@@ -5,36 +5,36 @@ function getBoardTemplateStatusesAndFields(boardId) {
         {
             id: shortid.generate(),
             boardId: boardId,
-            sort: 1,
+            sort: 0,
             title: 'Входящие',
             fields: [
-                {'title': 'Посмотреть резюме', 'type': 'checkbox', 'id': shortid.generate()},
-                {'title': 'Резюме подходит', 'type': 'color', 'id': shortid.generate()},
-                {'title': 'Связаться с кандидатом', 'type': 'checkbox', 'id': shortid.generate()},
+                {'title': 'Посмотреть резюме', 'type': 'checkbox', 'id': shortid.generate(), sort: 0},
+                {'title': 'Резюме подходит', 'type': 'color', 'id': shortid.generate(), sort: 1},
+                {'title': 'Связаться с кандидатом', 'type': 'checkbox', 'id': shortid.generate(), sort: 2},
+            ],
+        },
+        {
+            id: shortid.generate(),
+            boardId: boardId,
+            sort: 1,
+            title: 'Собеседование',
+            fields: [
+                {'title': 'Дата собеседования', 'type': 'datetime', 'id': shortid.generate(), sort: 0},
+                {'title': 'Письмо с адресом отправлено', 'type': 'checkbox', 'id': shortid.generate(), sort: 1},
+                {'title': 'Кандидат подходит', 'type': 'color', 'id': shortid.generate(), sort: 2},
+                {'title': 'Предложение сделано', 'type': 'checkbox', 'id': shortid.generate(), sort: 3},
+                {'title': 'Предложение принято', 'type': 'checkbox', 'id': shortid.generate(), sort: 4},
             ],
         },
         {
             id: shortid.generate(),
             boardId: boardId,
             sort: 2,
-            title: 'Собеседование',
-            fields: [
-                {'title': 'Дата собеседования', 'type': 'datetime', 'id': shortid.generate()},
-                {'title': 'Письмо с адресом отправлено', 'type': 'checkbox', 'id': shortid.generate()},
-                {'title': 'Кандидат подходит', 'type': 'color', 'id': shortid.generate()},
-                {'title': 'Предложение сделано', 'type': 'checkbox', 'id': shortid.generate()},
-                {'title': 'Предложение принято', 'type': 'checkbox', 'id': shortid.generate()},
-            ],
-        },
-        {
-            id: shortid.generate(),
-            boardId: boardId,
-            sort: 3,
             title: 'Выход на работу',
             fields: [
-                {'title': 'Дата выхода', 'type': 'datetime', 'id': shortid.generate()},
-                {'title': 'Список документов отправлен', 'type': 'checkbox', 'id': shortid.generate()},
-                {'title': 'Кандидат вышел', 'type': 'checkbox', 'id': shortid.generate()},
+                {'title': 'Дата выхода', 'type': 'datetime', 'id': shortid.generate(), sort: 0},
+                {'title': 'Список документов отправлен', 'type': 'checkbox', 'id': shortid.generate(), sort: 1},
+                {'title': 'Кандидат вышел', 'type': 'checkbox', 'id': shortid.generate(), sort: 2},
             ],
         },
     ]
@@ -58,13 +58,39 @@ module.exports = {
 
             response.send({
                 board: insertedBoardRecord,
-                statuses: insertedStatusRecords,
+                status: insertedStatusRecords,
+            });
+        }
+    },
+    update: (db) => {
+        return async (request, response) => {
+            let boards = db.collection('boards');
+            let newBoardData = request.body;
+            let boardId = newBoardData.id;
+
+            if (!boardId) {
+                response.send({
+                    board: false
+                });
+            }
+
+            if (newBoardData._id) {
+                delete newBoardData._id;
+            }
+
+            let query =  {id: boardId};
+            let updateResult = await boards.findOneAndReplace(query, newBoardData, {returnNewDocument: true});
+            let updatedBoardRecord = updateResult.value || false;
+
+            response.send({
+                board: updatedBoardRecord,
             });
         }
     },
     list: (db) => {
         return async (request, response) => {
             let boardsCollection = db.collection('boards');
+            let statusesCollection = db.collection('statuses');
             let userId = request.query.userId || false;
             let boards = [];
             if (userId) {
@@ -72,7 +98,7 @@ module.exports = {
             }
 
             response.send({
-                boards: boards
+                board: boards
             });
         }
     }

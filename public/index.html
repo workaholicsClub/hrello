@@ -20,9 +20,10 @@
             @maximize="maximizeAllStatuses"
             @add_board="addNewBoard"
             @settings="openModalSettings"
+            @change_active="changeActiveBoard"
     ></navmenu>
-    <div class="task-board flex-fill" v-on:mousemove.self="dragScroll" v-on:mousedown.self="dragStart" v-on:mouseup.self="dragEnd">
-        <status v-for="(status, index) in statuses"
+    <div class="task-board flex-fill" v-on:mousemove.self="dragScroll" v-on:mousedown.self="dragStart" v-on:mouseup.self="dragEnd" v-if="currentBoardId">
+        <status v-for="(status, index) in sortedStatuses"
                 :status="status"
                 :candidate_fields="getCandidateFields()"
                 :cards="getStatusCards(status.id)"
@@ -30,36 +31,70 @@
                 :next_status_cards="statuses[index+1] ? getStatusCards(statuses[index+1].id) : false"
                 :key="status.id + '_' + index"
                 :all_statuses="statuses"
-                @delete_card="deleteCard"
+                :drag_card="dragCard"
+                @update="updateStatus"
+                @update_card="updateCard"
                 @add_card="addCard(status)"
+                @drag_card="updateDragCard"
         ></status>
+    </div>
+    <div class="flex-fill d-flex justify-content-center align-items-center" v-else>
+        <button class="btn btn-success btn-lg" @click="addNewBoard">Создать доску</button>
     </div>
     <modal @close="closeModalSettings()" :id="modalBoardSettingsId">
         <h3 slot="header">Настройки доски</h3>
         <div slot="body">
-            <button class="btn btn-outline-primary btn-item-add-status mb-4">
+            <form class="mb-4">
+                <div class="form-group row">
+                    <div class="col-sm-12">
+                        <label>Название доски</label>
+                        <input type="text" class="form-control" v-model="currentBoard.title" placeholder="Название доски">
+                    </div>
+                </div>
+            </form>
+            <button class="btn btn-outline-primary btn-item-add-status mb-4" @click="addStatus">
                 <i class="fas fa-plus"></i> Добавить статус
             </button>
             <ul class="nav nav-pills">
-                <li v-for="status in statuses" class="nav-item">
+                <li v-for="status in sortedStatuses" class="nav-item">
                     <a class="nav-link"
                             :class="{active: isStatusActiveInSettings(status)}"
-                            href="#"
+                            href="javascript:void(0);"
                             @click="activeSettingsStatusId = status.id"
-                    >{{status.title}}</a>
+                    >{{status.title || '(без названия)'}}</a>
                 </li>
             </ul>
             <form class="mt-4">
                 <div class="form-group row">
                     <div class="col-sm-12">
+                        <label>Название статуса</label>
                         <input type="text" class="form-control" v-model="activeSettingsStatus.title" placeholder="Название статуса">
                     </div>
                 </div>
-                <div v-for="field in activeSettingsStatus.fields" class="form-group row">
-                    <div class="col-sm-4">
+                <div class="form-group row">
+                    <div class="col-sm-12">
+                        <label>Индекс сортировки</label>
+                        <input type="number" class="form-control" v-model="activeSettingsStatus.sort" placeholder="Индекс сортировки">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <label>Название поля</label>
+                    </div>
+                    <div class="col-sm-3">
+                        <label>Тип</label>
+                    </div>
+                    <div class="col-sm-2">
+                        <label>Сортировка</label>
+                    </div>
+                    <div class="col-sm-1 d-flex justify-content-end">
+                    </div>
+                </div>
+                <div v-for="field in activeSettingsSortedFields" class="form-group row">
+                    <div class="col-sm-6">
                         <input type="text" v-model="field.title" class="form-control">
                     </div>
-                    <div class="col-sm-4">
+                    <div class="col-sm-3">
                         <select v-model="field.type" class="form-control">
                             <option value="checkbox">Галочка</option>
                             <option value="color">Светофор</option>
@@ -69,19 +104,22 @@
                             <option value="longtext">Длинный текст</option>
                         </select>
                     </div>
-                    <div class="col-sm-4 d-flex justify-content-end">
-                        <button class="btn btn-outline-danger">
-                            <i class="fas fa-trash"></i> Удалить поле
+                    <div class="col-sm-2">
+                        <input type="number" v-model="field.sort" class="form-control">
+                    </div>
+                    <div class="col-sm-1 d-flex justify-content-end">
+                        <button type="button" class="btn btn-outline-danger" @click="removeField(field)">
+                            <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
             </form>
             <div class="mt-4 d-flex">
-                <button class="btn btn-outline-primary mr-4">
+                <button type="button" class="btn btn-outline-primary mr-4" @click="addField">
                     <i class="fas fa-plus"></i> Добавить поле
                 </button>
                 <span class="flex-fill"></span>
-                <button class="btn btn-outline-danger">
+                <button type="button" class="btn btn-outline-danger" @click="archiveActiveStatus">
                     <i class="fas fa-trash"></i> Удалить статус
                 </button>
             </div>
@@ -121,7 +159,7 @@
         <div class="collapse navbar-collapse" id="navbarMenu">
             <ul class="navbar-nav mr-auto nav nav-tabs" role="tablist">
                 <li v-for="item in items" class="nav-item" :class="{show: item.active, active: item.active}">
-                    <a class="nav-link" v-on:click="updateActiveMenu(item.id)" href="#">{{item.title}}</a>
+                    <a class="nav-link" v-on:click="updateActiveMenu(item)" href="#">{{item.title}}</a>
                 </li>
             </ul>
         </div>
@@ -134,12 +172,18 @@
             <span class="status-icons d-flex justify-content-between">
                 <button v-if="status.minimized" class="btn btn-link btn-maximize" v-on:click="maximize()"><i class="fas fa-expand-arrows-alt"></i></button>
                 <button v-else class="btn btn-link btn-minimize" v-on:click="minimize()"><i class="fas fa-compress-arrows-alt"></i></button>
-                <button class="btn btn-link btn-filter"><i class="fas fa-filter"></i></button>
+                <!--button class="btn btn-link btn-filter"><i class="fas fa-filter"></i></button-->
                 <button class="btn btn-link btn-hide" v-on:click="toggleHide()"><i class="fas fa-eye-slash"></i></button>
             </span>
         </div>
         <ul class="sortable" :class="{empty: isEmpty}" :id="'sort' + status.id">
-            <draggable v-model="currentCards" group="cards" draggable=".card-container">
+            <draggable v-model="currentCards" group="cards" draggable=".card-container"
+                    @add="cardAccepted"
+                    @remove="cardRemoved"
+                    @update="sortChanged"
+                    @start="rememberDraggedCard"
+                    @end="forgetDraggedCard"
+            >
                 <card v-for="(card, index) in currentCards"
                         :card="card"
                         :fields="status.fields"
@@ -148,7 +192,9 @@
                         :next_status="next_status"
                         :all_statuses="all_statuses"
                         :key="card.id + '_' + index"
-                        @move="moveCardToNextStatus(card)"
+                        @archive="archiveCard(card)"
+                        @field_update="updateCardData"
+                        @to_next_status="moveCardToNextStatus(card)"
                 ></card>
             </draggable>
             <button @click="$emit('add_card')" class="btn btn-add-card btn-outline-secondary btn-block">&plus; Добавить</button>
@@ -162,9 +208,9 @@
                 <div class="card-title mb-0 d-flex justify-content-between">
                     <h6 class="flex-fill mb-0" @click="openModalEdit()">{{card.name}}</h6>
                     <span class="status-icons d-flex justify-content-end">
-                        <button class="btn btn-link btn-maximize" v-on:click="maximize()"><i class="fas fa-expand-arrows-alt"></i></button>
-                        <button class="btn btn-link btn-archive"><i class="fas fa-archive"></i></button>
-                        <button class="btn btn-link btn-next" :class="{'text-success': isCompleted}" v-show="next_status" @click="moveToNextStatus()">
+                        <button class="btn btn-link btn-maximize" @click="maximize()"><i class="fas fa-expand-arrows-alt"></i></button>
+                        <button class="btn btn-link btn-archive" @click="archive()"><i class="fas fa-archive"></i></button>
+                        <button class="btn btn-link btn-next" :class="{'text-success': isCompleted}" v-show="next_status"  @click="$emit('to_next_status')">
                             <i class="fas fa-arrow-circle-right"></i>
                         </button>
                     </span>
@@ -181,22 +227,22 @@
                 <div class="card-title mb-1 d-flex justify-content-between">
                     <h5 class="flex-fill mb-0" @click="openModalEdit()">{{card.name}}</h5>
                     <span class="status-icons d-flex justify-content-end">
-                        <button class="btn btn-link btn-share-form"><i class="fas fa-share-alt"></i></button>
+                        <!--button class="btn btn-link btn-share-form"><i class="fas fa-share-alt"></i></button-->
                         <button class="btn btn-link btn-minimize" v-on:click="minimize()"><i class="fas fa-compress-arrows-alt"></i></button>
-                        <button class="btn btn-link btn-archive"><i class="fas fa-archive"></i></button>
+                        <button class="btn btn-link btn-archive" @click="archive()"><i class="fas fa-archive"></i></button>
                     </span>
                 </div>
                 <p class="card-text mb-0">{{card.position}}</p>
                 <p v-show="card.comment" class="card-text">{{card.comment}}</p>
             </div>
             <ul class="list-group list-group-flush">
-                <field v-for="(field, index) in fields" :field="field" :value="getFieldValue(field)" :key="field.id + '_' + index" @update="onFieldUpdate"></field>
+                <field v-for="(field, index) in sortedFields" :field="field" :value="getFieldValue(field)" :key="field.id + '_' + index" @update="onFieldUpdate"></field>
             </ul>
-            <button class="btn btn-next" :class="{'btn-success': isCompleted}" v-on:click="moveToNextStatus()" v-if="next_status">
+            <button class="btn btn-next" :class="{'btn-success': isCompleted}" @click="$emit('to_next_status')" v-if="next_status">
                 {{next_status.title}}
                 <i class="fas fa-arrow-circle-right"></i>
             </button>
-            <button class="btn btn-next" :class="{'btn-success': isCompleted}" v-else>Готово</button>
+            <button class="btn btn-next" :class="{'btn-success': isCompleted}" @click="archive()" v-else>Готово</button>
         </div>
         <modal @close="closeModalEdit()" :id="modalEditId">
             <h3 slot="header">Редактирование</h3>

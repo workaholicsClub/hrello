@@ -6,6 +6,7 @@ module.exports = {
             let cards = db.collection('cards');
             let cardData = request.body;
             cardData.id = shortid.generate();
+            cardData.archive = false;
 
             let result = await cards.insertOne(cardData);
             let insertedCardRecord = result.ops[0];
@@ -32,7 +33,7 @@ module.exports = {
             }
 
             let query =  {id: cardId};
-            let updateResult = await cards.findOneAndReplace(query, newCardData);
+            let updateResult = await cards.findOneAndReplace(query, newCardData, {returnNewDocument: true});
             let updatedCardRecord = updateResult.value || false;
 
             response.send({
@@ -42,16 +43,36 @@ module.exports = {
     },
     list: (db) => {
         return async (request, response) => {
-            let cardsCollection = db.collection('boards');
+            let cardsCollection = db.collection('cards');
             let boardId = request.query.boardId || false;
             let cards = [];
             if (boardId) {
-                cards = await cardsCollection.find({boardId: boardId}).toArray();
+                cards = await cardsCollection.find({boardId: boardId, archive: {$in: [null, false]}}).toArray();
             }
 
             response.send({
-                cards: cards
+                card: cards
             });
         }
-    }
+    },
+    archive: (db) => {
+        return async (request, response) => {
+            let cards = db.collection('cards');
+            let cardId = request.query.cardId || false;
+
+            if (!cardId) {
+                response.send({
+                    card: false
+                });
+            }
+
+            let query =  {id: cardId};
+            let updateResult = await cards.findOneAndUpdate(query, {$set: {archive: true}});
+            let updatedCardRecord = updateResult.value || false;
+
+            response.send({
+                card: updatedCardRecord,
+            });
+        }
+    },
 };
