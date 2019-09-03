@@ -16,11 +16,15 @@
 <section id="board" class="d-flex flex-column">
     <navmenu :title="title"
             :items="menuItems"
+            :is-authorized="isAuthorized"
+            :user="user"
             @minimize="minimizeAllStatuses"
             @maximize="maximizeAllStatuses"
             @add_board="addNewBoard"
             @settings="openModalSettings"
             @change_active="changeActiveBoard"
+            @authorized="login"
+            @logout="logout"
     ></navmenu>
     <div class="task-board flex-fill" v-on:mousemove.self="dragScroll" v-on:mousedown.self="dragStart" v-on:mouseup.self="dragEnd" v-if="currentBoardId">
         <status v-for="(status, index) in sortedStatuses"
@@ -39,7 +43,12 @@
         ></status>
     </div>
     <div class="flex-fill d-flex justify-content-center align-items-center" v-else>
-        <button class="btn btn-success btn-lg" @click="addNewBoard">Создать доску</button>
+        <div>
+            <div class="list-group mb-4" v-show="boards">
+                <a class="list-group-item list-group-item-action" v-for="board in boards" @click="changeActiveBoard({code: board.id})">{{board.title}}</a>
+            </div>
+            <button class="btn btn-success btn-lg w-100" @click="addNewBoard">Создать доску</button>
+        </div>
     </div>
     <modal @close="closeModalSettings()" :id="modalBoardSettingsId">
         <h3 slot="header">Настройки доски</h3>
@@ -73,7 +82,7 @@
                 </div>
                 <div class="form-group row">
                     <div class="col-sm-12">
-                        <label>Индекс сортировки</label>
+                        <label>Порядок (чем больше, тем правее)</label>
                         <input type="number" class="form-control" v-model="activeSettingsStatus.sort" placeholder="Индекс сортировки">
                     </div>
                 </div>
@@ -85,7 +94,7 @@
                         <label>Тип</label>
                     </div>
                     <div class="col-sm-2">
-                        <label>Сортировка</label>
+                        <label>Порядок</label>
                     </div>
                     <div class="col-sm-1 d-flex justify-content-end">
                     </div>
@@ -146,20 +155,32 @@
 
         <span class="flex-fill"></span>
 
-        <button v-if="minimized" class="navbar-toggler mr-2" v-on:click="toggleMaximize()">
+        <button v-if="minimized" class="navbar-toggler mr-2" @click="toggleMaximize()">
             <i class="fas fa-expand-arrows-alt"></i>
         </button>
-        <button v-else class="navbar-toggler mr-2" v-on:click="toggleMinimize()">
+        <button v-else class="navbar-toggler mr-2" @click="toggleMinimize()">
             <i class="fas fa-compress-arrows-alt"></i>
         </button>
         <button class="navbar-toggler">
-            <span class="navbar-toggler-icon"></span>
+            <div v-if="isAuthorized" @click="$emit('logout')">
+                <i class="fas fa-sign-out-alt"></i>
+                {{user.firstName}} {{user.familyName}}
+            </div>
+            <g-signin-button v-else
+                    :params="googleSignInParams"
+                    @success="onSignInSuccess"
+                    @error="onSignInError">
+                <i class="fas fa-user-alt"></i>
+            </g-signin-button>
         </button>
+        <!--button class="navbar-toggler burger-menu">
+            <span class="navbar-toggler-icon"></span>
+        </button-->
 
         <div class="collapse navbar-collapse" id="navbarMenu">
             <ul class="navbar-nav mr-auto nav nav-tabs" role="tablist">
                 <li v-for="item in items" class="nav-item" :class="{show: item.active, active: item.active}">
-                    <a class="nav-link" v-on:click="updateActiveMenu(item)" href="#">{{item.title}}</a>
+                    <a class="nav-link" @click="updateActiveMenu(item)" href="#">{{item.title}}</a>
                 </li>
             </ul>
         </div>
@@ -453,6 +474,8 @@
 <script src="https://unpkg.com/vue-async-computed"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.8.4/Sortable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.20.0/vuedraggable.umd.min.js"></script>
+<script src="https://apis.google.com/js/api:client.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue-google-signin-button@1.0.4/dist/vue-google-signin-button.min.js"></script>
 <script src="/app/main.js"></script>
 
 </body>

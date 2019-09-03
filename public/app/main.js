@@ -449,10 +449,13 @@ Vue.component('editfield', formField);
 
 Vue.component('navmenu', {
     template: '#menu-template',
-    props: ['title', 'items'],
+    props: ['title', 'items', 'is-authorized', 'user'],
     data() {
         return {
-            minimized: false
+            minimized: false,
+            googleSignInParams: {
+                client_id: '209938453740-ai5knts32hpbak6e20jq9i9l6ruhgar4.apps.googleusercontent.com'
+            }
         }
     },
     methods: {
@@ -469,7 +472,24 @@ Vue.component('navmenu', {
         toggleMaximize() {
             this.minimized = false;
             this.$emit('maximize');
-        }
+        },
+        onSignInSuccess(googleUser) {
+            let googleProfile = googleUser.getBasicProfile();
+
+            let user = {
+                googleId: googleProfile.getId(),
+                fullName: googleProfile.getName(),
+                firstName: googleProfile.getGivenName(),
+                familyName: googleProfile.getFamilyName(),
+                imageUrl: googleProfile.getImageUrl(),
+                email: googleProfile.getEmail()
+            };
+
+            this.$emit('authorized', user);
+        },
+        onSignInError(error) {
+            console.log('Мамочки!', error);
+        },
     },
     computed: {
     }
@@ -497,6 +517,7 @@ new Vue({
         activeSettingsStatusId: false,
         dragCard: false,
 
+        user: false,
         loadedUserId: false,
         loadedBoards: false
     },
@@ -684,7 +705,7 @@ new Vue({
             }, 0);
         },
         updateUrl() {
-            let urlHashParts = [this.currentBoardId];
+            let urlHashParts = [this.currentBoardId ? this.currentBoardId : '' ];
             if (this.currentCardId) {
                 urlHashParts.push(this.currentCardId);
             }
@@ -725,6 +746,53 @@ new Vue({
         },
         isStatusActiveInSettings(status) {
             return status.id === this.activeSettingsStatus.id;
+        },
+        resetBoards() {
+            this.loadedBoards = false;
+            this.currentBoardId = false;
+            this.currentCardId = false;
+            this.updateUrl();
+        },
+        async loadLocalData() {
+            this.loadedUserId = localStorage.getItem('userId') || false;
+            let savedUser = localStorage.getItem('authorizedUser') || false;
+
+            if (savedUser) {
+                this.user = JSON.parse(savedUser);
+                return this.user.id;
+            }
+
+            if (!this.loadedUserId) {
+                let response = await axios.post('/api/user/add', {});
+                let newUserId = response.data.user.id;
+
+                this.loadedUserId = newUserId;
+                localStorage.setItem('userId', newUserId);
+            }
+        },
+        loadUrlData() {
+            let hashParts = this.parseUrlParts();
+
+            if (hashParts.boardId) {
+                this.currentBoardId = hashParts.boardId;
+            }
+
+            if (hashParts.cardId) {
+                this.currentCardId = hashParts.cardId;
+            }
+        },
+        async login(profile) {
+            let response = await axios.post('/api/user/login', profile);
+            this.user = response.data.user;
+            localStorage.setItem('authorizedUser', JSON.stringify(this.user));
+
+            this.resetBoards();
+        },
+        logout() {
+            this.user = false;
+            localStorage.removeItem('authorizedUser');
+
+            this.resetBoards();
         }
     },
     computed: {
@@ -771,23 +839,16 @@ new Vue({
         },
         activeSettingsSortedFields() {
             return sortByIndex(this.activeSettingsStatus.fields);
+        },
+        isAuthorized() {
+            return this.user !== false;
         }
     },
     asyncComputed: {
         userId: {
-            async get() {
-                if (this.loadedUserId) {
-                    return this.loadedUserId;
-                }
-
-                this.loadedUserId = localStorage.getItem('userId') || false;
-
-                if (!this.loadedUserId) {
-                    let response = await axios.post('/api/user/add', {});
-                    let newUserId = response.data.user.id;
-
-                    this.loadedUserId = newUserId;
-                    localStorage.setItem('userId', newUserId);
+            get() {
+                if (this.user) {
+                    return this.user.id;
                 }
 
                 return this.loadedUserId;
@@ -821,14 +882,7 @@ new Vue({
     },
 
     created() {
-        let hashParts = this.parseUrlParts();
-
-        if (hashParts.boardId) {
-            this.currentBoardId = hashParts.boardId;
-        }
-
-        if (hashParts.cardId) {
-            this.currentCardId = hashParts.cardId;
-        }
+        this.loadUrlData();
+        this.loadLocalData();
     }
 });

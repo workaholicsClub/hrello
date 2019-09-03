@@ -41,6 +41,7 @@ async function connectToDatabase (host, port, dbName) {
     app.post('/api/card/update', cardRoutes.update(db));
 
     app.post('/api/user/add', userRoutes.add(db));
+    app.post('/api/user/login', userRoutes.login(db));
 
     app.get('/api/id/generate', function (request, response) {
         response.send({id: shortid.generate()});
