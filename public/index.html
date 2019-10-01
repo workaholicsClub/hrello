@@ -17,6 +17,7 @@
     <navmenu :title="title"
             :items="menuItems"
             :is-authorized="isAuthorized"
+            :google-sign-in-params="calendarCredentials"
             :user="user"
             @minimize="minimizeAllStatuses"
             @maximize="maximizeAllStatuses"
@@ -40,6 +41,7 @@
                 @update_card="updateCard"
                 @add_card="addCard(status)"
                 @drag_card="updateDragCard"
+                @calendar="addOrUpdateCalendarEvent"
         ></status>
     </div>
     <div class="flex-fill d-flex justify-content-center align-items-center" v-else>
@@ -63,6 +65,12 @@
             </form>
             <button class="btn btn-outline-primary btn-item-add-status mb-4" @click="addStatus">
                 <i class="fas fa-plus"></i> Добавить статус
+            </button>
+            <button class="btn btn-outline-success btn-item-add-status mb-4" v-if="calendarAuthorized">
+                <i class="fas fa-calendar"></i> Календарь подключен
+            </button>
+            <button class="btn btn-outline-primary btn-item-add-status mb-4" @click="authCalendar" v-else>
+                <i class="fas fa-calendar"></i> Подключить календарь
             </button>
             <ul class="nav nav-pills">
                 <li v-for="status in sortedStatuses" class="nav-item">
@@ -215,6 +223,7 @@
                         :key="card.id + '_' + index"
                         @archive="archiveCard(card)"
                         @field_update="updateCardData"
+                        @calendar="onCalendar"
                         @to_next_status="moveCardToNextStatus(card)"
                 ></card>
             </draggable>
@@ -257,7 +266,15 @@
                 <p v-show="card.comment" class="card-text">{{card.comment}}</p>
             </div>
             <ul class="list-group list-group-flush">
-                <field v-for="(field, index) in sortedFields" :field="field" :value="getFieldValue(field)" :key="field.id + '_' + index" @update="onFieldUpdate"></field>
+                <field
+                        v-for="(field, index) in sortedFields"
+                        :field="field"
+                        :value="getFieldValue(field)"
+                        :plugin-data="getFieldPluginData(field)"
+                        :key="field.id + '_' + index"
+                        @update="onFieldUpdate"
+                        @calendar="onCalendar"
+                ></field>
             </ul>
             <button class="btn btn-next" :class="{'btn-success': isCompleted}" @click="$emit('to_next_status')" v-if="next_status">
                 {{next_status.title}}
@@ -404,8 +421,10 @@
             <div class="card-input">
                 {{formattedDate}}
             </div>
-            <div v-if="fullView" class="btn-edit-field" v-on:click="toggleEditing()">
-                <i class="fas fa-edit"></i>
+            <div v-if="fullView" class="btn-edit-field" >
+                <i class="fas fa-edit" @click="toggleEditing()"></i>
+                <i class="far fa-calendar-check" @click="addCalendarEvent(field)" v-if="hasCalendarEvent"></i>
+                <i class="far fa-calendar-plus" @click="addCalendarEvent(field)" v-else></i>
             </div>
         </div>
         <div v-else class="card-input-item date-card-input-item edit-view">
@@ -425,8 +444,10 @@
             <div class="card-input">
                 {{formattedDateTime}}
             </div>
-            <div v-if="fullView" class="btn-edit-field" v-on:click="toggleEditing()">
-                <i class="fas fa-edit"></i>
+            <div v-if="fullView" class="btn-edit-field">
+                <i class="fas fa-edit" @click="toggleEditing()"></i>
+                <i class="far fa-calendar-check" @click="addCalendarEvent(field)" v-if="hasCalendarEvent"></i>
+                <i class="far fa-calendar-plus" @click="addCalendarEvent(field)" v-else></i>
             </div>
         </div>
         <div v-else class="card-input-item date-card-input-item edit-view">
@@ -476,6 +497,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.20.0/vuedraggable.umd.min.js"></script>
 <script src="https://apis.google.com/js/api:client.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue-google-signin-button@1.0.4/dist/vue-google-signin-button.min.js"></script>
+<script src="https://apis.google.com/js/client.js"></script>
 <script src="/app/main.js"></script>
 
 </body>

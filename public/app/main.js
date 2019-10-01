@@ -1,94 +1,3 @@
-function getRandom(array, count) {
-    let records = [];
-
-    for (let index = 1; index <= count; index++) {
-        let randomIndex = Math.round(Math.random()*(array.length-1));
-        records.push(array[randomIndex]);
-    }
-
-    return records;
-}
-function getTestCandidates() {
-    return [
-        {id: 1, name: 'Николюк Остап', position: '1С Программист', statusId: 1, boardId: '5d1f63f55f725d8d26ef3e13',
-            statusData: {},
-            additionalFields: [],
-            sort: 0
-        },
-        {id: 2, name: 'Ярков Антон', position: 'Аналитик', statusId: 1, boardId: '5d1f63f55f725d8d26ef3e13', sort: 1},
-        {id: 3, name: 'Сапалёв Виктор', position: '1С Программист', statusId: 1, boardId: '5d1f63f55f725d8d26ef3e13', sort: 2},
-        {id: 4, name: 'Караваев Эдуард', position: 'Помощник бухгалтера', statusId: 1, boardId: '5d1f63f55f725d8d26ef3e13', sort: 3},
-        {id: 5, name: 'Кулигин Степан', position: 'Стажер', statusId: 1, boardId: '5d1f63f55f725d8d26ef3e13', sort: 4},
-        {id: 6, name: 'Уманов Константин', position: 'Стажер', statusId: 1, boardId: '5d1f63f55f725d8d26ef3e13', sort: 5},
-        {id: 7, name: 'Звягин Захар', comment: 'Настойчив', statusId: 2, boardId: '5d1f63f55f725d8d26ef3e13', sort: 0},
-        {id: 8, name: 'Ярославцев Иван', position: 'Стажер', statusId: 2, boardId: '5d1f63f55f725d8d26ef3e13', sort: 1},
-        {id: 9, name: 'Ошурков Павел', position: 'Бухгалтер', statusId: 2, boardId: '5d1f63f55f725d8d26ef3e13', sort: 2},
-        {id: 10, name: 'Ячменцев Тарас', position: 'Стажер', statusId: 2, boardId: '5d1f63f55f725d8d26ef3e13', sort: 3},
-        {id: 11, name: 'Бабкина Елена', comment: 'Вторая попытка', statusId: 3, boardId: '5d1f63f55f725d8d26ef3e13', sort: 0},
-        {id: 12, name: 'Кривова Ника', position: 'Аналитик', statusId: 3, boardId: '5d1f63f55f725d8d26ef3e13', sort: 1},
-        {id: 13, name: 'Репина Дарья', position: '1С Программист', statusId: 3, boardId: '5d1f63f55f725d8d26ef3e13', sort: 2},
-        {id: 14, name: 'Веретёнова Виктория', comment: 'Нужно уточнить про паспорт', statusId: 4, boardId: '5d1f63f55f725d8d26ef3e13', sort: 0},
-        {id: 15, name: 'Курдина Яна', position: 'Стажер', statusId: 4, boardId: '5d1f63f55f725d8d26ef3e13', sort: 1},
-        {id: 16, name: 'Ерофеева Ирина', position: 'Помощник бухгалтера', statusId: 5, boardId: '5d1f63f55f725d8d26ef3e13', sort: 0},
-        {id: 17, name: 'Чекудаева Лидия', position: 'Помощник бухгалтера', statusId: 5, boardId: '5d1f63f55f725d8d26ef3e13', sort: 1},
-        {id: 18, name: 'Ковпак Вера', position: 'Бухгалтер', statusId: 5, boardId: '5d1f63f55f725d8d26ef3e13', sort: 2},
-        {id: 19, name: 'Кравец Регина', position: 'Бухгалтер', statusId: 5, boardId: '5d1f63f55f725d8d26ef3e13', sort: 3},
-        {id: 20, name: 'Гнусарева Анна', position: 'Аналитик', statusId: 5, boardId: '5d1f63f55f725d8d26ef3e13', sort: 4}
-    ];
-}
-function getTestStatuses() {
-    let testStatuses = [
-        {
-            id: 1,
-            title: 'Входящие',
-            fields: [],
-            boardId: '5d1f63f55f725d8d26ef3e13'
-        },
-        {
-            id: 2,
-            title: 'Интервью',
-            fields: [
-                {'title': 'Телефонное интервью', 'type': 'checkbox', 'id': 'i0', sort: 1},
-                {'title': 'Тестирование', 'type': 'checkbox', 'id': 'i1', sort: 2}
-            ],
-            boardId: '5d1f63f55f725d8d26ef3e13'
-        },
-        {
-            id: 3,
-            title: 'Собеседование',
-            fields: [
-                {'title': 'HR', 'type': 'color', 'id': 'i2', sort: 1},
-                {'title': 'Дата команды', 'type': 'datetime', 'id': 'i21', sort: 2},
-                {'title': 'С командой', 'type': 'color', 'id': 'i3', sort: 3}
-            ],
-            boardId: '5d1f63f55f725d8d26ef3e13'
-        },
-        {
-            id: 4,
-            title: 'Оффер',
-            fields: [
-                {'title': 'Подтверждение руководителем', 'type': 'color', 'id': 'i4', sort: 1},
-                {'title': 'Проверка СБ', 'type': 'color', 'id': 'i5', sort: 2},
-                {'title': 'Подтверждение кандидатом', 'type': 'checkbox', 'id': 'i6', sort: 3},
-                {'title': 'Оповещение группы', 'type': 'checkbox', 'id': 'i7', sort: 4}
-            ],
-            boardId: '5d1f63f55f725d8d26ef3e13'
-        },
-        {
-            id: 5,
-            title: 'Выход на работу',
-            fields: [
-                {'title': 'Дата выхода', 'type': 'date', 'id': 'i8', sort: 1},
-                {'title': 'Документы кандидата', 'type': 'checkbox', 'id': 'i9', sort: 2},
-                {'title': '«Buddy»', 'type': 'text', 'id': 'i10', sort: 3},
-                {'title': 'Выход', 'type': 'checkbox', 'id': 'i12', sort: 4}
-            ],
-            boardId: '5d1f63f55f725d8d26ef3e13'
-        },
-    ];
-
-    return testStatuses;
-}
 function zeroPad(num) {
     return num < 10 ? '0'+num : num;
 }
@@ -99,6 +8,31 @@ function sortByIndex(items) {
     let itemsCopy = items.concat();
 
     return itemsCopy.sort((a, b) => a.sort - b.sort);
+}
+function getCardFieldValue(field, card) {
+    if (!field) {
+        return undefined;
+    }
+
+    let hasValue =
+        typeof (card['statusData']) != 'undefined' &&
+        typeof (card.statusData[field.id]) != 'undefined';
+
+    return hasValue ? card.statusData[field.id] : undefined;
+}
+function getCardFieldPluginData(card, pluginId, fieldId) {
+    if (!card['pluginData']) {
+        return undefined;
+    }
+
+    if (!card['pluginData'][pluginId]) {
+        return undefined;
+    }
+
+    return card['pluginData'][pluginId][fieldId];
+}
+function clone(object) {
+    return JSON.parse(JSON.stringify(object));
 }
 
 
@@ -221,6 +155,10 @@ Vue.component('status', {
 
             let cardsToMoveUp = this.cards.slice(cardIndex);
             this.moveCardsUpList(cardsToMoveUp);
+        },
+        onCalendar(cardFieldData) {
+            cardFieldData.status = this.status;
+            this.$emit('calendar', cardFieldData);
         }
     },
     computed: {
@@ -243,7 +181,6 @@ Vue.component('status', {
         }
     }
 });
-
 Vue.component('card', {
     template: '#card-template',
     props: ['card', 'fields', 'candidate_fields', 'minimized', 'status', 'next_status', 'all_statuses'],
@@ -276,6 +213,12 @@ Vue.component('card', {
                 isWorkflowField: true
             });
         },
+        onCalendar(field) {
+            this.$emit('calendar', {
+                card: this.card,
+                field: field
+            });
+        },
         onCandidateFieldUpdate(fieldData) {
             let fieldId = fieldData.fieldId;
             let value = fieldData.value;
@@ -294,15 +237,10 @@ Vue.component('card', {
             $('#' + this.modalEditId).modal('hide');
         },
         getFieldValue(field) {
-            if (!field) {
-                return undefined;
-            }
-
-            let hasValue =
-                typeof (this.card['statusData']) != 'undefined' &&
-                typeof (this.card.statusData[field.id]) != 'undefined';
-
-            return hasValue ? this.card.statusData[field.id] : undefined;
+            return getCardFieldValue(field, this.card);
+        },
+        getFieldPluginData(field) {
+            return getCardFieldPluginData(this.card, 'calendar', field.id);
         },
         getCandidateFieldValue(field) {
             if (!field) {
@@ -369,7 +307,7 @@ Vue.component('card', {
 });
 
 let FieldComponent = Vue.extend({
-    props: ['field', 'value', 'onlyValue', 'is_inline'],
+    props: ['field', 'value', 'onlyValue', 'is_inline', 'plugin-data'],
     data() {
         return {
             isEditing: false,
@@ -388,6 +326,9 @@ let FieldComponent = Vue.extend({
         toggleEditing() {
             this.isEditing = !this.isEditing;
         },
+        addCalendarEvent(field) {
+            this.$emit('calendar', field);
+        }
     },
     computed: {
         formattedDate() {
@@ -420,6 +361,12 @@ let FieldComponent = Vue.extend({
         },
         fullView() {
             return !this.onlyValue;
+        },
+        calendarEventId() {
+            return this.pluginData ? this.pluginData.id : false;
+        },
+        hasCalendarEvent() {
+            return Boolean(this.calendarEventId) !== false;
         }
     },
     watch: {
@@ -446,16 +393,12 @@ let inplaceField = FieldComponent.extend({template: '#field-template'});
 let formField = FieldComponent.extend({template: '#fieldedit-template'});
 Vue.component('field', inplaceField);
 Vue.component('editfield', formField);
-
 Vue.component('navmenu', {
     template: '#menu-template',
-    props: ['title', 'items', 'is-authorized', 'user'],
+    props: ['title', 'items', 'is-authorized', 'user', 'google-sign-in-params'],
     data() {
         return {
             minimized: false,
-            googleSignInParams: {
-                client_id: '209938453740-ai5knts32hpbak6e20jq9i9l6ruhgar4.apps.googleusercontent.com'
-            }
         }
     },
     methods: {
@@ -474,18 +417,7 @@ Vue.component('navmenu', {
             this.$emit('maximize');
         },
         onSignInSuccess(googleUser) {
-            let googleProfile = googleUser.getBasicProfile();
-
-            let user = {
-                googleId: googleProfile.getId(),
-                fullName: googleProfile.getName(),
-                firstName: googleProfile.getGivenName(),
-                familyName: googleProfile.getFamilyName(),
-                imageUrl: googleProfile.getImageUrl(),
-                email: googleProfile.getEmail()
-            };
-
-            this.$emit('authorized', user);
+            this.$emit('authorized', googleUser);
         },
         onSignInError(error) {
             console.log('Мамочки!', error);
@@ -494,7 +426,6 @@ Vue.component('navmenu', {
     computed: {
     }
 });
-
 Vue.component('modal', {
     template: '#modal-template',
     props: ['id'],
@@ -505,21 +436,34 @@ Vue.component('modal', {
     }
 });
 
-new Vue({
+let hrelloInstance = new Vue({
     el: '#board',
     data: {
         dragStartPosition: false,
         dragStartElLeft: false,
         currentBoardId: false,
         currentCardId: false,
-        statuses: [], //getTestStatuses(),
-        cards: [], //getTestCandidates(),
+        statuses: [],
+        cards: [],
         activeSettingsStatusId: false,
         dragCard: false,
 
         user: false,
         loadedUserId: false,
-        loadedBoards: false
+        loadedBoards: false,
+
+        plugins: [],
+
+        clientCredentials: {
+            apiKey: 'AIzaSyBIY2q5KrLo7I-W8iREDq2zeqnfq3Xno0Y',
+            discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"],
+        },
+        calendarId: 'primary',
+        calendarCredentials: {
+            client_id: '401657247398-upt85a2i2spf4f61sfff5g6405cus68m.apps.googleusercontent.com',
+            scope: 'https://www.googleapis.com/auth/calendar'
+        },
+        calendarAuthData: false
     },
     watch: {
         currentBoardId: async function () {
@@ -563,6 +507,37 @@ new Vue({
 
             this.cards.unshift(createdCard);
         },
+        async updatePluginData(card, pluginId, fieldId, value) {
+            if (!card.pluginData) {
+                Vue.set(card, 'pluginData', {});
+            }
+
+            if (!card.pluginData[pluginId]) {
+                Vue.set(card['pluginData'], pluginId, {});
+            }
+
+            Vue.set(card['pluginData'][pluginId], fieldId, value);
+        },
+        getPluginData(card, pluginId, fieldId) {
+            return getCardFieldPluginData(card, pluginId, fieldId);
+        },
+        getStatusById(searchId) {
+            return this.statuses.reduce((found, currentStatus) => {
+                if (currentStatus.id === searchId) {
+                    return currentStatus;
+                }
+
+                return found;
+            }, false);
+        },
+        getStatusFieldById(status, searchId) {
+            return status.fields.reduce((found, currentField) => {
+                if (currentField.id === searchId) {
+                    return currentField;
+                }
+                return found;
+            }, false);
+        },
         async updateCard(updateData) {
             let card = updateData.card;
             let valueChanged = false;
@@ -575,6 +550,21 @@ new Vue({
                 valueChanged = card['statusData'][updateData.fieldId] !== updateData.value;
                 if (valueChanged) {
                     Vue.set(card['statusData'], updateData.fieldId, updateData.value);
+
+                    let status = this.getStatusById(card.statusId);
+                    let field = this.getStatusFieldById(status, updateData.fieldId);
+                    let isDateTimeField = field.type === 'date' || field.type === 'datetime';
+                    let hasEvent = Boolean(this.getPluginData(card, 'calendar', updateData.fieldId));
+                    let canUpdateCalendar = isDateTimeField && hasEvent && this.calendarAuthorized;
+
+                    if (canUpdateCalendar) {
+                        let eventSource = {
+                            card: card,
+                            field: field
+                        };
+
+                        this.addOrUpdateCalendarEvent(eventSource);
+                    }
                 }
             }
             else {
@@ -592,8 +582,11 @@ new Vue({
             }
 
             if (valueChanged) {
-                axios.post('/api/card/update', card);
+                this.saveCard(card);
             }
+        },
+        async saveCard(card) {
+            return axios.post('/api/card/update', card);
         },
         async updateStatus(updateData) {
             let changedStatus = updateData;
@@ -610,6 +603,15 @@ new Vue({
             let newStatus = addResponse.data.status;
 
             this.statuses.push(newStatus);
+        },
+        authCalendar() {
+            let ensureSignInPromise = Promise.resolve(gapi.auth2.getAuthInstance().signIn());
+            ensureSignInPromise.then((googleUser) => {
+                this.onAuthResult(googleUser);
+            });
+        },
+        onAuthResult(googleUser) {
+            this.calendarAuthData = googleUser;
         },
         async archiveActiveStatus() {
             let statusIndex = this.statuses.indexOf(this.activeSettingsStatus);
@@ -781,7 +783,23 @@ new Vue({
                 this.currentCardId = hashParts.cardId;
             }
         },
-        async login(profile) {
+        getGoogleUserProfile(googleUser) {
+            let googleProfile = googleUser.getBasicProfile();
+
+            let user = {
+                googleId: googleProfile.getId(),
+                fullName: googleProfile.getName(),
+                firstName: googleProfile.getGivenName(),
+                familyName: googleProfile.getFamilyName(),
+                imageUrl: googleProfile.getImageUrl(),
+                email: googleProfile.getEmail()
+            };
+
+            return user;
+        },
+
+        async login(googleUser) {
+            let profile = this.getGoogleUserProfile(googleUser);
             let response = await axios.post('/api/user/login', profile);
             this.user = response.data.user;
             localStorage.setItem('authorizedUser', JSON.stringify(this.user));
@@ -793,6 +811,110 @@ new Vue({
             localStorage.removeItem('authorizedUser');
 
             this.resetBoards();
+        },
+        readGoogleUserFromGAPI() {
+            let googleUser = gapi.auth2.getAuthInstance().currentUser.get();
+            this.onAuthResult(googleUser);
+        },
+        setupGapi() {
+            gapi.load('client:auth2', () => {
+                gapi.client.init(this.clientCredentials)
+                    .catch((error) => console.log(error));
+
+                gapi.auth2.init(this.calendarCredentials)
+                    .then(() => {
+                        let authInstance = gapi.auth2.getAuthInstance();
+                        let signInStatus = authInstance.isSignedIn.get();
+                        if (signInStatus === true) {
+                            this.readGoogleUserFromGAPI();
+                        }
+
+                        authInstance.isSignedIn.listen(
+                            (isSignedIn) => {
+                                if (isSignedIn) {
+                                    this.readGoogleUserFromGAPI();
+                                }
+                                else {
+                                    this.calendarAuthData = false;
+                                }
+                            }
+                        );
+                    })
+                    .catch((error) => console.log(error));
+            });
+        },
+        addEvent(title, start, end, card) {
+            let event = {
+                'summary': title,
+                'start': {
+                    'dateTime': start.toISOString()
+                },
+                'end': {
+                    'dateTime': end.toISOString()
+                },
+            };
+
+            let gapiRequest = gapi.client.calendar.events.insert({
+                'calendarId': this.calendarId,
+                'resource': event
+            });
+
+            return new Promise(resolve => gapiRequest.execute(resolve) );
+        },
+        updateEvent(event, title, newStart, newEnd) {
+            let newEvent = {
+                'summary': title,
+                'start': {
+                    'dateTime': newStart.toISOString()
+                },
+                'end': {
+                    'dateTime': newEnd.toISOString()
+                },
+            };
+
+            let gapiRequest = gapi.client.calendar.events.update({
+                'calendarId': this.calendarId,
+                'eventId': event.id,
+                'resource': newEvent
+            });
+
+            return new Promise(resolve => gapiRequest.execute(resolve) );
+        },
+        addOrUpdateCalendarEvent(eventSource) {
+            let canUseCalendar = this.calendarAuthorized;
+            if (!canUseCalendar) {
+                return this.authCalendar();
+            }
+
+            let field = eventSource.field;
+            let card = eventSource.card;
+            let savedData = this.getPluginData(card, 'calendar', field.id);
+            let eventExists = Boolean(savedData);
+            let hour = 60 * 60 * 1000;
+            let isDateField = field.type === 'datetime' || field.type === 'date';
+            let fieldValue = getCardFieldValue(field, card);
+            let hasValue = Boolean(fieldValue);
+
+            let start = isDateField && hasValue? new Date( fieldValue ) : new Date();
+            let end = new Date();
+            end.setTime( start.getTime() + hour );
+
+            let candidateName = card.name;
+            let actionName = field.title;
+            let eventTitle = `${actionName}: ${candidateName}`;
+
+            if (eventExists) {
+                this.updateEvent( savedData, eventTitle, start, end ).then((updatedEvent) => {
+                    this.updatePluginData(card, 'calendar', field.id, updatedEvent);
+                    this.saveCard(card);
+                });
+            }
+            else {
+                this.addEvent( eventTitle, start, end ).then((createdEvent) => {
+                    this.updatePluginData(card, 'calendar', field.id, createdEvent);
+                    this.saveCard(card);
+                });
+            }
         }
     },
     computed: {
@@ -842,6 +964,9 @@ new Vue({
         },
         isAuthorized() {
             return this.user !== false;
+        },
+        calendarAuthorized() {
+            return this.calendarAuthData !== false;
         }
     },
     asyncComputed: {
@@ -882,6 +1007,7 @@ new Vue({
     },
 
     created() {
+        this.setupGapi();
         this.loadUrlData();
         this.loadLocalData();
     }
