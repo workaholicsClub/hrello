@@ -245,3 +245,9 @@ ul {
   border-radius: .25rem;
   padding: .375rem .75rem;
 }
+
+.btn-edit-field .btn-primary {
+  font-size: 0.8rem;
+  padding: 0rem 0.2rem;
+  margin-right: 0.2rem;
+}

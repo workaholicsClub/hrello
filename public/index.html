@@ -18,12 +18,14 @@
             :items="menuItems"
             :is-authorized="isAuthorized"
             :google-sign-in-params="calendarCredentials"
+            :google-authorized="calendarAuthorized"
             :user="user"
             @minimize="minimizeAllStatuses"
             @maximize="maximizeAllStatuses"
             @add_board="addNewBoard"
             @settings="openModalSettings"
             @change_active="changeActiveBoard"
+            @google="authCalendar"
             @authorized="login"
             @logout="logout"
     ></navmenu>
@@ -39,6 +41,7 @@
                 :drag_card="dragCard"
                 @update="updateStatus"
                 @update_card="updateCard"
+                @upload="uploadFileGoogleDrive"
                 @add_card="addCard(status)"
                 @drag_card="updateDragCard"
                 @calendar="addOrUpdateCalendarEvent"
@@ -65,12 +68,6 @@
             </form>
             <button class="btn btn-outline-primary btn-item-add-status mb-4" @click="addStatus">
                 <i class="fas fa-plus"></i> Добавить статус
-            </button>
-            <button class="btn btn-outline-success btn-item-add-status mb-4" v-if="calendarAuthorized">
-                <i class="fas fa-calendar"></i> Календарь подключен
-            </button>
-            <button class="btn btn-outline-primary btn-item-add-status mb-4" @click="authCalendar" v-else>
-                <i class="fas fa-calendar"></i> Подключить календарь
             </button>
             <ul class="nav nav-pills">
                 <li v-for="status in sortedStatuses" class="nav-item">
@@ -117,6 +114,7 @@
                             <option value="color">Светофор</option>
                             <option value="date">Дата</option>
                             <option value="datetime">Дата и время</option>
+                            <option value="file">Файл</option>
                             <option value="text">Текст</option>
                             <option value="longtext">Длинный текст</option>
                         </select>
@@ -159,6 +157,13 @@
         </button>
         <button class="navbar-toggler mr-2" @click="$emit('add_board')">
             <i class="fas fa-plus"></i>
+        </button>
+
+        <button class="btn btn-success btn-item-add-status" v-if="googleAuthorized">
+            <i class="fas fa-calendar"></i> Google подключен
+        </button>
+        <button class="btn btn-primary btn-item-add-status" @click="$emit('google')" v-else>
+            <i class="fas fa-calendar"></i> Подключить Google для календаря и файлов
         </button>
 
         <span class="flex-fill"></span>
@@ -223,6 +228,7 @@
                         :key="card.id + '_' + index"
                         @archive="archiveCard(card)"
                         @field_update="updateCardData"
+                        @upload="fileUpload"
                         @calendar="onCalendar"
                         @to_next_status="moveCardToNextStatus(card)"
                 ></card>
@@ -273,6 +279,7 @@
                         :plugin-data="getFieldPluginData(field)"
                         :key="field.id + '_' + index"
                         @update="onFieldUpdate"
+                        @upload="onFileUpload"
                         @calendar="onCalendar"
                 ></field>
             </ul>
@@ -291,6 +298,7 @@
                         :is_inline="false"
                         :key="field.id + '_' + index"
                         @update="onCandidateFieldUpdate"
+                        @upload="onCandidateFileUpload"
                 ></editfield>
                 <fieldset v-for="status in all_statuses" class="form-group fieldset-group bg-white" v-show="status.fields">
                     <div class="row">
@@ -302,6 +310,7 @@
                                     :is_inline="true"
                                     :key="field.id + '_' + index"
                                     @update="onFieldUpdate"
+                                    @upload="onFileUpload"
                             ></editfield>
                         </div>
                     </div>
@@ -318,39 +327,48 @@
 </script>
 <script type="text/x-template" id="fieldedit-template">
     <div v-if="field.type === 'checkbox'" :class="{'form-group': !is_inline, 'row': !is_inline, 'd-flex': is_inline, 'justify-content-between': is_inline, 'mb-2': is_inline}">
-        <label :for="_uid + '_' + field.id" :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline}">{{field.title}}</label>
+        <label :for="_uid + '_' + field.id" :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline, 'mr-4': is_inline}">{{field.title}}</label>
         <div :class="{'col-sm-8': !is_inline}">
             <input type="checkbox" class="form-check-input" :id="_uid + '_' + field.id" :name="field.id" v-model="savedValue" true-value="1" false-value="0">
         </div>
     </div>
     <div v-else-if="field.type === 'color'" :class="{'form-group': !is_inline, 'row': !is_inline, 'd-flex': is_inline, 'justify-content-between': is_inline, 'mb-2': is_inline}">
-        <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline}">{{field.title}}</label>
+        <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline, 'mr-4': is_inline}">{{field.title}}</label>
         <div :class="{'col-sm-8': !is_inline}">
             <span class="color-selector color-green" :class="{active: savedValue === 'green'}" v-on:click="save('green')"></span>
             <span class="color-selector color-yellow" :class="{active: savedValue === 'yellow'}" v-on:click="save('yellow')"></span>
             <span class="color-selector color-red" :class="{active: savedValue === 'red'}" v-on:click="save('red')"></span>
         </div>
     </div>
+    <div v-else-if="field.type === 'file'" :class="{'form-group': !is_inline, 'row': !is_inline, 'd-flex': is_inline, 'justify-content-between': is_inline, 'mb-2': is_inline}">
+        <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline, 'mr-4': is_inline}">{{field.title}}</label>
+        <div :class="{'col-sm-6': !is_inline, 'mr-2': is_inline}">
+            <input type="file" class="form-control" ref="fileInput" @change="saveFile">
+        </div>
+        <div :class="{'col-sm-2': !is_inline}">
+            <a :href="savedValue" target="_blank" v-if="savedValue" class="btn btn-primary"><i class="fas fa-download"></i></a>
+        </div>
+    </div>
     <div v-else-if="field.type === 'text'" :class="{'form-group': !is_inline, 'row': !is_inline, 'd-flex': is_inline, 'justify-content-between': is_inline, 'mb-2': is_inline}">
-        <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline}">{{field.title}}</label>
+        <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline, 'mr-4': is_inline}">{{field.title}}</label>
         <div :class="{'col-sm-8': !is_inline}">
             <input type="text" class="form-control" v-model="savedValue">
         </div>
     </div>
     <div v-else-if="field.type === 'longtext'" :class="{'form-group': !is_inline, 'row': !is_inline, 'd-flex': is_inline, 'justify-content-between': is_inline, 'mb-2': is_inline}">
-        <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline}">{{field.title}}</label>
+        <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline, 'mr-4': is_inline}">{{field.title}}</label>
         <div :class="{'col-sm-8': !is_inline}">
             <textarea class="form-control" rows="3" v-model="savedValue"></textarea>
         </div>
     </div>
     <div v-else-if="field.type === 'date'" :class="{'form-group': !is_inline, 'row': !is_inline, 'd-flex': is_inline, 'justify-content-between': is_inline, 'mb-2': is_inline}">
-        <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline}">{{field.title}}</label>
+        <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline, 'mr-4': is_inline}">{{field.title}}</label>
         <div :class="{'col-sm-8': !is_inline}">
             <input type="date" class="form-control" v-model="savedValue">
         </div>
     </div>
     <div v-else-if="field.type === 'datetime'" :class="{'form-group': !is_inline, 'row': !is_inline, 'd-flex': is_inline, 'justify-content-between': is_inline, 'mb-2': is_inline}">
-        <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline}">{{field.title}}</label>
+        <label :class="{'col-sm-4 ': !is_inline, 'col-form-label': !is_inline, 'mr-4': is_inline}">{{field.title}}</label>
         <div :class="{'col-sm-8': !is_inline}">
             <input type="datetime-local" class="form-control" v-model="savedValue">
         </div>
@@ -373,6 +391,30 @@
             <span :class="'color-selector color-'+savedValue"></span>
         </div>
     </component>
+
+    <component :is="onlyValue ? 'div' : 'li'" v-else-if="field.type === 'file'" :class="{'list-group-item': fullView, 'bg-success': isFilled && fullView}">
+        <div v-if="!isEditing" class="card-input-item text-card-input-item">
+            <label class="card-input-label flex-fill">{{field.title}}</label>
+            <div class="card-input text-right btn-edit-field">
+                <a :href="value" target="_blank" v-if="value" class="btn btn-primary"><i class="fas fa-download"></i></a>
+            </div>
+            <div v-if="fullView" class="btn-edit-field" >
+                <i class="fas fa-edit" @click="toggleEditing()"></i>
+            </div>
+        </div>
+        <div v-else class="card-input-item text-card-input-item edit-view">
+            <label class="card-input-label flex-fill in-edit-view">{{field.title}}</label>
+            <div class="card-input-field in-edit-view">
+                <input type="file" class="form-control" ref="fileInput">
+            </div>
+            <div class="edit-buttons in-edit-view py-2">
+                <button class="btn btn-primary btn-save-field mr-2 flex-fill" @click="saveFile()">Загрузить</button>
+                <button class="btn btn-outline-secondary btn-edit-field" @click="toggleEditing()"><i class="fas fa-ban"></i></button>
+            </div>
+        </div>
+    </component>
+
+
     <component :is="onlyValue ? 'div' : 'li'" v-else-if="field.type === 'text'" :class="{'list-group-item': fullView, 'bg-success': isFilled && fullView}">
         <div v-if="!isEditing" class="card-input-item text-card-input-item">
             <label class="card-input-label flex-fill">{{field.title}}</label>

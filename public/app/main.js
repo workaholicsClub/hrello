@@ -65,7 +65,10 @@ Vue.component('status', {
         updateCardData(cardFieldData) {
             this.$emit('update_card', cardFieldData);
         },
-
+        fileUpload(uploadData) {
+            uploadData.status = this.status;
+            this.$emit('upload', uploadData);
+        },
         rememberDraggedCard(event) {
             let draggedCard = this.cards[event.oldIndex];
             this.$emit('drag_card', draggedCard);
@@ -213,6 +216,14 @@ Vue.component('card', {
                 isWorkflowField: true
             });
         },
+        onFileUpload(fieldData) {
+            this.$emit('upload', {
+                card: this.card,
+                field: fieldData.field,
+                file: fieldData.file,
+                isWorkflowField: true
+            });
+        },
         onCalendar(field) {
             this.$emit('calendar', {
                 card: this.card,
@@ -227,6 +238,14 @@ Vue.component('card', {
                 card: this.card,
                 fieldId: fieldId,
                 value: value,
+                isWorkflowField: false
+            });
+        },
+        onCandidateFileUpload(fieldData) {
+            this.$emit('upload', {
+                card: this.card,
+                field: fieldData.field,
+                file: fieldData.file,
                 isWorkflowField: false
             });
         },
@@ -328,6 +347,13 @@ let FieldComponent = Vue.extend({
         },
         addCalendarEvent(field) {
             this.$emit('calendar', field);
+        },
+        saveFile() {
+            let input = this.$refs.fileInput;
+            this.$emit('upload', {
+                field: this.field,
+                file: input.files[0]
+            });
         }
     },
     computed: {
@@ -372,6 +398,7 @@ let FieldComponent = Vue.extend({
     watch: {
         value() {
             this.savedValue = this.value;
+            this.isEditing = false;
         },
         savedValue() {
             this.isEditing = false;
@@ -395,7 +422,7 @@ Vue.component('field', inplaceField);
 Vue.component('editfield', formField);
 Vue.component('navmenu', {
     template: '#menu-template',
-    props: ['title', 'items', 'is-authorized', 'user', 'google-sign-in-params'],
+    props: ['title', 'items', 'is-authorized', 'user', 'google-sign-in-params', 'google-authorized'],
     data() {
         return {
             minimized: false,
@@ -456,12 +483,15 @@ let hrelloInstance = new Vue({
 
         clientCredentials: {
             apiKey: 'AIzaSyBIY2q5KrLo7I-W8iREDq2zeqnfq3Xno0Y',
-            discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"],
+            discoveryDocs: [
+                "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
+                "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"
+            ],
         },
         calendarId: 'primary',
         calendarCredentials: {
             client_id: '401657247398-upt85a2i2spf4f61sfff5g6405cus68m.apps.googleusercontent.com',
-            scope: 'https://www.googleapis.com/auth/calendar'
+            scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive'
         },
         calendarAuthData: false
     },
@@ -741,7 +771,7 @@ let hrelloInstance = new Vue({
                 {'title': 'Должность', 'type': 'text', 'id': 'position', sort: 2},
                 {'title': 'Почта', 'type': 'text', 'id': 'email', sort: 3},
                 {'title': 'Телефон', 'type': 'text', 'id': 'phone', sort: 4},
-                {'title': 'Ссылка на резюме', 'type': 'text', 'id': 'resumeUrl', sort: 5},
+                {'title': 'Резюме', 'type': 'file', 'id': 'resume', sort: 5},
                 {'title': 'Вуз', 'type': 'text', 'id': 'university', sort: 6},
                 {'title': 'Комментарий', 'type': 'longtext', 'id': 'comment', sort: 7},
             ];
@@ -879,6 +909,80 @@ let hrelloInstance = new Vue({
             });
 
             return new Promise(resolve => gapiRequest.execute(resolve) );
+        },
+        async getFolderIdOrMake(folderName, parentFolderId) {
+            let folderQuery = "name = '" + folderName + "' and mimeType = 'application/vnd.google-apps.folder'";
+            if (parentFolderId) {
+                folderQuery += " and '" + parentFolderId + "' in parents";
+            }
+
+            let searchRequest = gapi.client.drive.files.list({
+                q: folderQuery,
+                fields: 'files(id)',
+                spaces: 'drive'
+            });
+
+            let searchResponse = await new Promise(resolve => searchRequest.execute(resolve) );
+            let foundFolders = searchResponse.files;
+            let foundFolder = foundFolders.length > 0 ? foundFolders[0] : false;
+
+            if (foundFolder) {
+                return foundFolder.id
+            }
+
+            let folderMetadata = {
+                'name': folderName,
+                'mimeType': 'application/vnd.google-apps.folder'
+            };
+
+            if (parentFolderId) {
+                folderMetadata['parents'] = [parentFolderId];
+            }
+
+            let addRequest = gapi.client.drive.files.create({
+                resource: folderMetadata,
+                fields: 'id'
+            });
+
+            let addResponse = await new Promise(resolve => addRequest.execute(resolve) );
+
+            return addResponse.id ? addResponse.id : false;
+        },
+        async uploadFileGoogleDrive(uploadData) {
+            let field = uploadData.field;
+            let card = uploadData.card;
+            let file = uploadData.file;
+
+            let rootFolderId = await this.getFolderIdOrMake('HRello');
+            let fieldFolderId = await this.getFolderIdOrMake(field.title, rootFolderId);
+
+            let metadata = {
+                'name': file.name,
+                'mimeType': file.type,
+                'parents': [fieldFolderId],
+            };
+
+            let accessToken = gapi.auth.getToken().access_token;
+            let requestData = new FormData();
+            requestData.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
+            requestData.append('file', file);
+
+            let request = new XMLHttpRequest();
+            let uploadUrl = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+            request.open('post', uploadUrl);
+            request.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+            request.responseType = 'json';
+            request.onload = () => {
+                let driveFile = request.response;
+                let downloadUrl = 'https://drive.google.com/uc?export=download&id='+driveFile.id;
+                let updateData = uploadData;
+                updateData.fieldId = field.id;
+                updateData.value = downloadUrl;
+
+                this.updatePluginData(card, 'drive', field.id, driveFile);
+                this.updateCard(updateData);
+            };
+            request.send(requestData);
         },
         addOrUpdateCalendarEvent(eventSource) {
             let canUseCalendar = this.calendarAuthorized;
