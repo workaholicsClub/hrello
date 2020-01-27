@@ -5,37 +5,20 @@ function getBoardTemplateStatusesAndFields(boardId) {
         {
             id: shortid.generate(),
             boardId: boardId,
-            sort: 0,
+            sort: 100,
             title: 'Входящие',
-            fields: [
-                {'title': 'Посмотреть резюме', 'type': 'checkbox', 'id': shortid.generate(), sort: 0},
-                {'title': 'Резюме подходит', 'type': 'color', 'id': shortid.generate(), sort: 1},
-                {'title': 'Связаться с кандидатом', 'type': 'checkbox', 'id': shortid.generate(), sort: 2},
-            ],
         },
         {
             id: shortid.generate(),
             boardId: boardId,
-            sort: 1,
+            sort: 200,
             title: 'Собеседование',
-            fields: [
-                {'title': 'Дата собеседования', 'type': 'datetime', 'id': shortid.generate(), sort: 0},
-                {'title': 'Письмо с адресом отправлено', 'type': 'checkbox', 'id': shortid.generate(), sort: 1},
-                {'title': 'Кандидат подходит', 'type': 'color', 'id': shortid.generate(), sort: 2},
-                {'title': 'Предложение сделано', 'type': 'checkbox', 'id': shortid.generate(), sort: 3},
-                {'title': 'Предложение принято', 'type': 'checkbox', 'id': shortid.generate(), sort: 4},
-            ],
         },
         {
             id: shortid.generate(),
             boardId: boardId,
-            sort: 2,
+            sort: 300,
             title: 'Выход на работу',
-            fields: [
-                {'title': 'Дата выхода', 'type': 'datetime', 'id': shortid.generate(), sort: 0},
-                {'title': 'Список документов отправлен', 'type': 'checkbox', 'id': shortid.generate(), sort: 1},
-                {'title': 'Кандидат вышел', 'type': 'checkbox', 'id': shortid.generate(), sort: 2},
-            ],
         },
     ]
 }

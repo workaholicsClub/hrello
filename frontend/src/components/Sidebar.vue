@@ -13,46 +13,61 @@
             <v-row>
                 <v-col class="full-height d-flex flex-column pt-0">
                     <v-list>
-                        <v-list-item avatar>
+                        <v-list-item>
                             <v-list-item-avatar color="white">
                                 <v-img
-                                        src="https://www.theodinproject.com/assets/odin-logo-94557650fea28e24cc04263ece9c08ab5956e0d344faa4d03cdb732e9f9983d4.svg"
+                                        :src="user.imageUrl"
                                         height="34"
                                         contain
                                 />
                             </v-list-item-avatar>
                         </v-list-item>
-                        <v-list-item class="p-0">
-                            <v-list-item-action>
-                                <v-btn icon outlined ><v-icon>mdi-bell-outline</v-icon></v-btn>
-                            </v-list-item-action>
-                            <v-list-item-title class="font-weight-light">
-                                Напоминания
-                            </v-list-item-title>
-                        </v-list-item>
-                        <v-list-item class="p-0">
+                        <v-list-item class="p-0" @click="toggleTimetable" :class="{'active': localActiveItem === 'timetable'}">
                             <v-list-item-action>
                                 <v-btn icon outlined ><v-icon>mdi-calendar-blank-outline</v-icon></v-btn>
                             </v-list-item-action>
                             <v-list-item-title class="font-weight-light">
-                                Подключить календарь
+                                Расписание
                             </v-list-item-title>
                         </v-list-item>
 
                         <v-divider/>
 
-                        <v-list-item class="p-0">
+                        <v-list-item
+                                v-for="(board, index) in boards"
+                                :key="'board'+index"
+                                class="p-0"
+                                :class="{'active': localActiveItem === 'board'+board.id}"
+                                @click="toggleBoard(board)"
+                        >
                             <v-list-item-action>
-                                <v-btn icon outlined >ДУ</v-btn>
+                                <v-btn icon outlined >{{getBoardTitle(board, index)}}</v-btn>
                             </v-list-item-action>
                             <v-list-item-title class="font-weight-light">
-                                Доска Увольней
+                                {{board.title}}
+                            </v-list-item-title>
+                        </v-list-item>
+
+                        <v-list-item class="p-0" @click="$root.$emit('newBoard')">
+                            <v-list-item-action>
+                                <v-btn icon outlined ><v-icon>mdi-plus</v-icon></v-btn>
+                            </v-list-item-action>
+                            <v-list-item-title class="font-weight-light">
+                                Добавить доску
                             </v-list-item-title>
                         </v-list-item>
 
                     </v-list>
                     <v-spacer class="fill" />
                     <v-list>
+                        <v-list-item class="p-0" @click="$emit('logout')">
+                            <v-list-item-action>
+                                <v-btn icon><v-icon>mdi-logout</v-icon></v-btn>
+                            </v-list-item-action>
+                            <v-list-item-title class="font-weight-light">
+                                Выход
+                            </v-list-item-title>
+                        </v-list-item>
                         <v-divider/>
                         <v-list-item class="p-0">
                             <v-list-item-action  v-if="isDesktop">
@@ -72,14 +87,41 @@
 <script>
     export default {
         name: 'Sidebar',
-        props: ['drawer', 'isDesktop'],
+        props: ['drawer', 'isDesktop', 'boards', 'user', 'activeItem'],
         data() {
             return {
                 isDrawerVisible: false,
-                mini: this.isDesktop
+                mini: this.isDesktop,
+                localActiveItem: this.activeItem
+            }
+        },
+        methods: {
+            getBoardTitle(board, index) {
+                let hasTwoWords = board.title.indexOf(' ') !== -1;
+                let uppercaseTitle = board.title.toUpperCase();
+
+                if (hasTwoWords) {
+                    let words = uppercaseTitle.split(' ');
+                    return words[0][0] + (words[1] && words[1][0]? words[1][0] : index);
+                }
+
+                return uppercaseTitle[0]+index;
+            },
+            toggleBoard(board) {
+                this.localActiveItem = 'board'+board.id;
+                this.$emit('changeBoard', board.id);
+            },
+            toggleTimetable() {
+                this.localActiveItem = 'timetable';
+                this.$emit('timetable');
             }
         },
         watch: {
+            activeItem() {
+                if (this.activeItem !== false) {
+                    this.localActiveItem = this.activeItem;
+                }
+            },
             drawer() {
                 this.isDrawerVisible = this.drawer;
             },
@@ -112,5 +154,16 @@
     .v-navigation-drawer:not(.v-navigation-drawer--mini-variant) .v-btn--icon.v-size--default {
         min-width: 36px;
         margin-left: 12px;
+    }
+    .v-list-item.active:before {
+        display: block;
+        content: '\a';
+        background: #16d1a5;
+        width: 4px;
+        height: 24px;
+        opacity: 1;
+        top: 50%;
+        margin-top: -12px;
+        border-radius: 0 4px 4px 0;
     }
 </style>

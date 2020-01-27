@@ -5,7 +5,9 @@ module.exports = {
         return async (request, response) => {
             let users = db.collection('users');
             let userData = request.body;
+
             userData.id = shortid.generate();
+            userData.earlyAdopter = true;
 
             let result = await users.insertOne(userData);
             let insertedUserRecord = result.ops[0];
@@ -18,15 +20,29 @@ module.exports = {
     login: (db) => {
         return async (request, response) => {
             let users = db.collection('users');
-            let userData = request.body;
-            userData.id = shortid.generate();
+            let userDataInRequest = request.body;
+            let hasEmail = userDataInRequest && userDataInRequest.email;
 
-            let result = await users.findOneAndUpdate({ email: userData.email }, { $setOnInsert: userData }, {
-                returnNewDocument: true,
-                upsert: true
-            });
+            if (!hasEmail) {
+                return response.send({user: false});
+            }
+            
+            let loadedUserData = await users.findOne({ email: userDataInRequest.email });
 
-            let userRecord = result.value;
+            if (!loadedUserData) {
+                loadedUserData = userDataInRequest;
+            }
+
+            if (!loadedUserData.id) {
+                loadedUserData.id = shortid.generate();
+            }
+            
+            if (!loadedUserData.earlyAdopter) {
+                loadedUserData.earlyAdopter = true;
+            }
+
+            let updateResult = await users.findOneAndReplace({ email: loadedUserData.email }, loadedUserData, {returnNewDocument: true});
+            let userRecord = updateResult.value || false;
 
             response.send({
                 user: userRecord,

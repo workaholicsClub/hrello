@@ -17,6 +17,7 @@ services:
     container_name: 'backend'
     ports:
       - 3000:3000
+      - 9229:9229
     depends_on:
       - mongo
     env_file: ./dot.env
@@ -27,7 +28,7 @@ services:
       - NODE_ENV=development
       - MONGO_HOST=mongo
       - MONGO_DB=hrello
-    command: npm start
+    command: npm run debug
 
   mongo:
     image: mongo

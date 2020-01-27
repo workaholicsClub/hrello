@@ -47,7 +47,10 @@ module.exports = {
             let statuses = false;
 
             if (boardId) {
-                statuses = await statusesCollection.find({boardId: boardId, archive: {$in: [null, false]}}).toArray();
+                statuses = await statusesCollection
+                    .find({boardId: boardId, archive: {$in: [null, false]}})
+                    .sort({sort: 1})
+                    .toArray();
             }
 
             response.send({
