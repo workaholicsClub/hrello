@@ -362,7 +362,7 @@
     .btn.wide { padding-left: 34px;padding-right: 34px; }
     .btn-lg.wide { padding-left: 40px;padding-right: 40px; }
     .btn-md.wide { padding-left: 46px;padding-right: 46px; }
-    .btn-xl.wide { padding-left: 50px;padding-right: 50px; }
+    .btn-xl.wide { padding-left: 40px;padding-right: 40px; }
     .btn-xl.wide-2 { padding-left: 70px;padding-right: 70px; }
 
     .btn.btn-link:hover,
