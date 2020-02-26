@@ -50,8 +50,10 @@ export default {
             let isOk = !result.error;
 
             if (isOk) {
-                this.loadUserProfileAndUpdateLocalData();
+                await this.loadUserProfileAndUpdateLocalData();
                 this.resetBoards();
+                this.loadBoards();
+                this.reloadBoardData();
             }
         },
         async logout() {

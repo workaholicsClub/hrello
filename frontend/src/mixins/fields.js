@@ -201,6 +201,60 @@ export default {
             };
             request.send(requestData);
         },
+        async uploadFileToOurServer(uploadData) {
+            let field = uploadData.field;
+            let localField = uploadData.localField;
+            let card = uploadData.card;
+            let file = uploadData.file;
+
+            let requestData = new FormData();
+            requestData.append('file', file);
+
+            let uploadResult = await axios.post( '/api/file',
+                requestData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
+
+            let updatedField = field;
+
+            if (field.isGlobal) {
+                if (localField) {
+                    updatedField = localField;
+                }
+                else {
+                    await this.updateGlobalValue(null, field, card);
+                    updatedField = getGlobalFieldData(field.id, card);
+                }
+            }
+
+            updatedField.file = {
+                name: file.name,
+                type: file.type
+            };
+
+            updatedField.uploadData = {
+                fileId: uploadResult.data.fileId,
+                downloadUrl: uploadResult.data.relativeUrl,
+                fileAuthor: this.user,
+                fileDate: new Date()
+            };
+
+            this.saveCard(card);
+
+            this.cardRedrawIndex++;
+        },
+        async uploadFile(uploadData) {
+            if (this.useGoogleServices) {
+                this.uploadFileGoogleDrive(uploadData);
+            }
+            else {
+                this.uploadFileToOurServer(uploadData);
+            }
+        },
         async getGoogleToken() {
             return this.user
                 ? this.$gapi._libraryInit('client')
@@ -216,7 +270,7 @@ export default {
 
         this.$root.$on('newGlobalField', this.addGlobalField);
         this.$root.$on('updateFieldsOrder', this.updateFieldsOrder);
-        this.$root.$on('fileUpload', this.uploadFileGoogleDrive);
+        this.$root.$on('fileUpload', this.uploadFile);
     },
     beforeDestroy() {
         this.$root.$off('updateGlobalField', this.updateGlobalField);
@@ -224,6 +278,6 @@ export default {
 
         this.$root.$off('newGlobalField', this.addGlobalField);
         this.$root.$off('updateFieldsOrder', this.updateFieldsOrder);
-        this.$root.$off('fileUpload', this.uploadFileGoogleDrive);
+        this.$root.$off('fileUpload', this.uploadFile);
     }
 }

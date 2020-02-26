@@ -12,7 +12,7 @@
                         <v-container v-if="localField && localField.file" class="p-0">
                             <v-icon>mdi-paperclip</v-icon>
                             <v-label>{{field.name}}</v-label>
-                            <v-btn link :href="localField.googleDrive.downloadUrl" color="success" class="ml-4 download-btn" text>
+                            <v-btn link :href="getDownloadUrl(localField)" color="success" class="ml-4 download-btn" text>
                                 {{localField.file.name}}
                                 <v-icon right dark>mdi-cloud-download</v-icon>
                             </v-btn>
@@ -103,6 +103,14 @@
                         file: this.file
                     });
                     this.fileUploadStarted = true;
+                }
+            },
+            getDownloadUrl(field) {
+                if (field.googleDrive) {
+                    return field.googleDrive.downloadUrl;
+                }
+                else {
+                    return field.uploadData.downloadUrl;
                 }
             },
             reemitFieldInput(newValue, updatedField, oldField) {

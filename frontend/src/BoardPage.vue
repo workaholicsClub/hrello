@@ -79,6 +79,7 @@
 
     export default {
         name: 'BoardPage',
+        props: ['useGoogleServices'],
         components: {
             Header,
             Sidebar,

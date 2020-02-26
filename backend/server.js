@@ -1,14 +1,17 @@
 'use strict';
 
 const express = require('express');
+const fileupload = require('express-fileupload')
+const shortid = require('shortid');
 const MongoClient = require('mongodb').MongoClient;
+
 const boardRoutes = require('./routes/board');
 const userRoutes = require('./routes/user');
 const cardRoutes = require('./routes/card');
 const statusRoutes = require('./routes/status');
 const eventRoutes = require('./routes/event');
 const fieldRoutes = require('./routes/field');
-const shortid = require('shortid');
+const fileRoutes = require('./routes/file');
 
 const PORT = 3000;
 const HOST = '0.0.0.0';
@@ -24,7 +27,10 @@ async function connectToDatabase (host, port, dbName) {
 
 (async function () {
     const app = express();
-    app.use(express.json());
+    app.use(
+        express.json(),
+        fileupload()
+    );
 
     const db = await connectToDatabase(DB_HOST, DB_PORT, DB_NAME);
 
@@ -56,6 +62,8 @@ async function connectToDatabase (host, port, dbName) {
     app.get('/api/field/listGlobal', fieldRoutes.listGlobal(db));
     app.post('/api/field/updateGlobal', fieldRoutes.updateGlobal(db));
     app.post('/api/field/addGlobal', fieldRoutes.addGlobal(db));
+
+    app.post('/api/file', fileRoutes.upload(db));
 
     app.get('/api/id/generate', function (request, response) {
         response.send({id: shortid.generate()});
