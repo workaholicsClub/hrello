@@ -33,16 +33,21 @@ module.exports = {
                 loadedUserData = userDataInRequest;
             }
 
-            if (!loadedUserData.id) {
-                loadedUserData.id = shortid.generate();
-            }
-            
             if (!loadedUserData.earlyAdopter) {
                 loadedUserData.earlyAdopter = true;
             }
 
-            let updateResult = await users.findOneAndReplace({ email: loadedUserData.email }, loadedUserData, {returnNewDocument: true});
-            let userRecord = updateResult.value || false;
+            let userRecord = false;
+
+            if (!loadedUserData.id) {
+                loadedUserData.id = shortid.generate();
+                let insertResult = await users.insertOne(loadedUserData);
+                userRecord = insertResult.ops[0] || false;
+            }
+            else {
+                let updateResult = await users.findOneAndReplace({ email: loadedUserData.email }, loadedUserData, {returnNewDocument: true});
+                userRecord = updateResult.value || false;
+            }
 
             response.send({
                 user: userRecord,
