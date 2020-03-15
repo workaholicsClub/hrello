@@ -3,7 +3,7 @@ import axios from "axios";
 export default {
     data() {
         return {
-            currentBoardId: false,
+            currentBoard: false,
             boards: [],
         }
     },
@@ -20,27 +20,36 @@ export default {
             });
             this.boards = response.data.board;
         },
+        findBoard(searchId) {
+            if (!searchId || !this.boards) {
+                return false;
+            }
+
+            let foundBoard = this.boards.find(board => board.id === searchId);
+            return foundBoard || false;
+        },
         changeBoard(newBoardId, skipUrlUpdate) {
-            this.currentBoardId = newBoardId;
+            this.currentBoard = this.findBoard(newBoardId);
             this.currentCard = false;
             this.showTimetable = false;
+            this.showArchive = false;
             this.drawer = false;
-
-            this.loadGlobalEvents();
-            this.loadGlobalFields();
 
             if (!skipUrlUpdate) {
                 this.updateUrl();
             }
+
+            this.reloadBoardData();
         },
         reloadBoardData() {
-            this.loadBoardStatuses();
-            this.loadBoardCards();
+            this.loadAndUpdateBoardStatuses();
+            this.loadAndUpdateBoardCards();
         },
         resetBoards() {
             this.boards = [];
-            this.currentBoardId = false;
+            this.currentBoard = false;
             this.currentCard = false;
+            this.showArchive = false;
             this.updateUrl();
         },
         async addNewBoard() {
@@ -52,8 +61,8 @@ export default {
 
             let boardResponse = await axios.post('/api/board/add', boardTemplate);
             this.statuses = boardResponse.data.status;
-            this.boards.push(boardResponse.data.board);
-            this.currentBoardId = boardResponse.data.board.id;
+            this.currentBoard = boardResponse.data.board;
+            this.boards.push(this.currentBoard);
             this.updateUrl();
         },
         saveCurrentBoard() {
@@ -62,22 +71,26 @@ export default {
         setBoardTitle(newTitle) {
             this.currentBoard.title = newTitle;
             this.saveCurrentBoard();
-        }
+        },
+        async deleteBoard(boardId) {
+            return await axios.get('/api/board/delete', {
+                params: {
+                    boardId: boardId
+                }
+            });
+        },
     },
     computed: {
-        currentBoard() {
-            if (!this.currentBoardId || !this.boards) {
-                return false;
-            }
-
-            let foundBoards = this.boards.filter(board => board.id === this.currentBoardId);
-            return foundBoards.length > 0 ? foundBoards[0] : false;
+        currentBoardId() {
+            return this.currentBoard
+                ? this.currentBoard.id || false
+                : false;
         },
         boardIds() {
             return this.boards.map(board => board.id);
         },
         isBoardShown() {
-            return this.currentBoardId && !this.showTimetable && !this.currentCard;
+            return this.currentBoard && !this.showTimetable && !this.currentCard;
         },
         hasNoBoards() {
             return this.boards.length === 0;

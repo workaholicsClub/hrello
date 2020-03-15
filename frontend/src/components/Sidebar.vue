@@ -60,6 +60,15 @@
                     </v-list>
                     <v-spacer class="fill" />
                     <v-list>
+                        <v-list-item class="p-0" @click="toggleArchive" :class="{'active': localActiveItem === 'archive'}">
+                            <v-list-item-action>
+                                <v-btn icon><v-icon>mdi-archive-arrow-down-outline</v-icon></v-btn>
+                            </v-list-item-action>
+                            <v-list-item-title class="font-weight-light">
+                                Показать резерв
+                            </v-list-item-title>
+                        </v-list-item>
+                        <v-divider/>
                         <v-list-item class="p-0" @click="$emit('logout')">
                             <v-list-item-action>
                                 <v-btn icon><v-icon>mdi-logout</v-icon></v-btn>
@@ -114,6 +123,10 @@
             toggleTimetable() {
                 this.localActiveItem = 'timetable';
                 this.$emit('timetable');
+            },
+            toggleArchive() {
+                this.localActiveItem = 'archive';
+                this.$emit('archive', 'whitelist');
             }
         },
         watch: {

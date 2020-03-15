@@ -1,61 +1,84 @@
 <template>
-    <v-sheet elevation="10" class="py-1 px-4">
+    <v-sheet elevation="0" class="my-1 px-1 bordered">
         <v-form>
-            <v-container fluid>
+            <v-container fluid class="py-0">
                 <v-row align="center">
-                    <v-col class="d-flex" cols="12" sm="3">
-                        <v-select
-                                :items="items"
-                                v-model="type"
-                                outlined
-                                label="Тип поля"
-                        >
-                            <template v-slot:item="{ on, item }">
-                                <span v-on="on"><v-btn icon><v-icon>{{item.icon}}</v-icon></v-btn> {{item.text}}</span>
-                            </template>
-                        </v-select>
-                    </v-col>
-
-                    <v-col class="d-flex" cols="12" sm="3">
-                        <v-switch class="ma-2" v-model="isGlobal" label="Для всех карточек"></v-switch>
-                    </v-col>
-
-                    <v-col class="d-flex" cols="12" sm="6">
+                    <v-col class="d-flex py-0" cols="12" sm="12">
                         <v-text-field
-                                v-model="name"
+                                v-model="value.name"
                                 label="Название поля"
-                                :disabled="isTemplateType"
+                                hide-details
                         ></v-text-field>
                     </v-col>
                 </v-row>
+                <v-row>
+                    <v-col class="d-flex pb-0" cols="12" sm="12">
+                        <v-switch class="ma-2" v-model="value.isGlobal" label="Добавлять это поле в новые карточки доски" hide-details></v-switch>
+                    </v-col>
+                </v-row>
+                <v-row v-if="value.fieldType === 'color'">
+                    <v-col>
+                        <color-edit v-model="value.colors"></color-edit>
+                    </v-col>
+                </v-row>
+                <v-row v-if="value.fieldType === 'checkbox'">
+                    <v-col>
+                        <checkbox-edit v-model="value.tasks"></checkbox-edit>
+                    </v-col>
+                </v-row>
+                <v-alert
+                        v-if="value.linkToDefaultById"
+                        dense
+                        outlined
+                        type="warning"
+                        class="mb-0"
+                >
+                    {{value.isGlobal
+                        ? 'Поле будет изменено в этой и новых карточках'
+                        : 'Поле будет изменено только в этой карточке, а в новых останется прежним'}}
+                </v-alert>
             </v-container>
         </v-form>
     </v-sheet>
 </template>
 
 <script>
+    import {getFieldTypes, getDefaultColors} from "../../../unsorted/Helpers";
+    import ColorEdit from "../../Inputs/ColorEdit";
+    import CheckboxEdit from "../../Inputs/CheckboxEdit";
+
+    let defaultColors = getDefaultColors();
+
     export default {
         name: "EditField",
         props: ['value'],
+        components: {
+            ColorEdit,
+            CheckboxEdit
+        },
         data() {
             return {
-                name: '',
-                type: false,
+                name: this.value.name,
+                type: this.value.fieldType,
                 isGlobal: false,
                 field: this.value,
-                items: [
-                    {text: 'Текст', value: 'text', icon: 'mdi-cursor-text'},
-                    {text: 'Галочка', value: 'checkbox', icon: 'mdi-checkbox-marked-outline'},
-                    {text: 'Оценка', value: 'mark', icon: 'mdi-emoticon-happy-outline'},
-                    {text: 'Файл', value: 'file', icon: 'mdi-paperclip'},
-                    {text: 'Цвет', value: 'color', icon: 'mdi-palette'},
-                    {text: 'Резюме', value: 'resume', icon: 'mdi-paperclip', fieldName: 'Резюме', fieldType: 'file', template: true}
-                ],
+                items: getFieldTypes(),
             }
         },
+        created() {
+            this.ensureColorsInColorField();
+        },
         methods: {
+            ensureColorsInColorField() {
+                if (this.value.fieldType === 'color') {
+                    if (!this.value.colors) {
+                        this.value.colors = defaultColors;
+                        this.commitUpdate();
+                    }
+                }
+            },
             commitUpdate() {
-                this.$emit('input', this.field);
+                this.$emit('input', this.value);
             },
             getTypeData(type) {
                 return this.items.filter(data => data.value === type)[0] || false;

@@ -24,7 +24,6 @@ module.exports = {
 
             let cardData = request.body;
             cardData.id = shortid.generate();
-            cardData.archive = false;
 
             let result = await cards.insertOne(cardData);
             let insertedCardRecord = result.ops[0];
@@ -89,9 +88,48 @@ module.exports = {
                     archive: {$in: [null, false]},
                     whitelist: {$in: [null, false]},
                     blacklist: {$in: [null, false]},
-                    finishedlist: {$in: [null, false]}
+                    finishedlist: {$in: [null, false]},
+                    deleted: {$in: [null, false]}
                 }).toArray();
             }
+
+            response.send({
+                card: cards
+            });
+        }
+    },
+    listArchive: (db) => {
+        return async (request, response) => {
+            let userId = request.query.userId || false;
+            let archiveType = request.query.archiveType || false;
+
+            if (!userId || !archiveType) {
+                response.send({
+                    card: false
+                });
+                return;
+            }
+
+            let boardsCollection = db.collection('boards');
+            let boards = await boardsCollection.find({
+                userId: userId,
+            }).toArray();
+            let boardIds = boards.map(board => board.id);
+
+            if (!boardIds) {
+                response.send({
+                    card: false
+                });
+                return;
+            }
+
+            let cardsCollection = db.collection('cards');
+            let query = {
+                boardId: {$in: boardIds}
+            };
+            query[archiveType] = true;
+
+            let cards = await cardsCollection.find(query).toArray();
 
             response.send({
                 card: cards
@@ -122,6 +160,16 @@ module.exports = {
         return async (request, response) => {
             let cardId = request.query.cardId || false;
             let updatedCard = archive(db, cardId, 'finishedlist');
+
+            response.send({
+                card: updatedCard
+            });
+        }
+    },
+    delete: (db) => {
+        return async (request, response) => {
+            let cardId = request.query.cardId || false;
+            let updatedCard = archive(db, cardId, 'deleted');
 
             response.send({
                 card: updatedCard

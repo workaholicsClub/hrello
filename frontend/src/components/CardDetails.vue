@@ -1,113 +1,64 @@
 <template>
-    <v-content app class="card-details">
-        <v-container class="fill-height align-start justify-start">
-            <v-flex>
-                <v-form ref="form">
+    <v-content class="card-details fill-height">
+        <v-container class="align-start justify-start" fill-height>
+                <v-container>
                     <v-text-field
                             v-model="card.name"
-                            label="Название карточки"
+                            label="ФИО кандидата"
                             @input="$root.$emit('cardInput', card)"
                     ></v-text-field>
 
-                    <view-field
-                            v-for="field in globalFields"
+                    <draggable tag="div" class="v-list content-list v-sheet v-sheet--tile theme--light" role="list" v-model="card.content" handle=".handle">
+                        <content-element
+                                v-for="record in card.content" :key="record.id"
+                                :card="card" :record="record" :show-editor="record.isNew || false"></content-element>
+                    </draggable>
+                </v-container>
 
-                            :local-field="getGlobalFieldData(field.id)"
-                            :global-field="field"
-                            :card="card"
-                            :only-input="true"
-                            :value="getGlobalFieldValue(field.id)"
-                            :key="getFieldKey(field)"
+                <v-toolbar class="card-toolbar d-none d-sm-flex mb-4" bottom dark dense floating>
+                    <v-tooltip class="mb-2" top>
+                        <template v-slot:activator="{ on }">
+                            <v-btn small icon @click="addNewContent('event')" v-on="on"><v-icon>mdi-calendar</v-icon></v-btn>
+                        </template>
+                        <span>Событие</span>
+                    </v-tooltip>
 
-                            @input="sendUpdateGlobalFieldValue"
-                            @inputField="sendUpdateGlobalField"
-                    ></view-field>
+                    <v-tooltip class="mb-2" top>
+                        <template v-slot:activator="{ on }">
+                            <v-btn small icon @click="addNewContent('comment')" v-on="on"><v-icon>mdi-comment-outline</v-icon></v-btn>
+                        </template>
+                        <span>Комментарий</span>
+                    </v-tooltip>
 
-                    <view-event
-                            v-for="event in globalEvents"
+                    <v-tooltip class="mb-2" top v-for="fieldType in fieldTypes" :key="'btn'+fieldType.value">
+                        <template v-slot:activator="{ on }">
+                            <v-btn small icon @click="addNewField(fieldType)" v-on="on"><v-icon>{{fieldType.icon}}</v-icon></v-btn>
+                        </template>
+                        <span>{{fieldType.buttonText}}</span>
+                    </v-tooltip>
+                </v-toolbar>
 
-                            :event="event"
-                            :only-input="true"
-                            :value="getGlobalFieldValue(event.id)"
-                            :key="event.id"
+                <v-speed-dial v-model="fabActive" bottom right fixed direction="top" class="d-sm-none">
+                    <template v-slot:activator>
+                        <v-btn v-model="fabActive" fab class="pink darken-1" dark>
+                            <v-icon v-if="fabActive">mdi-close</v-icon>
+                            <v-icon v-else>mdi-plus</v-icon>
+                        </v-btn>
+                    </template>
 
-                            @input="sendUpdateGlobalEventValue"
-                    ></view-event>
-                </v-form>
-
-                <v-list-item v-if="editorType == 'field'">
-                    <v-list-item-content>
-                        <h4 class="pb-2">Новое поле данных</h4>
-                        <edit-field v-model="newField"></edit-field>
-                    </v-list-item-content>
-                    <v-list-item-action>
-                        <v-btn color="success" icon @click="sendSaveFieldEvent"><v-icon>mdi-check</v-icon></v-btn>
-                        <v-btn color="error" icon @click="editorType = false"><v-icon>mdi-cancel</v-icon></v-btn>
-                    </v-list-item-action>
-                </v-list-item>
-
-                <v-list-item v-if="editorType == 'comment'">
-                    <v-list-item-content>
-                        <h4 class="pb-2">Новый комментарий</h4>
-                        <edit-comment v-model="newComment.text"></edit-comment>
-                    </v-list-item-content>
-                    <v-list-item-action>
-                        <v-btn color="success" icon @click="sendSaveCommentEvent"><v-icon>mdi-check</v-icon></v-btn>
-                        <v-btn color="error" icon @click="editorType = false"><v-icon>mdi-cancel</v-icon></v-btn>
-                    </v-list-item-action>
-                </v-list-item>
-
-                <v-list-item v-if="editorType == 'event'">
-                    <v-list-item-content>
-                        <h4 class="pb-2">Новое событие</h4>
-                        <edit-event v-model="newEvent"></edit-event>
-                    </v-list-item-content>
-                    <v-list-item-action>
-                        <v-btn color="success" icon @click="sendSaveEventEvent"><v-icon>mdi-check</v-icon></v-btn>
-                        <v-btn color="error" icon @click="editorType = false"><v-icon>mdi-cancel</v-icon></v-btn>
-                    </v-list-item-action>
-                </v-list-item>
-
-                <draggable tag="div" class="v-list content-list v-sheet v-sheet--tile theme--light" role="list" v-model="draggableList" handle=".handle">
-                    <v-list-item class="mb-0 p-0" v-for="record in card.content" :key="record.id">
-                            <v-list-item-content>
-                                <view-comment :comment="record" v-if="record.type == 'comment'"></view-comment>
-                                <view-field
-                                        v-if="record.type == 'field'"
-                                        :local-field="record"
-                                        :value="record.value"
-                                        :card="card"
-                                        :key="getFieldKey(record)"
-
-                                        @input="sendUpdateContentValueEvent"
-                                        @inputField="sendUpdateContentEvent"
-                                ></view-field>
-                                <view-event :event="record" :value="record.value" v-if="record.type == 'event'" @input="sendUpdateContentValueEvent"></view-event>
-                            </v-list-item-content>
-                            <v-list-item-action class="handle"><v-icon>mdi-menu</v-icon></v-list-item-action>
-                    </v-list-item>
-                </draggable>
-
-            </v-flex>
-
-            <v-speed-dial v-model="fabActive" bottom right fixed direction="top">
-                <template v-slot:activator>
-                    <v-btn v-model="fabActive" fab class="pink darken-1" dark>
-                        <v-icon v-if="fabActive">mdi-close</v-icon>
-                        <v-icon v-else>mdi-plus</v-icon>
-                    </v-btn>
-                </template>
-
-                <v-btn fab small @click="editorType = 'event'">
-                    <v-icon>mdi-calendar</v-icon>
-                </v-btn>
-                <v-btn fab small @click="editorType = 'field'">
-                    <v-icon>mdi-textbox</v-icon>
-                </v-btn>
-                <v-btn fab small @click="editorType = 'comment'">
-                    <v-icon>mdi-comment-outline</v-icon>
-                </v-btn>
-            </v-speed-dial>
+                    <v-container class="p-0 pr-1 d-flex justify-content-end align-items-center">
+                        <v-label small @click="addNewContent('event')">Событие</v-label>
+                        <v-btn fab small @click="addNewContent('event')"><v-icon>mdi-calendar</v-icon></v-btn>
+                    </v-container>
+                    <v-container class="p-0 pr-1 d-flex justify-content-end align-items-center">
+                        <v-label small @click="addNewContent('comment')">Комментарий</v-label>
+                        <v-btn fab small @click="addNewContent('comment')"><v-icon>mdi-comment-outline</v-icon></v-btn>
+                    </v-container>
+                    <v-container class="p-0 pr-1 d-flex justify-content-end align-items-center" v-for="fieldType in fieldTypes" :key="fieldType.value">
+                        <v-label small @click="addNewField(fieldType.value)">{{fieldType.buttonText}}</v-label>
+                        <v-btn fab small @click="addNewField(fieldType.value)"><v-icon>{{fieldType.icon}}</v-icon></v-btn>
+                    </v-container>
+                </v-speed-dial>
 
         </v-container>
     </v-content>
@@ -115,27 +66,14 @@
 
 <script>
     import draggable from "vuedraggable";
-
-    import EditComment from "./Fields/Edit/Comment";
-    import EditField from "./Fields/Edit/Field";
-    import EditEvent from "./Fields/Edit/Event";
-
-    import ViewComment from "./Fields/View/Comment";
-    import ViewField from "./Fields/View/Field";
-    import ViewEvent from "./Fields/View/Event";
-
-    import {getGlobalFieldValue, getGlobalFieldData} from "../unsorted/Helpers";
+    import ContentElement from "./Fields/ContentElement";
+    import {getFieldTypes} from "../unsorted/Helpers";
 
     export default {
         name: "CardDetails",
-        props: ['card', 'globalFields', 'globalEvents'],
+        props: ['card'],
         components: {
-            EditComment,
-            EditField,
-            EditEvent,
-            ViewComment,
-            ViewField,
-            ViewEvent,
+            ContentElement,
             draggable
         },
         data() {
@@ -144,7 +82,8 @@
                 newField: null,
                 newComment:  null,
                 newEvent: null,
-                fabActive: false
+                fabActive: false,
+                fieldTypes: getFieldTypes()
             }
         },
         methods: {
@@ -168,78 +107,21 @@
                     isGlobal: false
                 };
             },
-            getGlobalFieldData(fieldId) {
-                return getGlobalFieldData(fieldId, this.card);
-            },
-            getGlobalFieldValue(fieldId) {
-                return getGlobalFieldValue(fieldId, this.card);
-            },
-            sendUpdateContentEvent(newValue, newContent, oldContent) {
-                this.$root.$emit('updateContentCard', newValue, newContent, oldContent, this.card);
-            },
-            sendUpdateContentValueEvent(newValue, content) {
-                this.$root.$emit('updateContentValueCard', newValue, content, this.card);
-            },
-            sendUpdateGlobalEventValue(newValue, event) {
-                this.$root.$emit('updateGlobalEvent', newValue, event, this.card);
-            },
-            sendUpdateGlobalFieldValue(newValue, field) {
-                this.$root.$emit('updateGlobalFieldValue', newValue, field, this.card);
-            },
-            sendUpdateGlobalField(newValue, newField, oldField) {
-                this.$root.$emit('updateGlobalField', newValue, newField, oldField, this.card);
-            },
-            sendSaveFieldEvent() {
-                if (this.newField.isGlobal) {
-                    this.$root.$emit('newGlobalField', this.newField);
-                }
-                else {
-                    this.$root.$emit('newContentCard', this.newField, this.card);
-                }
+            addNewContent(type) {
+                let ucType = type[0].toUpperCase()+type.slice(1);
+                let varName = 'new'+ucType;
+                let record = this[varName];
 
-                this.editorType = false;
+                this.$root.$emit('newContentCard', record, this.card);
                 this.resetField();
             },
-            sendSaveCommentEvent() {
-                this.$root.$emit('newContentCard', this.newComment, this.card);
-                this.editorType = false;
-                this.resetComment();
-            },
-            sendSaveEventEvent() {
-                if (this.newEvent.isGlobal) {
-                    this.$root.$emit('newGlobalEvent', this.newEvent);
-                }
-                else {
-                    this.$root.$emit('newContentCard', this.newEvent, this.card);
-                }
-
-                this.editorType = false;
-                this.resetEvent();
-            },
-            getFieldKey(field) {
-                let key = this.key ? this.key : '';
-                key += field.id ? field.id : field.name;
-
-                let data = field.isGlobal
-                    ? this.getGlobalFieldData(field.id) || field
-                    : field;
-
-                if (data.file && data.file.name) {
-                    key += data.file.name;
-                }
-
-                return key;
+            addNewField(defaultFieldData) {
+                this.newField.fieldType = defaultFieldData.value;
+                this.newField.name  = defaultFieldData.fieldName;
+                this.addNewContent('field');
             }
         },
         computed: {
-            draggableList: {
-                get() {
-                    return this.card.content;
-                },
-                set(value) {
-                    this.$root.$emit('updateFieldsOrder', value, this.card);
-                }
-            }
         },
         created() {
             this.resetField();
@@ -261,9 +143,54 @@
     .v-list-item__content {
         overflow: visible;
     }
+
+    .v-toolbar {
+        left: 50%;
+        margin-left: -150px;
+        position: fixed;
+    }
 </style>
 <style>
     .v-file-input legend {
         display: none;
     }
+
+    .bordered {
+        border: 1px solid rgba(0, 0, 0, 0.42);
+        border-radius: 4px;
+        /*box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12) !important;*/
+    }
+
+    .dash-bordered {
+        border: 1px dashed rgba(0, 0, 0, 0.42);
+        border-radius: 4px;
+    }
+
+    .v-speed-dial__list{
+        width: 300px!important;
+        margin-left: -244px;
+    }
+
+    .v-speed-dial__list .v-label {
+        color: rgba(0, 0, 0, 0.87);
+        background-color: #f5f5f5;
+        margin-bottom: 0;
+        margin-right: 0.5rem;
+        padding: 0.25rem;
+        border-radius: 4px;
+
+        -webkit-box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
+        box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-toolbar .v-toolbar__content {
+        width: 300px;
+        justify-content: space-around;
+    }
+
+    .v-tooltip__content {
+        margin-bottom: .5rem!important;
+        margin-top: -0.5rem!important;
+    }
+
 </style>

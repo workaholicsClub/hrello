@@ -23,7 +23,6 @@ export default {
             }
             : false;
         },
-
         async checkAndLoadAuthorizedUser() {
             let isSignedIn = await this.$gapi.isSignedIn();
 

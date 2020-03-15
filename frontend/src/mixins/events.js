@@ -3,14 +3,10 @@ import axios from "axios";
 export default {
     data() {
         return {
-            globalEvents: [],
             timetableEvents: false,
         }
     },
     methods: {
-        async loadGlobalEvents() {
-            this.globalEvents = await this.loadGlobalObject('event');
-        },
         async loadTimetableEvents() {
             let eventsResponse = await axios.get('/api/event/listTimetable', {
                 params: {
@@ -20,12 +16,7 @@ export default {
             });
             this.timetableEvents = eventsResponse.data.groupedEvents;
         },
-
-        findGlobalEvent(eventId) {
-            let foundEvents = this.globalEvents.filter(event => event.id === eventId);
-            return foundEvents.length > 0 ? foundEvents[0] : false;
-        },
-        addEvent(newEvent, apiMethodName) {
+        async addCardlessEvent(newEvent) {
             newEvent.date = new Date();
             newEvent.author = this.user;
 
@@ -37,29 +28,24 @@ export default {
                 newEvent.boardId = this.currentBoard.id;
             }
 
-            return axios.post('/api/event/'+apiMethodName, newEvent);
+            await axios.post('/api/event/addCardless', newEvent);
+            return await this.loadTimetableEvents();
         },
-        async addGlobalEvent(newEvent) {
-            let response = await this.addEvent(newEvent, 'addGlobal');
-            this.globalEvents = response.data.events;
-
-            return response;
-        },
-        async addCardlessEvent(newEvent) {
-            await this.addEvent(newEvent, 'addCardless');
+        async deleteCardlessEvent(eventToDelete) {
+            await axios.get('/api/event/deleteCardless', {
+                params: {
+                    eventId: eventToDelete.id
+                }
+            });
             return await this.loadTimetableEvents();
         },
     },
     mounted() {
-        this.$root.$on('updateGlobalEvent', this.updateGlobalValue);
-
-        this.$root.$on('newGlobalEvent', this.addGlobalEvent);
         this.$root.$on('newCardlessEvent', this.addCardlessEvent);
+        this.$root.$on('deleteCardlessEvent', this.deleteCardlessEvent);
     },
     beforeDestroy() {
-        this.$root.$off('updateGlobalEvent', this.updateGlobalValue);
-
-        this.$root.$off('newGlobalEvent', this.addGlobalEvent);
         this.$root.$off('newCardlessEvent', this.addCardlessEvent);
+        this.$root.$off('deleteCardlessEvent', this.deleteCardlessEvent);
     }
 }

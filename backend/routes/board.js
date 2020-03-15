@@ -23,6 +23,17 @@ function getBoardTemplateStatusesAndFields(boardId) {
     ]
 }
 
+function getCardTemplates(statusIds, boardId) {
+    return statusIds.map( (statusId, index) => {
+        return {
+            id: shortid.generate(),
+            name: 'Кандидат ' + (index+1),
+            statusId: statusId,
+            boardId: boardId
+        }
+    });
+}
+
 module.exports = {
     add: (db) => {
         return async (request, response) => {
@@ -39,9 +50,16 @@ module.exports = {
             let statusesResult = await statuses.insertMany(templateStatuses);
             let insertedStatusRecords = statusesResult.ops;
 
+            let cards = db.collection('cards');
+            let statusIds = templateStatuses.map( (status) => status.id );
+            let templateCards = getCardTemplates(statusIds, newBoardId);
+            let cardsResult = await cards.insertMany(templateCards);
+            let insertedCardsRecords = cardsResult.ops;
+
             response.send({
                 board: insertedBoardRecord,
                 status: insertedStatusRecords,
+                card: insertedCardsRecords
             });
         }
     },
@@ -73,16 +91,39 @@ module.exports = {
     list: (db) => {
         return async (request, response) => {
             let boardsCollection = db.collection('boards');
-            let statusesCollection = db.collection('statuses');
             let userId = request.query.userId || false;
             let boards = [];
             if (userId) {
-                boards = await boardsCollection.find({userId: userId}).toArray();
+                boards = await boardsCollection.find({
+                    userId: userId,
+                    archive: {$in: [null, false]},
+                    deleted: {$in: [null, false]},
+                }).toArray();
             }
 
             response.send({
                 board: boards
             });
         }
-    }
+    },
+    delete: (db) => {
+        return async (request, response) => {
+            let boards = db.collection('boards');
+            let boardId = request.query.boardId || false;
+
+            if (!boardId) {
+                response.send({
+                    board: false
+                });
+            }
+
+            let query =  {id: boardId};
+            let updateResult = await boards.findOneAndUpdate(query, {$set: {deleted: true}});
+            let updatedBoardRecord = updateResult.value || false;
+
+            response.send({
+                board: updatedBoardRecord,
+            });
+        }
+    },
 };

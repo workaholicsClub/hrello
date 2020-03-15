@@ -15,7 +15,7 @@
                 <v-btn x-large dark @click="login">Вход с помощью Google</v-btn>
             </v-row>
         </v-container>
-        <v-container fill-height fluid v-else-if="hasNoBoards">
+        <v-container fill-height v-else-if="hasNoBoards">
             <Sidebar
                     :drawer="drawer"
                     :is-desktop="isDesktop"
@@ -31,7 +31,7 @@
                 </v-col>
             </v-row>
         </v-container>
-        <div v-else>
+        <v-container fill-height fluid class="p-0" v-else>
             <Sidebar
                 :drawer="drawer"
                 :is-desktop="isDesktop"
@@ -41,21 +41,23 @@
                 @drawer="setDrawerState"
                 @changeBoard="changeBoard"
                 @timetable="toggleTimetable"
+                @archive="toggleArchive"
                 @logout="logout"
             ></Sidebar>
             <Header
                     :is-desktop="isDesktop"
                     :title="currentTitle"
                     :show-back="showBack"
-                    :allow-title-edit="isBoardShown"
+                    :allow-title-edit="isBoardShown && !showArchive"
                     @drawer="toggleDrawer"
                     @back="goBack"
                     @input="setBoardTitle"
             ></Header>
-            <CardDetails v-if="currentCard" :card="currentCard" :global-fields="globalFields" :global-events="globalEvents" :key="cardRedrawIndex" class="mt-2"></CardDetails>
+            <CardDetails v-if="currentCard" :card="currentCard" :key="cardRedrawIndex"></CardDetails>
+            <CardArchive v-else-if="showArchive" :type="showArchive" :user="user" :boards="boards" :is-loading="archiveLoading" :cards="whitelistCards"></CardArchive>
             <Timetable v-else-if="showTimetable" :is-desktop="isDesktop" :grouped-events="timetableEvents"></Timetable>
-            <Board v-else :is-desktop="isDesktop" :statuses="statuses" :cards="cards" :global-fields="globalFields" class="mt-2"></Board>
-        </div>
+            <Board v-else :is-desktop="isDesktop" :statuses="statuses" :cards="cards" :key="currentBoardId"></Board>
+        </v-container>
     </v-app>
 
 </template>
@@ -66,6 +68,7 @@
     import Board from './components/Board.vue'
     import CardDetails from "./components/CardDetails";
     import Timetable from "./components/Timetable";
+    import CardArchive from "./components/CardArchive";
 
     import CardsMixin from "./mixins/cards";
     import BoardsMixin from "./mixins/boards";
@@ -81,6 +84,7 @@
         name: 'BoardPage',
         props: ['useGoogleServices'],
         components: {
+            CardArchive,
             Header,
             Sidebar,
             Board,
@@ -102,6 +106,7 @@
                 isDesktop: this.$isDesktop(),
                 initFinished: false,
                 showTimetable: false,
+                showArchive: false,
                 cardRedrawIndex: 0,
                 statuses: [],
             }
@@ -192,37 +197,78 @@
                 let objectCodePlural = objectCode+'s';
                 return response.data[objectCodePlural];
             },
-            async loadBoardStatuses() {
+            async loadBoardStatuses(boardId) {
                 let statusesResponse = await axios.get('/api/status/list', {
                     params: {
-                        boardId: this.currentBoardId
+                        boardId: boardId
                     }
                 });
 
-                this.statuses = statusesResponse.data.status;
+                return statusesResponse.data.status;
             },
-
+            async loadAndUpdateBoardStatuses() {
+                this.statuses = await this.loadBoardStatuses(this.currentBoardId);
+            },
             toggleTimetable() {
                 this.currentCard = false;
+                this.showArchive = false;
                 this.showTimetable = !this.showTimetable;
 
                 if (this.showTimetable) {
                     this.loadTimetableEvents();
                 }
             },
-            goBack() {
+            toggleArchive(type) {
                 this.currentCard = false;
+                this.showTimetable = false;
+                this.showArchive = type;
+
+                if (this.showArchive) {
+                    this.loadArchiveCards(this.archiveType);
+                }
+            },
+            async goBack() {
+                if (this.currentCard) {
+                    await this.saveCard(this.currentCard);
+                    this.currentCard = false;
+                }
+
                 this.updateUrl();
+
+                if (this.showTimetable) {
+                    this.loadTimetableEvents();
+                }
             },
         },
         computed: {
+            currentCardTitle() {
+                if (!this.currentCard) {
+                    return false;
+                }
+
+                let isDefaultName = /Кандидат \d+/.test(this.currentCard.name);
+                let newCardTitle = 'Новый кандидат';
+                if (isDefaultName) {
+                    return newCardTitle;
+                }
+
+                return this.currentCard.name || newCardTitle;
+            },
             currentTitle() {
                 if (this.currentCard) {
-                    return this.currentCard.name;
+                    return this.currentCardTitle;
                 }
 
                 if (this.showTimetable) {
                     return 'Расписание';
+                }
+
+                if (this.showArchive) {
+                    let archiveTitles = {
+                        whitelist: 'Резерв'
+                    };
+
+                    return archiveTitles[this.showArchive] || 'Архив';
                 }
 
                 if (this.currentBoard) {

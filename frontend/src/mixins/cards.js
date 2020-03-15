@@ -1,10 +1,14 @@
 import axios from "axios";
+import {clone} from "../unsorted/Helpers";
 
 export default {
     data() {
         return {
             currentCard: false,
             cards: [],
+            whitelistCards: [],
+            archiveType: 'whitelist',
+            archiveLoading: false,
         }
     },
     methods: {
@@ -18,7 +22,7 @@ export default {
             });
             return cardResponse.data.card;
         },
-        async loadBoardCards() {
+        async loadAndUpdateBoardCards() {
             let cardsResponse = await axios.get('/api/card/list', {
                 params: {
                     boardId: this.currentBoardId
@@ -26,6 +30,18 @@ export default {
             });
 
             this.cards = cardsResponse.data.card;
+        },
+        async loadArchiveCards(type) {
+            this.isLoading = true;
+            let cardsResponse = await axios.get('/api/card/listArchive', {
+                params: {
+                    userId: this.user.id,
+                    archiveType: type,
+                }
+            });
+
+            this.isLoading = false;
+            this.whitelistCards = cardsResponse.data.card;
         },
         async changeCard(newCardId, skipUrlUpdate) {
             let foundCard = this.findCard(newCardId);
@@ -48,10 +64,19 @@ export default {
                 boardId: status.boardId
             };
 
+            if (this.currentBoard && this.currentBoard.defaultContent) {
+                newCard.content = clone(this.currentBoard.defaultContent).map( record => {
+                    record.linkToDefaultById = record.id;
+                    delete record.id;
+                    return record;
+                });
+            }
+
             let response = await axios.post('/api/card/add', newCard);
             let createdCard = response.data.card;
 
-            this.cards.unshift(createdCard);
+            this.cards.push(createdCard);
+            this.changeCard(createdCard.id);
         },
         async addContentToCard(content, card) {
             if (typeof (card['content']) === 'undefined') {
@@ -60,6 +85,7 @@ export default {
 
             content.date = new Date();
             content.author = this.user;
+            content.isNew = true;
 
             let newCardContent = card.content.concat();
             newCardContent.unshift(content);
@@ -68,25 +94,41 @@ export default {
 
             return this.saveCard(card);
         },
-        async updateContent(newValue, newContent, oldContent, card) {
+        async updateContent(newContent, oldContent, card) {
             let contentIndex = card.content.indexOf(oldContent);
 
-            newContent.value = newValue;
             newContent.valueAuthor = this.user;
             newContent.valueDate = new Date();
+            delete newContent.isNew;
+
+            let needToAddNewDefaultField = newContent.isGlobal && !newContent.linkToDefaultById;
+            let needToUpdateDefaultField = newContent.isGlobal && newContent.linkToDefaultById;
+            let needToUnlinkDefaultField = !newContent.isGlobal && newContent.linkToDefaultById;
+
+            if (needToAddNewDefaultField) {
+                let newDefaultContent = await this.addDefaultContent(newContent);
+                newContent.linkToDefaultById = newDefaultContent.id;
+            }
+
+            if (needToUpdateDefaultField) {
+                await this.updateDefaultContent(newContent);
+            }
+
+            if (needToUnlinkDefaultField) {
+                delete newContent.linkToDefaultById;
+            }
 
             this.$set(card.content, contentIndex, newContent);
 
             return this.saveCard(card);
         },
-        async updateContentValue(value, content, card) {
-            let contentIndex = card.content.indexOf(content);
+        async deleteContent(contentToDelete, card, deleteLinkedDefault) {
+            let contentIndex = card.content.indexOf(contentToDelete);
+            this.$delete(card.content, contentIndex);
 
-            content.value = value;
-            content.valueAuthor = this.user;
-            content.valueDate = new Date();
-
-            this.$set(card.content, contentIndex, content);
+            if (deleteLinkedDefault) {
+                await this.deleteDefaultContent(contentToDelete);
+            }
 
             return this.saveCard(card);
         },
@@ -136,6 +178,38 @@ export default {
                 card.statusId = previousStatus.id;
                 this.saveCard(card);
             }
+        },
+        async moveCardToBoard(card, board) {
+            let archiveProps = ['blacklist', 'whitelist', 'finishedlist', 'archive', 'deleted'];
+            archiveProps.forEach(prop => {
+                if (card[prop] === true) {
+                    card[prop] = false;
+                }
+            });
+
+            this.archiveLoading = true;
+
+            let statuses = await this.loadBoardStatuses(board.id);
+            let firstStatus = statuses[0];
+
+            card.boardId = board.id;
+            card.statusId = firstStatus.id;
+
+            await this.saveCard(card);
+            await this.loadArchiveCards(this.archiveType);
+
+            this.archiveLoading = false;
+        },
+        async deleteCard(card) {
+            let response = await axios.get('/api/card/delete', {
+                params: {
+                    cardId: card.id
+                }
+            });
+
+            this.reloadBoardData();
+
+            return response.data.card;
         },
 
         async saveCard(card) {
@@ -188,32 +262,36 @@ export default {
     },
     mounted() {
         this.$root.$on('addCard', this.addCard);
+        this.$root.$on('deleteCard', this.deleteCard);
         this.$root.$on('selectCard', this.changeCard);
         this.$root.$on('cardInput', this.saveCard);
 
         this.$root.$on('newContentCard', this.addContentToCard);
-        this.$root.$on('updateContentCard', this.updateContent);
-        this.$root.$on('updateContentValueCard', this.updateContentValue);
+        this.$root.$on('updateContent', this.updateContent);
+        this.$root.$on('deleteContent', this.deleteContent);
 
         this.$root.$on('moveCardToNextStatus', this.moveCardToNextStatus);
         this.$root.$on('moveCardToPrevStatus', this.moveCardToPrevStatus);
         this.$root.$on('moveCardToWhiteList', this.moveCardToWhiteList);
         this.$root.$on('moveCardToBlackList', this.moveCardToBlackList);
         this.$root.$on('moveCardToFinishedList', this.moveCardToFinishedList);
+        this.$root.$on('moveCardToBoard', this.moveCardToBoard);
     },
     beforeDestroy() {
         this.$root.$off('addCard', this.addCard);
+        this.$root.$off('deleteCard', this.deleteCard);
         this.$root.$off('selectCard', this.changeCard);
         this.$root.$off('cardInput', this.saveCard);
 
         this.$root.$off('newContentCard', this.addContentToCard);
-        this.$root.$off('updateContentCard', this.updateContent);
-        this.$root.$off('updateContentValueCard', this.updateContentValue);
+        this.$root.$off('updateContent', this.updateContent);
+        this.$root.$off('deleteContent', this.deleteContent);
 
         this.$root.$off('moveCardToNextStatus', this.moveCardToNextStatus);
         this.$root.$off('moveCardToPrevStatus', this.moveCardToPrevStatus);
         this.$root.$off('moveCardToWhiteList', this.moveCardToWhiteList);
         this.$root.$off('moveCardToBlackList', this.moveCardToBlackList);
         this.$root.$off('moveCardToFinishedList', this.moveCardToFinishedList);
+        this.$root.$off('moveCardToBoard', this.moveCardToBoard);
     }
 }

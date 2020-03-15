@@ -1,6 +1,6 @@
 <template>
-    <v-content app>
-        <v-container class="fill-height board" :class="{'wide': isHorizontalScrollable }" v-dragscroll:nochilddrag="{'active': isHorizontalScrollable}" fluid >
+    <v-content class="fill-height">
+        <v-container class="fill-height board mt-2" :class="{'wide': isHorizontalScrollable }" v-dragscroll:nochilddrag="{'active': isHorizontalScrollable}" fluid >
             <div
                     class="row scrollable justify-start row--dense"
                     data-dragscroll
@@ -10,7 +10,6 @@
                         :status="status"
                         :last="index === statuses.length-1"
                         :cards="getStatusCards(status.id)"
-                        :global-fields="globalFields"
                         @input="updateStatusTitle"
                 ></Status>
                 <v-col class="new-status" cols="4">
@@ -27,7 +26,7 @@
 
     export default {
         name: 'Board',
-        props: ['isDesktop', 'statuses', 'cards', 'globalFields'],
+        props: ['isDesktop', 'statuses', 'cards'],
         directives: {
             dragscroll
         },
@@ -123,9 +122,6 @@
 
         padding: 0 32px 0 0;
         min-width: 100vw!important;
-
-
-        padding-top: 0;
     }
 
     .new-status .v-btn {

@@ -1,11 +1,9 @@
 <template>
-    <v-card outlined elevation="2" min-width="300" @click="$root.$emit('selectCard', card.id)">
-        <v-system-bar v-if="cardColor" :color="cardColor" height="4"></v-system-bar>
+    <v-card outlined elevation="2" min-width="300" @click="sendSelectCardEvent">
+        <v-system-bar v-for="(color, index) in cardColor" :color="color" height="4" :key="index"></v-system-bar>
         <v-card-text>
             <v-row class="align-center justify-space-between">
-                <h6 class="text--primary">
-                    {{card.name}}
-                </h6>
+                <h6 class="text--primary">{{card.name || 'Новый кандидат'}}</h6>
                 <v-chip class="badge" color="primary" v-if="hasAlarm"><v-icon>mdi-alarm</v-icon></v-chip>
             </v-row>
             <v-row class="card-info align-center justify-space-between">
@@ -15,7 +13,15 @@
                 <v-spacer class="fill" />
 
                 <div class="card-icons d-flex justify-content-between">
-                    <v-menu bottom left offset-x @click.native.stop.prevent>
+                    <v-menu v-if="isArchiveCard" v-model="showArchiveMenu" bottom left offset-x @click.native.stop.prevent>
+                        <template v-slot:activator="{ on }">
+                            <v-btn icon text v-on="on" @click.stop><v-icon>mdi-archive-arrow-up-outline</v-icon></v-btn>
+                        </template>
+                        <v-list-item v-for="board in boards" :key="board.id" @click="sendMoveToBoardEvent(board)">
+                            <v-list-item-title>{{board.title}}</v-list-item-title>
+                        </v-list-item>
+                    </v-menu>
+                    <v-menu v-else v-model="showActiveMenu" bottom left offset-x @click.native.stop.prevent>
                         <template v-slot:activator="{ on }">
                             <v-btn icon text v-on="on" @click.stop><v-icon>mdi-dots-horizontal</v-icon></v-btn>
                         </template>
@@ -40,21 +46,28 @@
                             </v-list-item>
                             <v-list-item @click="sendWhiteListEvent">
                                 <v-list-item-icon>
-                                    <v-icon>mdi-account-box-multiple-outline</v-icon>
+                                    <v-icon>mdi-archive-arrow-down-outline</v-icon>
                                 </v-list-item-icon>
-                                <v-list-item-title>В архив кандидатов</v-list-item-title>
+                                <v-list-item-title>В резерв</v-list-item-title>
                             </v-list-item>
                             <v-list-item @click="sendBlackListEvent">
                                 <v-list-item-icon>
-                                    <v-icon>mdi-delete</v-icon>
+                                    <v-icon>mdi-cancel</v-icon>
                                 </v-list-item-icon>
                                 <v-list-item-title>В черный список</v-list-item-title>
+                            </v-list-item>
+                            <v-list-item @click="sendDeleteCardEvent">
+                                <v-list-item-icon>
+                                    <v-icon>mdi-delete</v-icon>
+                                </v-list-item-icon>
+                                <v-list-item-title>Удалить</v-list-item-title>
                             </v-list-item>
                         </v-list>
                     </v-menu>
 
-                    <v-btn v-if="almostFinished" icon depressed color="success" @click.stop="sendFinishedListEvent"><v-icon>mdi-check-bold</v-icon></v-btn>
-                    <v-btn v-else icon text @click.stop="sendMoveCardEvent"><v-icon>mdi-redo-variant</v-icon></v-btn>
+                    <v-btn v-if="almostFinished && isActiveCard" icon depressed color="success" @click.stop="sendFinishedListEvent"><v-icon>mdi-check-bold</v-icon></v-btn>
+                    <v-btn v-if="!almostFinished && isActiveCard" icon text @click.stop="sendMoveCardEvent"><v-icon>mdi-redo-variant</v-icon></v-btn>
+                    <v-btn v-if="isActiveCard" icon text @click.stop="sendSelectCardEvent"><v-icon>mdi-pencil</v-icon></v-btn>
                 </div>
             </v-row>
         </v-card-text>
@@ -63,18 +76,25 @@
 
 <script>
     import moment from 'moment';
-    import {getGlobalField} from "../unsorted/Helpers";
+    import {getDefaultColors} from "../unsorted/Helpers";
+
+    let defaultColors = getDefaultColors();
 
     export default {
         name: 'Card',
-        props: ['card', 'almostFinished', 'globalFields'],
+        props: ['card', 'almostFinished', 'boards'],
         components: {
         },
         data() {
             return {
+                showActiveMenu: false,
+                showArchiveMenu: false
             }
         },
         methods: {
+            sendSelectCardEvent() {
+                this.$root.$emit('selectCard', this.card.id);
+            },
             sendMoveCardEvent() {
                 this.$root.$emit('moveCardToNextStatus', this.card);
             },
@@ -90,45 +110,38 @@
             sendFinishedListEvent() {
                 this.$root.$emit('moveCardToFinishedList', this.card);
             },
+            sendDeleteCardEvent() {
+                this.$root.$emit('deleteCard', this.card);
+            },
+            sendMoveToBoardEvent(board) {
+                this.showMenu = false;
+                this.showSubmenu = false;
+                this.$root.$emit('moveCardToBoard', this.card, board);
+            }
+
         },
         computed: {
+            isArchiveCard() {
+                return this.card.blacklist || this.card.whitelist || this.card.finishedlist || this.card.deleted || this.card.archive;
+            },
+            isActiveCard() {
+                return !this.isArchiveCard;
+            },
             cardColor() {
-                let localValues = this.card.content || [];
-                let globalValues = this.card.globalValues || [];
+                let firstColorField = this.card.content
+                    ? this.card.content.find(valueItem => valueItem.type === 'field' && valueItem.fieldType === 'color')
+                    : false;
 
-                let globalColorValues = globalValues.filter(globalItem => {
-                    if (globalItem.type !== 'field') {
-                        return false;
-                    }
-
-                    let fieldData = getGlobalField(globalItem.fieldId, this.globalFields);
-                    return fieldData.fieldType === 'color';
-                });
-
-                let hasGlobalColors = globalColorValues.length > 0;
-                let colorValue = false;
-                let colors = false;
-
-                if (hasGlobalColors) {
-                    colorValue = globalColorValues[0];
-                    colors = getGlobalField(colorValue.fieldId, this.globalFields).colors;
-                }
-                else {
-                    let localColorValues = localValues.filter(valueItem => valueItem.type === 'field' && valueItem.fieldType === 'color');
-                    let hasLocalColors = localColorValues.length > 0;
-
-                    if (hasLocalColors) {
-                        colorValue = localColorValues[0];
-                        colors = colorValue.colors;
-                    }
-                }
-
-                if (!colorValue || !colors) {
+                if (!firstColorField) {
                     return null;
                 }
 
-                let currentColorItem = colors.filter( colorItem => colorItem.value === colorValue.value )[0];
-                return currentColorItem ? currentColorItem.color : null;
+                let colors = firstColorField.colors || defaultColors;
+
+                let currentColors = colors
+                                        .filter( colorItem => firstColorField.value && firstColorField.value.indexOf(colorItem.value) !== -1 )
+                                        .map( colorItem => colorItem.color );
+                return currentColors ? currentColors : null;
             },
             pendingEvent() {
                 let cardHasContent = this.card.content && this.card.content instanceof Array;
@@ -233,5 +246,9 @@
 
         color: #6ca4b3;
         font-size: 14px;
+    }
+
+    .v-menu__content {
+        background-color: #ffffff;
     }
 </style>

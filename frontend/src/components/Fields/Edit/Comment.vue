@@ -1,5 +1,5 @@
 <template>
-    <v-sheet elevation="10" class="new-comment">
+    <v-sheet elevation="0" class="new-comment">
         <editor-menu-bar :editor="editor" v-slot="{ commands, isActive}">
             <v-toolbar flat color="#f6fcfe">
                 <v-btn icon :class="{ 'is-active': isActive.bold() }" @click="commands.bold"><v-icon>mdi-format-bold</v-icon></v-btn>
@@ -39,6 +39,7 @@
             return {
                 newComment: false,
                 editor: new Editor({
+                    content: this.value,
                     extensions: [
                         new Bold(),
                         new Italic(),

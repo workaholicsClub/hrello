@@ -1,90 +1,76 @@
 import axios from "axios";
-import {getGlobalFieldData} from "../unsorted/Helpers";
+import {clone} from "../unsorted/Helpers";
+import shortid from "shortid";
 
 export default {
     data() {
         return {
-            globalFields: [],
             googleToken: false,
         }
     },
     methods: {
-        async loadGlobalFields() {
-            this.globalFields = await this.loadGlobalObject('field');
+        prepareDefaultContent(cardContent) {
+            let preparedDefaultContent = clone(cardContent);
+
+            if (preparedDefaultContent.linkToDefaultById) {
+                preparedDefaultContent.id = preparedDefaultContent.linkToDefaultById;
+                delete preparedDefaultContent.linkToDefaultById;
+            }
+            else if (!preparedDefaultContent.id) {
+                preparedDefaultContent.id = shortid.generate();
+            }
+
+            preparedDefaultContent.date = preparedDefaultContent.date || new Date();
+            preparedDefaultContent.author = this.user || preparedDefaultContent.author;
+
+            delete preparedDefaultContent.value;
+            delete preparedDefaultContent.valueAuthor;
+            delete preparedDefaultContent.valueDate;
+
+            return preparedDefaultContent;
         },
-        findGlobalField(fieldId) {
-            let foundFields = this.globalFields.filter(field => field.id === fieldId);
-            return foundFields.length > 0 ? foundFields[0] : false;
+        findLinkedDefaultContent(cardContent) {
+            return this.currentBoard.defaultContent.find(defaultContent => defaultContent.id === cardContent.linkToDefaultById)
         },
-        findGlobalValueIndex(fieldId, card) {
-            if (!card.globalValues) {
-                return -1;
+        async addDefaultContent(cardContent) {
+            let newDefaultContent = this.prepareDefaultContent(cardContent);
+
+            if (!this.currentBoard.defaultContent) {
+                this.currentBoard.defaultContent = [];
             }
 
-            return card.globalValues.reduce( (foundIndex, valueData, currentIndex) => {
-                if (valueData.fieldId === fieldId) {
-                    return currentIndex;
-                }
+            this.currentBoard.defaultContent.push(newDefaultContent);
+            await this.saveCurrentBoard();
 
-                return foundIndex;
-            }, -1);
+            return newDefaultContent;
         },
-        async addGlobalField(newField) {
-            newField.date = new Date();
-            newField.author = this.user;
-
-            if (this.user) {
-                newField.userId = this.user.id;
-            }
-
-            if (this.currentBoard) {
-                newField.boardId = this.currentBoard.id;
-            }
-
-            let response = await axios.post('/api/field/addGlobal', newField);
-            this.globalFields = response.data.fields;
-
-            return response;
-        },
-        async updateGlobalValue(newValue, content, card) {
-            let fieldId = content.id;
-            let valueIndex = this.findGlobalValueIndex(fieldId, card);
-
-            let newValueData = {
-                fieldId: fieldId,
-                type: content.type,
-                name: content.name,
-                value: newValue,
-                valueAuthor: this.user,
-                valueDate: new Date()
-            };
-
-            if (!card.globalValues) {
-                card.globalValues = [];
-            }
-
-            if (valueIndex === -1) {
-                card.globalValues.push(newValueData);
-            }
-            else {
-                card.globalValues[valueIndex] = newValueData;
-            }
-
-            return this.saveCard(card);
-        },
-        async updateGlobalField(newValue, newField, oldField, card) {
-            let fieldIndex = this.globalFields.indexOf(oldField);
-
-            if (fieldIndex === -1) {
+        async updateDefaultContent(cardContent) {
+            if (!cardContent.linkToDefaultById) {
                 return;
             }
 
-            this.$set(this.globalFields, fieldIndex, newField);
+            let currentDefaultContent = this.findLinkedDefaultContent(cardContent);
+            let contentIndex = this.currentBoard.defaultContent.indexOf(currentDefaultContent);
 
-            await axios.post('/api/field/updateGlobal', newField);
-            return await this.updateGlobalValue(newValue, newField, card);
+            if (contentIndex === -1) {
+                return;
+            }
+
+            let updatedDefaultContent = this.prepareDefaultContent(cardContent);
+            this.$set(this.currentBoard.defaultContent, contentIndex, updatedDefaultContent);
+
+            await this.saveCurrentBoard();
+            return updatedDefaultContent;
         },
-
+        async deleteDefaultContent(cardContent) {
+            let currentDefaultContent = this.findLinkedDefaultContent(cardContent);
+            let contentIndex = this.currentBoard.defaultContent.indexOf(currentDefaultContent);
+            if (contentIndex === -1) {
+                return;
+            }
+            this.currentBoard.defaultContent.splice(contentIndex, 1);
+            return this.saveCurrentBoard();
+        },
         async updateFieldsOrder(sortedContent, card) {
             card.content = sortedContent;
             this.saveCard(card);
@@ -171,14 +157,8 @@ export default {
 
                 let updatedField = field;
 
-                if (field.isGlobal) {
-                    if (localField) {
-                        updatedField = localField;
-                    }
-                    else {
-                        await this.updateGlobalValue(null, field, card);
-                        updatedField = getGlobalFieldData(field.id, card);
-                    }
+                if (localField) {
+                    updatedField = localField;
                 }
 
                 updatedField.file = {
@@ -221,14 +201,8 @@ export default {
 
             let updatedField = field;
 
-            if (field.isGlobal) {
-                if (localField) {
-                    updatedField = localField;
-                }
-                else {
-                    await this.updateGlobalValue(null, field, card);
-                    updatedField = getGlobalFieldData(field.id, card);
-                }
+            if (localField) {
+                updatedField = localField;
             }
 
             updatedField.file = {
@@ -265,18 +239,10 @@ export default {
         }
     },
     mounted() {
-        this.$root.$on('updateGlobalField', this.updateGlobalField);
-        this.$root.$on('updateGlobalFieldValue', this.updateGlobalValue);
-
-        this.$root.$on('newGlobalField', this.addGlobalField);
         this.$root.$on('updateFieldsOrder', this.updateFieldsOrder);
         this.$root.$on('fileUpload', this.uploadFile);
     },
     beforeDestroy() {
-        this.$root.$off('updateGlobalField', this.updateGlobalField);
-        this.$root.$off('updateGlobalFieldValue', this.updateGlobalValue);
-
-        this.$root.$off('newGlobalField', this.addGlobalField);
         this.$root.$off('updateFieldsOrder', this.updateFieldsOrder);
         this.$root.$off('fileUpload', this.uploadFile);
     }

@@ -41,7 +41,7 @@
             </span>
         </div>
         <ul class="status-cards">
-            <Card v-for="card in cards" :key="card.id" :card="card" :almost-finished="last" :global-fields="globalFields"></Card>
+            <Card v-for="card in cards" :key="card.id" :card="card" :almost-finished="last"></Card>
         </ul>
         <div class="status-footer">
             <v-btn text @click="sendAddCardEvent"><v-icon>mdi-plus</v-icon> Добавить кандидата</v-btn>

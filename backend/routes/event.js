@@ -46,13 +46,18 @@ module.exports = {
             if (boardIds) {
                 cards = await cardsCollection.find({
                     boardId: { $in: boardIds },
+                    archive: {$in: [null, false]},
                     whitelist: {$in: [null, false]},
                     blacklist: {$in: [null, false]},
                     finishedlist: {$in: [null, false]},
+                    deleted: {$in: [null, false]}
                 }).toArray();
             }
 
-            let events = await cardlessEventsCollection.find({'userId': userId}).toArray();
+            let events = await cardlessEventsCollection.find({
+                userId: userId,
+                deleted: {$in: [null, false]}
+            }).toArray();
 
             cards.forEach(card => {
                 let allContent = [];
@@ -149,6 +154,26 @@ module.exports = {
         return async (request, response) => {
             let responseData = await addEvent(db, 'cardlessEvents', request.body);
             response.send(responseData);
+        }
+    },
+    deleteCardless: (db) => {
+        return async (request, response) => {
+            let eventId = request.query.eventId || false;
+            let events = db.collection('cardlessEvents');
+
+            if (!eventId) {
+                response.send({
+                    event: false
+                });
+
+                return false;
+            }
+
+            let updateResult = await events.findOneAndUpdate({id: eventId}, {$set: {deleted: true}});
+            let updatedEventRecord = updateResult.value || false;
+            response.send({
+                event: updatedEventRecord
+            });
         }
     }
 };

@@ -23,13 +23,11 @@ export default {
             };
             await axios.post('/api/status/add', newStatusTemplate);
 
-            return await this.loadBoardStatuses();
+            return await this.loadAndUpdateBoardStatuses();
         },
-
         getStatusIndex(targetStatus) {
             return this.statuses.indexOf(targetStatus);
         },
-
         getNextStatusForStatus(targetStatus) {
             let targetIndex = this.getStatusIndex(targetStatus);
             if (targetIndex === -1) {
@@ -42,7 +40,6 @@ export default {
 
             return this.statuses[targetIndex+1];
         },
-
         getPreviousStatusForStatus(targetStatus) {
             let targetIndex = this.getStatusIndex(targetStatus);
             if (targetIndex === -1 || targetIndex === 0) {
@@ -51,7 +48,6 @@ export default {
 
             return this.statuses[targetIndex-1];
         },
-
         async addStatusLeft(targetStatus) {
             let newSortIndex = targetStatus.sort - 100;
             let previousStatus = this.getPreviousStatusForStatus(targetStatus);

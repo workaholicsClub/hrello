@@ -48,7 +48,11 @@ module.exports = {
 
             if (boardId) {
                 statuses = await statusesCollection
-                    .find({boardId: boardId, archive: {$in: [null, false]}})
+                    .find({
+                        boardId: boardId,
+                        archive: {$in: [null, false]},
+                        deleted: {$in: [null, false]},
+                    })
                     .sort({sort: 1})
                     .toArray();
             }
@@ -58,7 +62,7 @@ module.exports = {
             });
         }
     },
-    archive: (db) => {
+    delete: (db) => {
         return async (request, response) => {
             let statuses = db.collection('statuses');
             let statusId = request.query.statusId || false;
@@ -70,7 +74,7 @@ module.exports = {
             }
 
             let query =  {id: statusId};
-            let updateResult = await statuses.findOneAndUpdate(query, {$set: {archive: true}});
+            let updateResult = await statuses.findOneAndUpdate(query, {$set: {deleted: true}});
             let updatedStatusRecord = updateResult.value || false;
 
             response.send({

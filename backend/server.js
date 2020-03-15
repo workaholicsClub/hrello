@@ -37,17 +37,20 @@ async function connectToDatabase (host, port, dbName) {
     app.get('/api/board/list', boardRoutes.list(db));
     app.post('/api/board/add', boardRoutes.add(db));
     app.post('/api/board/update', boardRoutes.update(db));
+    app.post('/api/board/delete', boardRoutes.delete(db));
 
     app.get('/api/status/list', statusRoutes.list(db));
-    app.get('/api/status/archive', statusRoutes.archive(db));
+    app.get('/api/status/delete', statusRoutes.delete(db));
     app.post('/api/status/add', statusRoutes.add(db));
     app.post('/api/status/update', statusRoutes.update(db));
 
     app.get('/api/card/list', cardRoutes.list(db));
+    app.get('/api/card/listArchive', cardRoutes.listArchive(db))
     app.get('/api/card/findOne', cardRoutes.findOne(db));
     app.get('/api/card/blacklist', cardRoutes.blacklist(db));
     app.get('/api/card/whitelist', cardRoutes.whitelist(db));
     app.get('/api/card/finishedlist', cardRoutes.finishedlist(db));
+    app.get('/api/card/delete', cardRoutes.delete(db));
     app.post('/api/card/add', cardRoutes.add(db));
     app.post('/api/card/update', cardRoutes.update(db));
 
@@ -58,6 +61,7 @@ async function connectToDatabase (host, port, dbName) {
     app.get('/api/event/listGlobal', eventRoutes.listGlobal(db));
     app.post('/api/event/addGlobal', eventRoutes.addGlobal(db));
     app.post('/api/event/addCardless', eventRoutes.addCardless(db));
+    app.get('/api/event/deleteCardless', eventRoutes.deleteCardless(db));
 
     app.get('/api/field/listGlobal', fieldRoutes.listGlobal(db));
     app.post('/api/field/updateGlobal', fieldRoutes.updateGlobal(db));

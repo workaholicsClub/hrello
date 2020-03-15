@@ -1,18 +1,18 @@
 <template>
-    <v-row>
-        <v-col>
-            <v-select :items="colors" :label="label" v-model="newValue" @change="sendUpdate">
+    <v-row class="px-3">
+        <v-col class="py-0">
+            <v-select :items="colors" :label="label" v-model="newValue" multiple clearable @change="sendUpdate">
                 <template v-slot:selection="{ select, item }">
-                    <v-chip :color="selectedColor">{{item.text}}</v-chip>
+                    <v-chip :color="item.color">{{item.text || getColorName(item.value)}}</v-chip>
                 </template>
-                <template v-slot:item="{ on, item }">
+                <template v-slot:item="{ on, item, parent }">
                     <v-list-item :style="{'background-color': item.color}">
-                        <v-text-field v-if="item.isEditing" v-model="item.text"></v-text-field>
-                        <v-list-item-content  v-on="on" v-else v-text="item.text"></v-list-item-content>
-                        <v-list-item-icon>
-                            <v-icon v-if="item.isEditing" @click="stopEditing(item)">mdi-check</v-icon>
-                            <v-icon v-else @click="startEditing(item)">mdi-pencil</v-icon>
-                        </v-list-item-icon>
+                        <v-list-item-action>
+                            <v-simple-checkbox @input="parent.$emit('select', item)" :value="isColorSelected(item.value)" :ripple="false"></v-simple-checkbox>
+                        </v-list-item-action>
+                        <v-list-item-content  v-on="on">
+                            <v-list-item-title>{{item.text || getColorName(item.value)}}</v-list-item-title>
+                        </v-list-item-content>
                     </v-list-item>
                 </template>
             </v-select>
@@ -21,62 +21,49 @@
 </template>
 
 <script>
-    import {clone} from "../../unsorted/Helpers";
-
-    let defaultColors = [
-        {text: '', value: 'green', color: '#519839', isEditing: false},
-        {text: '', value: 'yellow', color: '#f2d600', isEditing: false},
-        {text: '', value: 'orange', color: '#ff9f1a', isEditing: false},
-        {text: '', value: 'red', color: '#eb5a46', isEditing: false},
-        {text: '', value: 'purple', color: '#c377e0', isEditing: false},
-        {text: '', value: 'blue', color: '#0079bf', isEditing: false}
-    ];
-
     export default {
         name: "ColorSelect",
-        props: ['label', 'value', 'localField', 'globalField'],
+        props: ['label', 'value', 'field',],
         data() {
-            let fieldCopy = this.globalField
-                ? clone(this.globalField)
-                : clone(this.localField);
-
             return {
-                newValue: this.localField ? this.localField.value : null,
-                newField: fieldCopy,
-                colors: fieldCopy.colors || defaultColors
+                newValue: this.field.value,
+                colors: this.field.colors
             }
         },
+        watch: {
+            field: {
+                async handler() {
+                    this.colors = this.field.colors;
+                },
+                deep: true
+            },
+        },
         methods: {
-            startEditing(item) {
-                item.isEditing = true;
-            },
-            stopEditing(item) {
-                item.isEditing = false;
-                this.sendUpdate();
-            },
             sendUpdate() {
-                let updatedField = clone(this.newField);
-                updatedField.colors = this.colors;
-                let oldField = this.field;
+                this.$emit('input', this.newValue);
+            },
+            findColorData(colorCode) {
+                let colors = this.field.colors;
 
-                this.$emit('input', this.newValue, updatedField, oldField);
+                return colors.filter( item => item.value === colorCode )[0] || false;
+            },
+            getColorName(colorCode) {
+                let color = this.findColorData(colorCode);
+                return color.defaultName;
+            },
+            isColorSelected(colorCode) {
+                return this.newValue ? this.newValue.indexOf(colorCode) !== -1 : false;
             }
         },
         computed: {
-            field() {
-                return this.globalField
-                    ? this.globalField
-                    : this.localField;
-            },
             selectedColor() {
-                let colors = this.field.colors || defaultColors;
                 let currentColorCode = this.newValue || false;
 
                 if (!currentColorCode) {
                     return null;
                 }
 
-                let selectedColorItem = colors.filter( item => item.value === currentColorCode )[0];
+                let selectedColorItem = this.findColorData(currentColorCode);
                 return selectedColorItem ? selectedColorItem.color : null;
             }
         }
