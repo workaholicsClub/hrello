@@ -55,8 +55,8 @@
                         <v-btn fab small @click="addNewContent('comment')"><v-icon>mdi-comment-outline</v-icon></v-btn>
                     </v-container>
                     <v-container class="p-0 pr-1 d-flex justify-content-end align-items-center" v-for="fieldType in fieldTypes" :key="fieldType.value">
-                        <v-label small @click="addNewField(fieldType.value)">{{fieldType.buttonText}}</v-label>
-                        <v-btn fab small @click="addNewField(fieldType.value)"><v-icon>{{fieldType.icon}}</v-icon></v-btn>
+                        <v-label small @click="addNewField(fieldType)">{{fieldType.buttonText}}</v-label>
+                        <v-btn fab small @click="addNewField(fieldType)"><v-icon>{{fieldType.icon}}</v-icon></v-btn>
                     </v-container>
                 </v-speed-dial>
 
