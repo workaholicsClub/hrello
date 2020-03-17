@@ -2,8 +2,10 @@ import Vue from 'vue'
 import Vuetify from 'vuetify/lib';
 import DatetimePicker from 'vuetify-datetime-picker'
 import VueGoogleApi from 'vue-google-api'
+import Rollbar from 'vue-rollbar'
 
 const useGoogleServices = false;
+const isProduction = /localhost|127\.0\.0/.test(location.href) || false;
 
 const gapiConfig = useGoogleServices
     ? {
@@ -20,14 +22,33 @@ const gapiConfig = useGoogleServices
         clientId: '401657247398-upt85a2i2spf4f61sfff5g6405cus68m.apps.googleusercontent.com',
     };
 
-
 Vue.use(Vuetify);
 Vue.use(DatetimePicker);
 Vue.use(VueGoogleApi, gapiConfig);
+Vue.use(Rollbar, {
+    accessToken: '62e0891d2c9d41e6971d135094781b74',
+    captureUncaught: true,
+    captureUnhandledRejections: true,
+    enabled: true,
+    environment: isProduction ? 'production' : 'development',
+    payload: {
+        client: {
+            javascript: {
+                code_version: '1.0',
+                source_map_enabled: false,
+                guess_uncaught_frames: false
+            }
+        }
+    }
+});
 
 import BoardPage from './BoardPage.vue'
 
 Vue.config.productionTip = false;
+
+Vue.config.errorHandler = function (err) {
+    Vue.rollbar.error(err);
+};
 
 Vue.prototype.$isDesktop = function () {
     let desktopMobileBreakpoint = this.$vuetify.breakpoint.thresholds.sm;

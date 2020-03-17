@@ -20,6 +20,7 @@
     "vue-async-computed": "^3.7.0",
     "vue-dragscroll": "^1.10.2",
     "vue-google-api": "^0.2.0",
+    "vue-rollbar": "^1.0.0",
     "vuedraggable": "^2.23.2",
     "vuetify": "^2.1.0",
     "vuetify-datetime-picker": "^2.1.1"
