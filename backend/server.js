@@ -1,12 +1,17 @@
 'use strict';
 
 const express = require('express');
+const fileupload = require('express-fileupload')
+const shortid = require('shortid');
 const MongoClient = require('mongodb').MongoClient;
+
 const boardRoutes = require('./routes/board');
 const userRoutes = require('./routes/user');
 const cardRoutes = require('./routes/card');
 const statusRoutes = require('./routes/status');
-const shortid = require('shortid');
+const eventRoutes = require('./routes/event');
+const fieldRoutes = require('./routes/field');
+const fileRoutes = require('./routes/file');
 
 const PORT = 3000;
 const HOST = '0.0.0.0';
@@ -22,26 +27,47 @@ async function connectToDatabase (host, port, dbName) {
 
 (async function () {
     const app = express();
-    app.use(express.json());
+    app.use(
+        express.json(),
+        fileupload()
+    );
 
     const db = await connectToDatabase(DB_HOST, DB_PORT, DB_NAME);
 
     app.get('/api/board/list', boardRoutes.list(db));
     app.post('/api/board/add', boardRoutes.add(db));
     app.post('/api/board/update', boardRoutes.update(db));
+    app.post('/api/board/delete', boardRoutes.delete(db));
 
     app.get('/api/status/list', statusRoutes.list(db));
-    app.get('/api/status/archive', statusRoutes.archive(db));
+    app.get('/api/status/delete', statusRoutes.delete(db));
     app.post('/api/status/add', statusRoutes.add(db));
     app.post('/api/status/update', statusRoutes.update(db));
 
     app.get('/api/card/list', cardRoutes.list(db));
-    app.get('/api/card/archive', cardRoutes.archive(db));
+    app.get('/api/card/listArchive', cardRoutes.listArchive(db))
+    app.get('/api/card/findOne', cardRoutes.findOne(db));
+    app.get('/api/card/blacklist', cardRoutes.blacklist(db));
+    app.get('/api/card/whitelist', cardRoutes.whitelist(db));
+    app.get('/api/card/finishedlist', cardRoutes.finishedlist(db));
+    app.get('/api/card/delete', cardRoutes.delete(db));
     app.post('/api/card/add', cardRoutes.add(db));
     app.post('/api/card/update', cardRoutes.update(db));
 
     app.post('/api/user/add', userRoutes.add(db));
     app.post('/api/user/login', userRoutes.login(db));
+
+    app.get('/api/event/listTimetable', eventRoutes.listTimetable(db));
+    app.get('/api/event/listGlobal', eventRoutes.listGlobal(db));
+    app.post('/api/event/addGlobal', eventRoutes.addGlobal(db));
+    app.post('/api/event/addCardless', eventRoutes.addCardless(db));
+    app.get('/api/event/deleteCardless', eventRoutes.deleteCardless(db));
+
+    app.get('/api/field/listGlobal', fieldRoutes.listGlobal(db));
+    app.post('/api/field/updateGlobal', fieldRoutes.updateGlobal(db));
+    app.post('/api/field/addGlobal', fieldRoutes.addGlobal(db));
+
+    app.post('/api/file', fileRoutes.upload(db));
 
     app.get('/api/id/generate', function (request, response) {
         response.send({id: shortid.generate()});
