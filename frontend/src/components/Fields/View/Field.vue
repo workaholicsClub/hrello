@@ -18,28 +18,27 @@
                                 hide-details></v-checkbox>
                     </v-container>
 
-                    <v-container v-if="field.fieldType == 'file'" class="p-0">
-                        <v-container v-if="field && field.file" class="p-0">
+                    <v-container v-if="field.fieldType == 'file'" class="p-1 pb-0">
+                        <v-sheet v-if="field && field.file" class="mx-2 my-0 align-items-center">
                             <v-icon>mdi-paperclip</v-icon>
-                            <v-label>{{field.name}}</v-label>
+                            <v-label class="mb-0">{{field.name}}</v-label>
                             <v-btn link :href="getDownloadUrl(field)" color="success" class="ml-4 download-btn" text>
                                 {{field.file.name}}
                                 <v-icon right dark>mdi-cloud-download</v-icon>
                             </v-btn>
-                        </v-container>
+                        </v-sheet>
 
-                        <v-row class="pt-2 pl-4" v-else>
-                            <v-col cols="12" md="9" class="p-0">
-                                <v-file-input v-model="file" :label="field.name" placeholder="Выбрать файл" hide-details dense full-width outlined></v-file-input>
-                            </v-col>
-                            <v-col cols="12" md="3" class="p-0">
-                                <v-btn @click="sendFileUpload" text color="success" :disabled="!file" :loading="fileUploadStarted" class="ml-8 ml-md-0">
-                                    Прикрепить
-                                    <v-icon right dark>mdi-cloud-upload</v-icon>
-                                </v-btn>
-                            </v-col>
-                        </v-row>
-
+                        <v-sheet v-else class="w-100">
+                            <v-label>Прикрепить файл</v-label>
+                            <v-file-input class="mt-4" v-model="file" :label="field.name" placeholder="Выбрать файл" hide-details dense full-width outlined>
+                                <template v-slot:append>
+                                    <v-btn @click="sendFileUpload" text small color="success" :disabled="!file" :loading="fileUploadStarted">
+                                        Прикрепить
+                                        <v-icon right dark>mdi-cloud-upload</v-icon>
+                                    </v-btn>
+                                </template>
+                            </v-file-input>
+                        </v-sheet>
                     </v-container>
 
                     <div v-if="field.fieldType == 'mark'" class="marks-field px-3 pt-2">

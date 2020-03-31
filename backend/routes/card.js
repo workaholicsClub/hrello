@@ -81,10 +81,22 @@ module.exports = {
         return async (request, response) => {
             let cardsCollection = db.collection('cards');
             let boardId = request.query.boardId || false;
+            let guestId = request.query.guestId || false;
+
             let cards = [];
             if (boardId) {
                 cards = await cardsCollection.find({
                     boardId: boardId,
+                    archive: {$in: [null, false]},
+                    whitelist: {$in: [null, false]},
+                    blacklist: {$in: [null, false]},
+                    finishedlist: {$in: [null, false]},
+                    deleted: {$in: [null, false]}
+                }).toArray();
+            }
+            else if (guestId) {
+                cards = await cardsCollection.find({
+                    guestIds: { $elemMatch: {$eq: guestId} },
                     archive: {$in: [null, false]},
                     whitelist: {$in: [null, false]},
                     blacklist: {$in: [null, false]},

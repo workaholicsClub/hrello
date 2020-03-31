@@ -12,7 +12,12 @@
         </v-container>
         <v-container fill-height fluid v-else-if="!user">
             <v-row align="center" justify="center">
-                <v-btn x-large dark @click="login">Вход с помощью Google</v-btn>
+                <login
+                        :error="loginError"
+                        @login="login"
+                        @register="register"
+                        @google="googleLogin"
+                ></login>
             </v-row>
         </v-container>
         <v-container fill-height v-else-if="hasNoBoards">
@@ -48,16 +53,65 @@
                     :is-desktop="isDesktop"
                     :title="currentTitle"
                     :show-back="showBack"
-                    :allow-title-edit="isBoardShown && !showArchive"
+                    :allow-title-edit="isBoardShown"
                     @drawer="toggleDrawer"
                     @back="goBack"
                     @input="setBoardTitle"
-            ></Header>
-            <CardDetails v-if="currentCard" :card="currentCard" :key="cardRedrawIndex"></CardDetails>
+            >
+                <template v-slot:menu v-if="currentCard">
+                    <v-menu bottom left offset-x @click.native.stop.prevent>
+                        <template v-slot:activator="{ on }">
+                            <v-btn icon text v-on="on" @click.stop><v-icon>mdi-dots-vertical</v-icon></v-btn>
+                        </template>
+                        <card-menu :card="currentCard"></card-menu>
+                    </v-menu>
+                </template>
+                <template v-slot:menu v-else-if="isBoardShown">
+                    <v-menu bottom left offset-x @click.native.stop.prevent>
+                        <template v-slot:activator="{ on }">
+                            <v-btn icon text v-on="on" @click.stop><v-icon>mdi-dots-vertical</v-icon></v-btn>
+                        </template>
+                        <board-menu :board="currentBoard"></board-menu>
+                    </v-menu>
+                </template>
+            </Header>
+            <CardDetails v-if="currentCard" :card="currentCard" :key="cardRedrawIndex" :statuses="statuses" :user="user"></CardDetails>
             <CardArchive v-else-if="showArchive" :type="showArchive" :user="user" :boards="boards" :is-loading="archiveLoading" :cards="whitelistCards"></CardArchive>
             <Timetable v-else-if="showTimetable" :is-desktop="isDesktop" :grouped-events="timetableEvents"></Timetable>
             <Board v-else :is-desktop="isDesktop" :statuses="statuses" :cards="cards" :key="currentBoardId"></Board>
         </v-container>
+        <v-dialog v-model="shareDialog" persistent max-width="600px">
+            <v-card>
+                <v-card-title>
+                    <span class="headline" v-if="shareCard">Ссылка на карточку</span>
+                    <span class="headline" v-if="shareBoard">Ссылка на доску</span>
+                </v-card-title>
+                <v-card-text>
+                    <v-container>
+                        <v-textarea
+                                v-if="shareCard"
+                                outlined
+                                hide-details
+                                readonly
+                                rows="3"
+                                :value="cardShareLink"
+                        ></v-textarea>
+                        <v-textarea
+                                v-if="shareBoard"
+                                outlined
+                                hide-details
+                                readonly
+                                rows="3"
+                                :value="boardShareLink"
+                        ></v-textarea>
+                    </v-container>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="pink darken-1" dark @click="closeShareDialog">Закрыть</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-app>
 
 </template>
@@ -69,6 +123,10 @@
     import CardDetails from "./components/CardDetails";
     import Timetable from "./components/Timetable";
     import CardArchive from "./components/CardArchive";
+    import Login from "./components/Login";
+
+    import CardMenu from "./components/Menus/CardMenu";
+    import BoardMenu from "./components/Menus/BoardMenu";
 
     import CardsMixin from "./mixins/cards";
     import BoardsMixin from "./mixins/boards";
@@ -89,7 +147,10 @@
             Sidebar,
             Board,
             CardDetails,
-            Timetable
+            Login,
+            Timetable,
+            CardMenu,
+            BoardMenu
         },
         mixins: [
             CardsMixin,
@@ -114,7 +175,7 @@
         watch: {
             currentBoardId: async function () {
                 this.reloadBoardData();
-            }
+            },
         },
         methods: {
             toggleDrawer() {
@@ -174,6 +235,14 @@
 
                 let newHash = '!/' + urlHashParts.join('/');
                 this.changeUrlAndAvoidResetByVue(newHash);
+            },
+
+            async processInvitation() {
+                let [,, inviteType, targetId] = location.hash.split('/');
+                await axios.post(`/api/invite/${inviteType}`, {userId: this.user.id, targetId: targetId});
+                if (inviteType === 'board') {
+                    this.changeUrlAndAvoidResetByVue('!/'+targetId);
+                }
             },
 
             async loadGlobalObject(objectCode) {
@@ -239,6 +308,22 @@
                     this.loadTimetableEvents();
                 }
             },
+
+            showShareBoardDialog(board) {
+                this.shareCard = null;
+                this.shareBoard = board;
+                this.shareDialog = true;
+            },
+            showShareCardDialog(card) {
+                this.shareCard = card;
+                this.shareBoard = null;
+                this.shareDialog = true;
+            },
+            closeShareDialog() {
+                this.shareDialog = false;
+                this.shareBoard = null;
+                this.shareCard = null;
+            }
         },
         computed: {
             currentCardTitle() {
@@ -280,23 +365,40 @@
             showBack() {
                 return Boolean(this.currentCard);
             },
+            cardShareLink() {
+                return this.shareCard ? location.origin + '/b#!/invite/card/'+this.shareCard.id : false;
+            },
+            boardShareLink() {
+                return this.shareBoard ? location.origin + '/b#!/invite/board/'+this.shareBoard.id : false;
+            },
+            isInvitation() {
+                return location.hash.indexOf('invite') !== -1;
+            }
         },
         async created() {
             moment.locale('ru');
 
-            let isUserSignedIn = await this.checkAndLoadAuthorizedUser();
-
-            if (isUserSignedIn) {
-                await this.getGoogleToken();
-                await this.loadBoards();
-                await this.loadUrlData();
+            let localUser = this.checkAndLoadAuthorizedLocalUser();
+            if (localUser) {
+                this.finishLogin(localUser);
+                await this.afterLogin();
+            }
+            else {
+                let isGoogleUserSignedIn = await this.checkAndLoadAuthorizedGoogleUser();
+                if (isGoogleUserSignedIn) {
+                    await this.afterLogin();
+                }
             }
 
             this.initFinished = true;
         },
         mounted() {
+            this.$root.$on('shareCard', this.showShareCardDialog);
+            this.$root.$on('shareBoard', this.showShareBoardDialog);
         },
         beforeDestroy() {
+            this.$root.$off('shareCard', this.showShareCardDialog);
+            this.$root.$off('shareBoard', this.showShareBoardDialog);
         }
     }
 </script>

@@ -8,6 +8,8 @@
             <v-btn v-if="allowTitleEdit && !isTitleEditing" icon @click="isTitleEditing = true"><v-icon>mdi-pencil</v-icon></v-btn>
             <v-btn v-if="allowTitleEdit && isTitleEditing" icon @click="isTitleEditing = false"><v-icon>mdi-check</v-icon></v-btn>
         </v-toolbar-title>
+        <v-spacer/>
+        <slot name="menu"></slot>
     </v-app-bar>
 </template>
 <script>

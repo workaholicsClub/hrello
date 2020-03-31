@@ -1,22 +1,24 @@
 <template>
     <v-sheet>
-        <div v-if="isEditing">
+        <div v-if="record.isEditing">
             <v-list-item  class="mb-1 p-0">
                 <v-list-item-content class="dash-bordered" :class="{'py-2': record.type !== 'comment', 'py-0': record.type === 'comment'}">
-                    <edit-field v-model="newRecord" v-if="record.type === 'field'"></edit-field>
-                    <edit-comment v-model="newRecord.text" v-if="record.type === 'comment'"></edit-comment>
-                    <edit-event v-model="newRecord" v-if="record.type === 'event'"></edit-event>
+                    <edit-field v-model="newRecord" v-if="record.type === 'field'" :user-is-author="userIsAuthor"></edit-field>
+                    <edit-comment v-model="newRecord" v-if="record.type === 'comment'" :user-is-author="userIsAuthor"></edit-comment>
+                    <edit-event v-model="newRecord" v-if="record.type === 'event'" :card="card" :user-is-author="userIsAuthor"></edit-event>
                 </v-list-item-content>
                 <v-list-item-action>
                     <v-btn color="success" icon @click="sendSaveRecordChange"><v-icon>mdi-check</v-icon></v-btn>
-                    <v-btn color="error" icon @click="isEditing = false"><v-icon>mdi-cancel</v-icon></v-btn>
+                    <v-btn color="error" icon @click="record.isEditing = false"><v-icon>mdi-cancel</v-icon></v-btn>
                 </v-list-item-action>
             </v-list-item>
         </div>
         <div v-else>
             <v-list-item class="mb-1 p-0">
                 <v-list-item-content class="bordered p-0 pb-2">
-                    <view-comment :comment="record" v-if="record.type === 'comment'"></view-comment>
+                    <view-comment v-if="record.type === 'comment'"
+                            :comment="record"
+                    ></view-comment>
                     <view-field v-if="record.type === 'field'"
                             :field="record"
                             :value="record.value"
@@ -26,16 +28,21 @@
                             @input="sendUpdateRecordValue"
                             @inputField="sendSaveRecordChange"
                     ></view-field>
-                    <view-event :event="record" :value="record.value" v-if="record.type === 'event'" @input="sendUpdateRecordValue"></view-event>
+                    <view-event v-if="record.type === 'event'"
+                            :event="record"
+                            :value="record.value"
+
+                            @input="sendUpdateEventValue"
+                    ></view-event>
                 </v-list-item-content>
                 <v-list-item-action class="d-flex py-0 my-0">
                     <v-btn icon text class="handle"><v-icon>mdi-cursor-move</v-icon></v-btn>
-                    <v-menu bottom right offset-x @click.native.stop.prevent>
+                    <v-menu bottom right offset-x @click.native.stop.prevent v-if="showActions">
                         <template v-slot:activator="{ on }">
                             <v-btn icon text v-on="on" @click.stop><v-icon>mdi-dots-horizontal</v-icon></v-btn>
                         </template>
                         <v-list>
-                            <v-list-item @click="isEditing = true">
+                            <v-list-item @click="sendStartEditingEvent()">
                                 <v-list-item-icon>
                                     <v-icon>mdi-pencil</v-icon>
                                 </v-list-item-icon>
@@ -73,7 +80,7 @@
 
     export default {
         name: "ContentElement",
-        props: ['card', 'record', 'showEditor'],
+        props: ['card', 'record', 'showEditor', 'userIsAuthor'],
         components: {
             EditComment,
             EditField,
@@ -83,13 +90,7 @@
             ViewEvent
         },
         data() {
-            let isEditing = false;
-            if (this.showEditor) {
-                isEditing = true;
-            }
-
             return {
-                isEditing: isEditing,
                 newRecord: false,
             }
         },
@@ -97,11 +98,6 @@
             this.resetChanges();
         },
         watch: {
-            showEditor() {
-                if (this.showEditor) {
-                    this.isEditing = true;
-                }
-            },
             record() {
                 this.resetChanges();
             }
@@ -110,13 +106,26 @@
             resetChanges() {
                 this.newRecord = clone(this.record);
             },
+            sendUpdateEventValue(newValue, event) {
+                if (event) {
+                    this.newRecord = event;
+                }
+                this.sendUpdateRecordValue(newValue);
+            },
             sendUpdateRecordValue(newValue) {
                 this.newRecord.value = newValue;
                 this.sendSaveRecordChange();
             },
             sendSaveRecordChange() {
+                this.newRecord.isEditing = false;
                 this.$root.$emit('updateContent', this.newRecord, this.record, this.card);
                 this.isEditing = false;
+            },
+            sendStartEditingEvent() {
+                this.$root.$emit('startRecordEdit', this.record, this.card);
+            },
+            sendStopEditingEvent() {
+                this.$root.$emit('stopRecordEdit', this.record, this.card);
             },
             sendDeleteRecord() {
                 let deleteDefault = false;
@@ -143,7 +152,10 @@
             }
         },
         computed: {
-
+            showActions() {
+                let isNotComment = this.record.type !== 'comment';
+                return isNotComment || this.userIsAuthor;
+            }
         }
     }
 </script>

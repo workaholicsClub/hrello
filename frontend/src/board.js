@@ -48,6 +48,8 @@ Vue.config.productionTip = false;
 
 Vue.config.errorHandler = function (err) {
     Vue.rollbar.error(err);
+    let a = console;
+    a.error(err);
 };
 
 Vue.prototype.$isDesktop = function () {

@@ -1,4 +1,5 @@
 import axios from "axios";
+import shortid from "shortid";
 import {clone} from "../unsorted/Helpers";
 
 export default {
@@ -9,6 +10,8 @@ export default {
             whitelistCards: [],
             archiveType: 'whitelist',
             archiveLoading: false,
+            shareCard: null,
+            shareDialog: false,
         }
     },
     methods: {
@@ -83,9 +86,11 @@ export default {
                 this.$set(card, 'content', []);
             }
 
+            content.id = shortid.generate();
             content.date = new Date();
             content.author = this.user;
-            content.isNew = true;
+            content.isEditing = true;
+            content.version = 1;
 
             let newCardContent = card.content.concat();
             newCardContent.unshift(content);
@@ -97,9 +102,13 @@ export default {
         async updateContent(newContent, oldContent, card) {
             let contentIndex = card.content.indexOf(oldContent);
 
+            if (!newContent.id) {
+                newContent.id = shortid.generate();
+            }
+
             newContent.valueAuthor = this.user;
             newContent.valueDate = new Date();
-            delete newContent.isNew;
+            newContent.version = newContent.version ? newContent.version + 1 : 1;
 
             let needToAddNewDefaultField = newContent.isGlobal && !newContent.linkToDefaultById;
             let needToUpdateDefaultField = newContent.isGlobal && newContent.linkToDefaultById;
@@ -211,14 +220,16 @@ export default {
 
             return response.data.card;
         },
+        async saveCard(cardToSave) {
+            let cardIndex = this.cards.findIndex(card => card.id === cardToSave.id);
+            if (cardIndex !== -1) {
+                this.cards[cardIndex] = cardToSave;
+            }
 
-        async saveCard(card) {
-            return axios.post('/api/card/update', card);
+            return axios.post('/api/card/update', cardToSave);
         },
-
         findCard(cardId) {
-            let foundCards = this.cards.filter(card => card.id === cardId);
-            return foundCards.length > 0 ? foundCards[0] : false;
+            return this.cards.find(card => card.id === cardId) || false;
         },
         getNextStatusForCard(card) {
             let nextStatus = this.statuses.reduce((result, iteratedStatus) => {
@@ -258,7 +269,7 @@ export default {
     computed: {
         currentCardId() {
             return this.currentCard ? this.currentCard.id : false;
-        }
+        },
     },
     mounted() {
         this.$root.$on('addCard', this.addCard);

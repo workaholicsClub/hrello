@@ -1,4 +1,10 @@
 const shortid = require('shortid');
+const crypto = require('crypto');
+
+function md5(string) {
+    return crypto.createHash('md5').update(string).digest("hex");
+}
+
 
 module.exports = {
     add: (db) => {
@@ -8,6 +14,7 @@ module.exports = {
 
             userData.id = shortid.generate();
             userData.earlyAdopter = true;
+            userData.dateRegistered = (new Date).toString();
 
             let result = await users.insertOne(userData);
             let insertedUserRecord = result.ops[0];
@@ -18,6 +25,68 @@ module.exports = {
         }
     },
     login: (db) => {
+        return async (request, response) => {
+            let email = request.body.email;
+            let passwordHash = md5(request.body.password);
+
+            let users = db.collection('users');
+            let loadedUserData = await users.findOne({ email: email, passwordHash: passwordHash });
+            let isLoaded = Boolean(loadedUserData);
+
+            if (isLoaded) {
+                delete loadedUserData.passwordHash;
+            }
+
+            response.send({
+                user: loadedUserData,
+                error: isLoaded ? false : 'Электропочта или пароль не подходят',
+            });
+        };
+    },
+    register: (db) => {
+        return async (request, response) => {
+            let fullName = request.body.name;
+            let email = request.body.email;
+            let passwordHash = md5(request.body.password);
+            let [firstName, familyName] = fullName.split(' ');
+
+            let emailHash = md5( email.toLowerCase() );
+            let gravatarUrl = "https://www.gravatar.com/avatar/"+emailHash+".jpg?d=identicon";
+
+            let userData = {
+                "id" : shortid.generate(),
+                "dateRegistered": (new Date).toString(),
+                "fullName" : fullName,
+                "firstName" : firstName,
+                "familyName" : familyName,
+                "imageUrl" : gravatarUrl,
+                "email" : email,
+                "passwordHash": passwordHash,
+                "earlyAdopter" : true
+            };
+
+            let users = db.collection('users');
+
+            let existingUser = await users.findOne({ email: email });
+            if (existingUser) {
+                response.send({
+                    user: false,
+                    error: 'Пользователь с такой электропочтой уже зарегистрирован'
+                });
+            }
+            else {
+                let insertResult = await users.insertOne(userData);
+                let userRecord = insertResult.ops[0] || false;
+                delete userRecord.passwordHash;
+
+                response.send({
+                    user: userRecord,
+                    error: false
+                });
+            }
+        };
+    },
+    googleLogin: (db) => {
         return async (request, response) => {
             let users = db.collection('users');
             let userDataInRequest = request.body;
@@ -37,10 +106,16 @@ module.exports = {
                 loadedUserData.earlyAdopter = true;
             }
 
+            if (!loadedUserData.dateRegistered) {
+                loadedUserData.dateRegistered = new Date;
+            }
+
             let userRecord = false;
 
             if (!loadedUserData.id) {
                 loadedUserData.id = shortid.generate();
+                loadedUserData.dateRegistered = (new Date).toString();
+
                 let insertResult = await users.insertOne(loadedUserData);
                 userRecord = insertResult.ops[0] || false;
             }

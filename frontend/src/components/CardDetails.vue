@@ -5,22 +5,40 @@
                     <v-text-field
                             v-model="card.name"
                             label="ФИО кандидата"
-                            @input="$root.$emit('cardInput', card)"
+                            @input="sendSaveCardEvent"
                     ></v-text-field>
+
+                    <v-select
+                            v-model="card.statusId"
+                            :items="statuses"
+                            item-text="title"
+                            item-value="id"
+                            label="Текущий этап"
+                            @change="sendSaveCardEvent"
+                    ></v-select>
 
                     <draggable tag="div" class="v-list content-list v-sheet v-sheet--tile theme--light" role="list" v-model="card.content" handle=".handle">
                         <content-element
-                                v-for="record in card.content" :key="record.id"
-                                :card="card" :record="record" :show-editor="record.isNew || false"></content-element>
+                                v-for="(record, index) in visibleRecords"
+                                :key="getRecordKey(record, index)"
+                                :card="card" :record="record" :show-editor="record.isEditing || false"
+                                :user-is-author="userIsAuthor(record)"
+                        ></content-element>
                     </draggable>
                 </v-container>
 
                 <v-toolbar class="card-toolbar d-none d-sm-flex mb-4" bottom dark dense floating>
                     <v-tooltip class="mb-2" top>
                         <template v-slot:activator="{ on }">
-                            <v-btn small icon @click="addNewContent('event')" v-on="on"><v-icon>mdi-calendar</v-icon></v-btn>
+                            <v-btn small icon @click="addNewEvent('basic')" v-on="on"><v-icon>mdi-calendar</v-icon></v-btn>
                         </template>
                         <span>Событие</span>
+                    </v-tooltip>
+                    <v-tooltip class="mb-2" top>
+                        <template v-slot:activator="{ on }">
+                            <v-btn small icon @click="addNewEvent('reminder')" v-on="on"><v-icon>mdi-alarm</v-icon></v-btn>
+                        </template>
+                        <span>Напоминание</span>
                     </v-tooltip>
 
                     <v-tooltip class="mb-2" top>
@@ -30,7 +48,7 @@
                         <span>Комментарий</span>
                     </v-tooltip>
 
-                    <v-tooltip class="mb-2" top v-for="fieldType in fieldTypes" :key="'btn'+fieldType.value">
+                    <v-tooltip class="mb-2" top v-for="(fieldType, index) in fieldTypes" :key="'btn'+fieldType.value+index">
                         <template v-slot:activator="{ on }">
                             <v-btn small icon @click="addNewField(fieldType)" v-on="on"><v-icon>{{fieldType.icon}}</v-icon></v-btn>
                         </template>
@@ -47,8 +65,12 @@
                     </template>
 
                     <v-container class="p-0 pr-1 d-flex justify-content-end align-items-center">
-                        <v-label small @click="addNewContent('event')">Событие</v-label>
-                        <v-btn fab small @click="addNewContent('event')"><v-icon>mdi-calendar</v-icon></v-btn>
+                        <v-label small @click="addNewEvent('basic')">Событие</v-label>
+                        <v-btn fab small @click="addNewEvent('basic')"><v-icon>mdi-calendar</v-icon></v-btn>
+                    </v-container>
+                    <v-container class="p-0 pr-1 d-flex justify-content-end align-items-center">
+                        <v-label small @click="addNewEvent('reminder')">Напоминание</v-label>
+                        <v-btn fab small @click="addNewEvent('reminder')"><v-icon>mdi-alarm</v-icon></v-btn>
                     </v-container>
                     <v-container class="p-0 pr-1 d-flex justify-content-end align-items-center">
                         <v-label small @click="addNewContent('comment')">Комментарий</v-label>
@@ -71,7 +93,7 @@
 
     export default {
         name: "CardDetails",
-        props: ['card'],
+        props: ['card', 'statuses', 'user'],
         components: {
             ContentElement,
             draggable
@@ -87,9 +109,25 @@
             }
         },
         methods: {
+            getRecordKey(record, index) {
+                let version = record.version || 0;
+                let isEditing = record.isEditing ? 1 : 0;
+                return [record.id, index, version, isEditing].join('_');
+            },
+            userIsAuthor(record) {
+                let hasAuthor = Boolean(record.author);
+                return  hasAuthor && record.author.id === this.user.id;
+            },
+            isVisible(record) {
+                let isCurrentUserAuthor = this.userIsAuthor(record);
+                let isRecordPublic = !record.isPrivate;
+
+                return isCurrentUserAuthor || isRecordPublic;
+            },
             resetField() {
                 this.newField = {
                     name: '',
+                    author: this.user,
                     type: 'field',
                     fieldType: false,
                     isGlobal: false,
@@ -98,12 +136,15 @@
             resetComment() {
                 this.newComment = {
                     type: 'comment',
+                    author: this.user,
                     text: null,
                 };
             },
             resetEvent() {
                 this.newEvent = {
                     type: 'event',
+                    eventType: 'basic',
+                    author: this.user,
                     isGlobal: false
                 };
             },
@@ -115,13 +156,32 @@
                 this.$root.$emit('newContentCard', record, this.card);
                 this.resetField();
             },
+            addNewEvent(type) {
+                this.newEvent.eventType = type;
+                if (type === 'reminder') {
+                    this.newEvent.dateStart = Date.now();
+                    this.newEvent.repeatPeriodSeconds = 0;
+                    this.newEvent.text = '';
+                    this.newEvent.targetType = 'email';
+                    this.newEvent.targetContact = '';
+                    this.newEvent.isActive = true;
+                }
+
+                this.addNewContent('event');
+            },
             addNewField(defaultFieldData) {
                 this.newField.fieldType = defaultFieldData.value;
                 this.newField.name  = defaultFieldData.fieldName;
                 this.addNewContent('field');
+            },
+            sendSaveCardEvent() {
+                this.$root.$emit('cardInput', this.card);
             }
         },
         computed: {
+            visibleRecords() {
+                return this.card.content ? this.card.content.filter(this.isVisible) : [];
+            }
         },
         created() {
             this.resetField();

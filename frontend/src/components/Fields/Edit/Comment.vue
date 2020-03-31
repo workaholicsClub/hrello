@@ -16,8 +16,12 @@
                 <v-btn icon :class="{ 'is-active': isActive.code() }" @click="commands.code"><v-icon>mdi-code-tags</v-icon></v-btn>
             </v-toolbar>
         </editor-menu-bar>
-
         <editor-content class="editor__content fill-height" :editor="editor" />
+        <v-row v-if="userIsAuthor">
+            <v-col class="d-flex pb-0" cols="12" sm="12">
+                <v-switch class="ma-2" v-model="value.isPrivate" label="Показывать только мне" hide-details></v-switch>
+            </v-col>
+        </v-row>
     </v-sheet>
 </template>
 <script>
@@ -30,7 +34,7 @@
 
     export default {
         name: "EditComment",
-        props: ['value'],
+        props: ['value', 'userIsAuthor'],
         components: {
             EditorContent,
             EditorMenuBar,
@@ -39,7 +43,7 @@
             return {
                 newComment: false,
                 editor: new Editor({
-                    content: this.value,
+                    content: this.value.text,
                     extensions: [
                         new Bold(),
                         new Italic(),
@@ -54,7 +58,8 @@
                         new Code(),
                     ],
                     onUpdate: ({getHTML}) => {
-                        this.$emit('input', getHTML());
+                        this.value.text = getHTML();
+                        this.$emit('input', this.value);
                     }
                 }),
             }

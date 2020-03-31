@@ -4,6 +4,8 @@ export default {
     data() {
         return {
             currentBoard: false,
+            shareBoard: false,
+
             boards: [],
         }
     },
@@ -90,7 +92,7 @@ export default {
             return this.boards.map(board => board.id);
         },
         isBoardShown() {
-            return this.currentBoard && !this.showTimetable && !this.currentCard;
+            return this.currentBoard && !this.showTimetable && !this.currentCard && !this.showArchive;
         },
         hasNoBoards() {
             return this.boards.length === 0;

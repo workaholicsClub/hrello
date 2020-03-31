@@ -25,44 +25,7 @@
                         <template v-slot:activator="{ on }">
                             <v-btn icon text v-on="on" @click.stop><v-icon>mdi-dots-horizontal</v-icon></v-btn>
                         </template>
-                        <v-list>
-                            <v-list-item @click="sendMoveBackCardEvent">
-                                <v-list-item-icon>
-                                    <v-icon>mdi-undo-variant</v-icon>
-                                </v-list-item-icon>
-                                <v-list-item-title>В предыдущий статус</v-list-item-title>
-                            </v-list-item>
-                            <v-list-item @click="sendMoveCardEvent">
-                                <v-list-item-icon>
-                                    <v-icon>mdi-redo-variant</v-icon>
-                                </v-list-item-icon>
-                                <v-list-item-title>В следующий статус</v-list-item-title>
-                            </v-list-item>
-                            <v-list-item @click="sendFinishedListEvent">
-                                <v-list-item-icon>
-                                    <v-icon>mdi-check-bold</v-icon>
-                                </v-list-item-icon>
-                                <v-list-item-title>В штат</v-list-item-title>
-                            </v-list-item>
-                            <v-list-item @click="sendWhiteListEvent">
-                                <v-list-item-icon>
-                                    <v-icon>mdi-archive-arrow-down-outline</v-icon>
-                                </v-list-item-icon>
-                                <v-list-item-title>В резерв</v-list-item-title>
-                            </v-list-item>
-                            <v-list-item @click="sendBlackListEvent">
-                                <v-list-item-icon>
-                                    <v-icon>mdi-cancel</v-icon>
-                                </v-list-item-icon>
-                                <v-list-item-title>В черный список</v-list-item-title>
-                            </v-list-item>
-                            <v-list-item @click="sendDeleteCardEvent">
-                                <v-list-item-icon>
-                                    <v-icon>mdi-delete</v-icon>
-                                </v-list-item-icon>
-                                <v-list-item-title>Удалить</v-list-item-title>
-                            </v-list-item>
-                        </v-list>
+                        <card-menu :card="card"></card-menu>
                     </v-menu>
 
                     <v-btn v-if="almostFinished && isActiveCard" icon depressed color="success" @click.stop="sendFinishedListEvent"><v-icon>mdi-check-bold</v-icon></v-btn>
@@ -77,13 +40,15 @@
 <script>
     import moment from 'moment';
     import {getDefaultColors} from "../unsorted/Helpers";
+    import CardMenu from "./Menus/CardMenu";
 
     let defaultColors = getDefaultColors();
 
     export default {
         name: 'Card',
-        props: ['card', 'almostFinished', 'boards'],
+        props: ['card', 'almostFinished', 'boards', 'statuses'],
         components: {
+            CardMenu
         },
         data() {
             return {
@@ -92,33 +57,20 @@
             }
         },
         methods: {
-            sendSelectCardEvent() {
-                this.$root.$emit('selectCard', this.card.id);
-            },
             sendMoveCardEvent() {
                 this.$root.$emit('moveCardToNextStatus', this.card);
             },
-            sendMoveBackCardEvent() {
-                this.$root.$emit('moveCardToPrevStatus', this.card);
-            },
-            sendWhiteListEvent() {
-                this.$root.$emit('moveCardToWhiteList', this.card);
-            },
-            sendBlackListEvent() {
-                this.$root.$emit('moveCardToBlackList', this.card);
+            sendSelectCardEvent() {
+                this.$root.$emit('selectCard', this.card.id);
             },
             sendFinishedListEvent() {
                 this.$root.$emit('moveCardToFinishedList', this.card);
-            },
-            sendDeleteCardEvent() {
-                this.$root.$emit('deleteCard', this.card);
             },
             sendMoveToBoardEvent(board) {
                 this.showMenu = false;
                 this.showSubmenu = false;
                 this.$root.$emit('moveCardToBoard', this.card, board);
             }
-
         },
         computed: {
             isArchiveCard() {

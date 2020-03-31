@@ -72,7 +72,7 @@ export default {
             let statusIndex = this.getStatusIndex(targetStatus);
             if (statusIndex !== -1) {
                 let archivedStatus = this.statuses.splice(statusIndex, 1)[0];
-                return await axios.get('/api/status/archive', {
+                return await axios.get('/api/status/delete', {
                     params: {
                         statusId: archivedStatus.id
                     }

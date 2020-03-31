@@ -161,6 +161,8 @@ export default {
                     updatedField = localField;
                 }
 
+                updatedField.version++;
+
                 updatedField.file = {
                     name: file.name,
                     type: file.type
@@ -183,7 +185,6 @@ export default {
         },
         async uploadFileToOurServer(uploadData) {
             let field = uploadData.field;
-            let localField = uploadData.localField;
             let card = uploadData.card;
             let file = uploadData.file;
 
@@ -200,10 +201,9 @@ export default {
             );
 
             let updatedField = field;
+            let fieldIndex = card.content.reduce( (acc, searchField, index) => field.id === searchField.id ? index : acc, -1);
 
-            if (localField) {
-                updatedField = localField;
-            }
+            updatedField.version++;
 
             updatedField.file = {
                 name: file.name,
@@ -217,7 +217,8 @@ export default {
                 fileDate: new Date()
             };
 
-            this.saveCard(card);
+            card.content[fieldIndex] = updatedField;
+            await this.saveCard(card);
 
             this.cardRedrawIndex++;
         },
@@ -236,13 +237,26 @@ export default {
                         this.googleToken = client.getToken().access_token;
                     })
                 : null;
+        },
+
+        async startRecordEdit(record) {
+            record.isEditing = true;
+            this.cardRedrawIndex++;
+        },
+        async stopRecordEdit(record) {
+            record.isEditing = false;
+            this.cardRedrawIndex++;
         }
     },
     mounted() {
+        this.$root.$on('startRecordEdit', this.startRecordEdit);
+        this.$root.$on('stopRecordEdit', this.stopRecordEdit);
         this.$root.$on('updateFieldsOrder', this.updateFieldsOrder);
         this.$root.$on('fileUpload', this.uploadFile);
     },
     beforeDestroy() {
+        this.$root.$off('startRecordEdit', this.startRecordEdit);
+        this.$root.$off('stopRecordEdit', this.stopRecordEdit);
         this.$root.$off('updateFieldsOrder', this.updateFieldsOrder);
         this.$root.$off('fileUpload', this.uploadFile);
     }

@@ -95,7 +95,10 @@ module.exports = {
             let boards = [];
             if (userId) {
                 boards = await boardsCollection.find({
-                    userId: userId,
+                    $or: [
+                        {userId: userId},
+                        {guestIds: { $elemMatch: {$eq: userId} }}
+                    ],
                     archive: {$in: [null, false]},
                     deleted: {$in: [null, false]},
                 }).toArray();

@@ -12,6 +12,7 @@ const statusRoutes = require('./routes/status');
 const eventRoutes = require('./routes/event');
 const fieldRoutes = require('./routes/field');
 const fileRoutes = require('./routes/file');
+const inviteRoutes = require('./routes/invite');
 
 const PORT = 3000;
 const HOST = '0.0.0.0';
@@ -56,6 +57,8 @@ async function connectToDatabase (host, port, dbName) {
 
     app.post('/api/user/add', userRoutes.add(db));
     app.post('/api/user/login', userRoutes.login(db));
+    app.post('/api/user/register', userRoutes.register(db));
+    app.post('/api/user/googleLogin', userRoutes.googleLogin(db));
 
     app.get('/api/event/listTimetable', eventRoutes.listTimetable(db));
     app.get('/api/event/listGlobal', eventRoutes.listGlobal(db));
@@ -68,6 +71,9 @@ async function connectToDatabase (host, port, dbName) {
     app.post('/api/field/addGlobal', fieldRoutes.addGlobal(db));
 
     app.post('/api/file', fileRoutes.upload(db));
+
+    app.post('/api/invite/card', inviteRoutes.card(db));
+    app.post('/api/invite/board', inviteRoutes.board(db));
 
     app.get('/api/id/generate', function (request, response) {
         response.send({id: shortid.generate()});
