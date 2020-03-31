@@ -105,15 +105,15 @@
                 showPassword: false,
                 emailRules: [
                     v => Boolean(v) || 'Обязательное поле',
-                    v => /.+@.+\..+/.test(v) || 'Ошибка в адресе',
+                    v => v && /.+@.+\..+/.test(v) || 'Ошибка в адресе',
                 ],
                 passwordRules: [
                     v => Boolean(v) || 'Обязательное поле',
-                    v => v.length >= 6 || 'Не меньше 6 символов',
+                    v => v && v.length >= 6 || 'Не меньше 6 символов',
                 ],
                 nameRules: [
                     v => Boolean(v) || 'Обязательное поле',
-                    v => v.indexOf(' ') !== -1 || 'Укажите имя и фамилию'
+                    v => v && v.indexOf(' ') !== -1 || 'Укажите имя и фамилию'
                 ],
                 isRegister: false
             }

@@ -106,6 +106,10 @@
         },
         methods: {
             getBoardTitle(board, index) {
+                if (!board.title) {
+                    return 'Д'+index;
+                }
+
                 let hasTwoWords = board.title.indexOf(' ') !== -1;
                 let uppercaseTitle = board.title.toUpperCase();
 

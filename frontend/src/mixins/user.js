@@ -96,9 +96,7 @@ export default {
 
             if (isOk) {
                 await this.loadGoogleUserProfileAndUpdateLocalData();
-                this.resetBoards();
-                this.loadBoards();
-                this.reloadBoardData();
+                await this.afterLogin();
             }
         },
         async afterLogin() {
