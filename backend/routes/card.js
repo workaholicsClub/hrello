@@ -135,7 +135,10 @@ module.exports = {
 
             let boardsCollection = db.collection('boards');
             let boards = await boardsCollection.find({
-                userId: userId,
+                $or: [
+                    {userId: userId},
+                    {guestIds: { $elemMatch: {$eq: userId} }}
+                ],
             }).toArray();
             let boardIds = boards.map(board => board.id);
 
