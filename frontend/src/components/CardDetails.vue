@@ -9,6 +9,7 @@
                     ></v-text-field>
 
                     <v-select
+                            v-if="statuses"
                             v-model="card.statusId"
                             :items="statuses"
                             item-text="title"
@@ -21,8 +22,11 @@
                         <content-element
                                 v-for="(record, index) in visibleRecords"
                                 :key="getRecordKey(record, index)"
-                                :card="card" :record="record" :show-editor="record.isEditing || false"
+                                :card="card"
+                                :record="record"
+                                :show-editor="record.isEditing || false"
                                 :user-is-author="userIsAuthor(record)"
+                                :skip-global="skipGlobal"
                         ></content-element>
                     </draggable>
                 </v-container>
@@ -93,7 +97,7 @@
 
     export default {
         name: "CardDetails",
-        props: ['card', 'statuses', 'user'],
+        props: ['card', 'statuses', 'user', 'skipGlobal'],
         components: {
             ContentElement,
             draggable

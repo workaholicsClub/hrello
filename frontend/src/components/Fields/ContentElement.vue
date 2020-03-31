@@ -3,9 +3,21 @@
         <div v-if="record.isEditing">
             <v-list-item  class="mb-1 p-0">
                 <v-list-item-content class="dash-bordered" :class="{'py-2': record.type !== 'comment', 'py-0': record.type === 'comment'}">
-                    <edit-field v-model="newRecord" v-if="record.type === 'field'" :user-is-author="userIsAuthor"></edit-field>
-                    <edit-comment v-model="newRecord" v-if="record.type === 'comment'" :user-is-author="userIsAuthor"></edit-comment>
-                    <edit-event v-model="newRecord" v-if="record.type === 'event'" :card="card" :user-is-author="userIsAuthor"></edit-event>
+                    <edit-field v-if="record.type === 'field'"
+                            v-model="newRecord"
+                            :user-is-author="userIsAuthor"
+                            :skip-global="skipGlobal"
+                    ></edit-field>
+                    <edit-comment v-if="record.type === 'comment'"
+                            v-model="newRecord"
+                            :user-is-author="userIsAuthor"
+                    ></edit-comment>
+                    <edit-event v-if="record.type === 'event'"
+                            v-model="newRecord"
+                            :card="card"
+                            :user-is-author="userIsAuthor"
+                            :skip-global="skipGlobal"
+                    ></edit-event>
                 </v-list-item-content>
                 <v-list-item-action>
                     <v-btn color="success" icon @click="sendSaveRecordChange"><v-icon>mdi-check</v-icon></v-btn>
@@ -54,7 +66,7 @@
                                 </v-list-item-icon>
                                 <v-list-item-title>{{record.isGlobal ? 'Удалить поле в этой карточке' : 'Удалить поле'}}</v-list-item-title>
                             </v-list-item>
-                            <v-list-item @click="sendDeleteRecordAndDefault" v-if="record.isGlobal">
+                            <v-list-item @click="sendDeleteRecordAndDefault" v-if="record.isGlobal && !skipGlobal">
                                 <v-list-item-icon>
                                     <v-icon>mdi-delete-alert</v-icon>
                                 </v-list-item-icon>
@@ -80,7 +92,7 @@
 
     export default {
         name: "ContentElement",
-        props: ['card', 'record', 'showEditor', 'userIsAuthor'],
+        props: ['card', 'record', 'showEditor', 'userIsAuthor', 'skipGlobal'],
         components: {
             EditComment,
             EditField,

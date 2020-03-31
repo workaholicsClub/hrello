@@ -71,7 +71,7 @@
                 <v-row class="d-flex" cols="12" v-if="!skipValueField">
                     <view-event v-model="value.value" :event="value"></view-event>
                 </v-row>
-                <v-row v-else-if="userIsAuthor">
+                <v-row v-else-if="userIsAuthor && !skipGlobal">
                     <v-col class="d-flex pb-0" cols="12" sm="12">
                         <v-switch class="ma-2" v-model="value.isGlobal" :label="'Добавлять это ' + eventTypeText() + ' в новые карточки доски'" hide-details></v-switch>
                     </v-col>
@@ -104,7 +104,7 @@
 
     export default {
         name: "EditEvent",
-        props: ['card', 'value', 'skipGlobalSwitch', 'userIsAuthor'],
+        props: ['card', 'value', 'skipGlobalSwitch', 'userIsAuthor', 'skipGlobal'],
         components: {
             ViewEvent
         },

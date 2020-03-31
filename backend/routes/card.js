@@ -63,13 +63,24 @@ module.exports = {
             let cardsCollection = db.collection('cards');
             let cardId = request.query.cardId || false;
             let boardIds = request.query.boardIds || false;
+            let userId = request.query.userId || false;
             let card = false;
 
-            if (cardId && boardIds) {
-                card = await cardsCollection.findOne({
-                    id: cardId,
-                    boardId: { $in: boardIds },
-                });
+            let query = {
+                id: cardId
+            };
+
+            if (boardIds) {
+                query['boardId'] = { $in: boardIds };
+            }
+            else if (userId) {
+                query['guestIds'] = { $elemMatch: {$eq: userId} };
+            }
+
+            let canLoad = (cardId && boardIds) || (cardId && userId);
+
+            if (canLoad) {
+                card = await cardsCollection.findOne(query);
             }
 
             response.send({

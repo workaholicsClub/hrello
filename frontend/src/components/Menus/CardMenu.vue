@@ -1,11 +1,11 @@
 <template>
     <v-list>
-        <!--v-list-item @click="sendShareEvent">
+        <v-list-item @click="sendShareEvent">
             <v-list-item-icon>
                 <v-icon>mdi-share-variant</v-icon>
             </v-list-item-icon>
             <v-list-item-title>Поделиться</v-list-item-title>
-        </v-list-item-->
+        </v-list-item>
         <v-list-item @click="sendMoveBackCardEvent">
             <v-list-item-icon>
                 <v-icon>mdi-undo-variant</v-icon>

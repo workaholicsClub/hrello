@@ -16,12 +16,17 @@ export default {
     },
     methods: {
         async loadCard(cardId) {
+            let requestParams = {
+                cardId: cardId,
+                userId: this.userId,
+            };
+
+            if (this.boardIds) {
+                requestParams['boardIds'] = this.boardIds;
+            }
+
             let cardResponse = await axios.get('/api/card/findOne', {
-                params: {
-                    cardId: cardId,
-                    userId: this.userId,
-                    boardIds: this.boardIds
-                }
+                params: requestParams
             });
             return cardResponse.data.card;
         },
@@ -110,21 +115,23 @@ export default {
             newContent.valueDate = new Date();
             newContent.version = newContent.version ? newContent.version + 1 : 1;
 
-            let needToAddNewDefaultField = newContent.isGlobal && !newContent.linkToDefaultById;
-            let needToUpdateDefaultField = newContent.isGlobal && newContent.linkToDefaultById;
-            let needToUnlinkDefaultField = !newContent.isGlobal && newContent.linkToDefaultById;
+            if (!this.onlyCardMode) {
+                let needToAddNewDefaultField = newContent.isGlobal && !newContent.linkToDefaultById;
+                let needToUpdateDefaultField = newContent.isGlobal && newContent.linkToDefaultById;
+                let needToUnlinkDefaultField = !newContent.isGlobal && newContent.linkToDefaultById;
 
-            if (needToAddNewDefaultField) {
-                let newDefaultContent = await this.addDefaultContent(newContent);
-                newContent.linkToDefaultById = newDefaultContent.id;
-            }
+                if (needToAddNewDefaultField) {
+                    let newDefaultContent = await this.addDefaultContent(newContent);
+                    newContent.linkToDefaultById = newDefaultContent.id;
+                }
 
-            if (needToUpdateDefaultField) {
-                await this.updateDefaultContent(newContent);
-            }
+                if (needToUpdateDefaultField) {
+                    await this.updateDefaultContent(newContent);
+                }
 
-            if (needToUnlinkDefaultField) {
-                delete newContent.linkToDefaultById;
+                if (needToUnlinkDefaultField) {
+                    delete newContent.linkToDefaultById;
+                }
             }
 
             this.$set(card.content, contentIndex, newContent);
@@ -270,6 +277,22 @@ export default {
         currentCardId() {
             return this.currentCard ? this.currentCard.id : false;
         },
+        currentCardTitle() {
+            if (!this.currentCard) {
+                return false;
+            }
+
+            let isDefaultName = /Кандидат \d+/.test(this.currentCard.name);
+            let newCardTitle = 'Новый кандидат';
+            if (isDefaultName) {
+                return newCardTitle;
+            }
+
+            return this.currentCard.name || newCardTitle;
+        },
+        isInvitation() {
+            return location.hash.indexOf('invite') !== -1;
+        }
     },
     mounted() {
         this.$root.$on('addCard', this.addCard);

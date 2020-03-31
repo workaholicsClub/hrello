@@ -75,7 +75,7 @@
                     </v-menu>
                 </template>
             </Header>
-            <CardDetails v-if="currentCard" :card="currentCard" :key="cardRedrawIndex" :statuses="statuses" :user="user"></CardDetails>
+            <CardDetails v-if="currentCard" :card="currentCard" :key="cardRedrawIndex" :statuses="statuses" :user="user" :skip-global="false"></CardDetails>
             <CardArchive v-else-if="showArchive" :type="showArchive" :user="user" :boards="boards" :is-loading="archiveLoading" :cards="whitelistCards"></CardArchive>
             <Timetable v-else-if="showTimetable" :is-desktop="isDesktop" :grouped-events="timetableEvents"></Timetable>
             <Board v-else :is-desktop="isDesktop" :statuses="statuses" :cards="cards" :key="currentBoardId"></Board>
@@ -134,6 +134,7 @@
     import EventsMixin from "./mixins/events";
     import FieldsMixin from "./mixins/fields";
     import UserMixin from "./mixins/user";
+    import NavigationMixin from "./mixins/navigation";
 
     import axios from 'axios';
     import moment from 'moment';
@@ -158,7 +159,8 @@
             StatusMixin,
             EventsMixin,
             FieldsMixin,
-            UserMixin
+            UserMixin,
+            NavigationMixin
         ],
         data() {
             return {
@@ -168,6 +170,7 @@
                 initFinished: false,
                 showTimetable: false,
                 showArchive: false,
+                onlyCardMode: false,
                 cardRedrawIndex: 0,
                 statuses: [],
             }
@@ -220,28 +223,6 @@
 
                 if (hashParts.cardId) {
                     await this.changeCard(hashParts.cardId, skipUrlUpdate);
-                }
-            },
-            changeUrlAndAvoidResetByVue(newHash) {
-                setTimeout(() => {
-                    window.location.hash = newHash;
-                }, 0);
-            },
-            updateUrl() {
-                let urlHashParts = [this.currentBoardId ? this.currentBoardId : '' ];
-                if (this.currentCardId) {
-                    urlHashParts.push(this.currentCardId);
-                }
-
-                let newHash = '!/' + urlHashParts.join('/');
-                this.changeUrlAndAvoidResetByVue(newHash);
-            },
-
-            async processInvitation() {
-                let [,, inviteType, targetId] = location.hash.split('/');
-                await axios.post(`/api/invite/${inviteType}`, {userId: this.user.id, targetId: targetId});
-                if (inviteType === 'board') {
-                    this.changeUrlAndAvoidResetByVue('!/'+targetId);
                 }
             },
 
@@ -326,19 +307,6 @@
             }
         },
         computed: {
-            currentCardTitle() {
-                if (!this.currentCard) {
-                    return false;
-                }
-
-                let isDefaultName = /Кандидат \d+/.test(this.currentCard.name);
-                let newCardTitle = 'Новый кандидат';
-                if (isDefaultName) {
-                    return newCardTitle;
-                }
-
-                return this.currentCard.name || newCardTitle;
-            },
             currentTitle() {
                 if (this.currentCard) {
                     return this.currentCardTitle;
@@ -366,13 +334,10 @@
                 return Boolean(this.currentCard);
             },
             cardShareLink() {
-                return this.shareCard ? location.origin + '/b#!/invite/card/'+this.shareCard.id : false;
+                return this.shareCard ? location.origin + '/c#!/invite/card/'+this.shareCard.id : false;
             },
             boardShareLink() {
                 return this.shareBoard ? location.origin + '/b#!/invite/board/'+this.shareBoard.id : false;
-            },
-            isInvitation() {
-                return location.hash.indexOf('invite') !== -1;
             }
         },
         async created() {

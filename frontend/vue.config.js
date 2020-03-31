@@ -4,6 +4,11 @@ module.exports = {
       "entry": "src/board.js",
       "template": "templates/board.html",
       "filename": "board.html"
+    },
+    "card": {
+      "entry": "src/card.js",
+      "template": "templates/card.html",
+      "filename": "card.html"
     }
   },
   "transpileDependencies": [
@@ -15,4 +20,4 @@ module.exports = {
       "splitChunks": false
     }
   }
-}
+};

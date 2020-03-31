@@ -99,7 +99,22 @@ export default {
                 await this.afterLogin();
             }
         },
+        async afterCardLogin() {
+            if (this.user.googleId) {
+                await this.getGoogleToken();
+            }
+
+            if (this.isInvitation) {
+                await this.processInvitation();
+            }
+
+            await this.loadUrlData();
+        },
         async afterLogin() {
+            if (this.onlyCardMode) {
+                return this.afterCardLogin();
+            }
+
             if (this.user.googleId) {
                 await this.getGoogleToken();
             }
@@ -116,7 +131,14 @@ export default {
             this.user = false;
             localStorage.removeItem('authorizedUser');
 
-            this.resetBoards();
+            if (!this.onlyCardMode) {
+                this.resetBoards();
+            }
+        },
+        async processInvitation() {
+            let [,, inviteType, targetId] = location.hash.split('/');
+            await axios.post(`/api/invite/${inviteType}`, {userId: this.user.id, targetId: targetId});
+            await this.changeUrlAndAvoidResetByVue('!/'+targetId);
         },
     },
 

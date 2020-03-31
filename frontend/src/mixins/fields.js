@@ -132,7 +132,7 @@ export default {
                 return;
             }
 
-            let rootFolderId = await this.getFolderIdOrMake('HRello');
+            let rootFolderId = await this.getFolderIdOrMake('Рекруто');
             let fieldFolderId = await this.getFolderIdOrMake(field.name, rootFolderId);
 
             let metadata = {

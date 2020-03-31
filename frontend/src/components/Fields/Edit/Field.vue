@@ -16,7 +16,7 @@
                         <v-switch class="ma-2" v-model="value.isPrivate" label="Показывать только мне" hide-details></v-switch>
                     </v-col>
                 </v-row>
-                <v-row v-if="userIsAuthor">
+                <v-row v-if="userIsAuthor && !skipGlobal">
                     <v-col class="d-flex pb-0" cols="12" sm="12">
                         <v-switch class="ma-2" v-model="value.isGlobal" label="Добавлять это поле в новые карточки доски" hide-details></v-switch>
                     </v-col>
@@ -56,7 +56,7 @@
 
     export default {
         name: "EditField",
-        props: ['value', 'userIsAuthor'],
+        props: ['value', 'userIsAuthor', 'skipGlobal'],
         components: {
             ColorEdit,
             CheckboxEdit
