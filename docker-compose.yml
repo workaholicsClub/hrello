@@ -39,4 +39,4 @@ services:
       - ./etc/database:/data/db
     restart: always
     ports:
-      - "27017:27017"
+      - "27217:27017"
