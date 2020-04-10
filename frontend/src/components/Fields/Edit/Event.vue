@@ -71,16 +71,6 @@
                 <v-row class="d-flex" cols="12" v-if="!skipValueField">
                     <view-event v-model="value.value" :event="value"></view-event>
                 </v-row>
-                <v-row v-else-if="userIsAuthor && !skipGlobal">
-                    <v-col class="d-flex pb-0" cols="12" sm="12">
-                        <v-switch class="ma-2" v-model="value.isGlobal" :label="'Добавлять это ' + eventTypeText() + ' в новые карточки доски'" hide-details></v-switch>
-                    </v-col>
-                </v-row>
-                <v-row v-if="userIsAuthor">
-                    <v-col class="d-flex pb-0" cols="12" sm="12">
-                        <v-switch class="ma-2" v-model="value.isPrivate" label="Показывать только мне" hide-details></v-switch>
-                    </v-col>
-                </v-row>
 
                 <v-alert
                         v-if="value.linkToDefaultById"

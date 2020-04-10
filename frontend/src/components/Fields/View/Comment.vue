@@ -17,3 +17,9 @@
         props: ['comment'],
     }
 </script>
+
+<style>
+    .v-card__text p:last-child {
+        margin-bottom: 0px;
+    }
+</style>

@@ -241,6 +241,7 @@ export default {
 
         async startRecordEdit(record) {
             record.isEditing = true;
+            this.activeRecord = record;
             this.cardRedrawIndex++;
         },
         async stopRecordEdit(record) {

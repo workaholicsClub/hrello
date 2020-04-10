@@ -1,22 +1,68 @@
 <template>
-    <v-content class="card-details fill-height">
-        <v-container class="align-start justify-start" fill-height>
-                <v-container>
-                    <v-text-field
-                            v-model="card.name"
-                            label="ФИО кандидата"
-                            @input="sendSaveCardEvent"
-                    ></v-text-field>
+    <v-content class="fill-height" @click="activateRecord(null)">
+        <v-navigation-drawer v-if="!isDesktop"
+                v-model="editDrawer"
+                absolute
+                top
+                left
+                temporary
+        >
+            <card-details-menu
+                    :record="activeRecord"
+                    :user-is-author="userIsAuthor(activeRecord)"
+                    :skip-global="skipGlobal"
+                    :card="card"
+                    :field-types="fieldTypes"
+                    :add-menu-expanded="!Boolean(activeRecord)"
 
-                    <v-select
-                            v-if="statuses"
-                            v-model="card.statusId"
-                            :items="statuses"
-                            item-text="title"
-                            item-value="id"
-                            label="Текущий этап"
-                            @change="sendSaveCardEvent"
-                    ></v-select>
+                    @addEvent="addNewEvent"
+                    @addContent="addNewContent"
+                    @addField="addNewField"
+
+                    :key="(activeRecord ? activeRecord.id || activeRecord.name : 'add') + '_nav'"
+            ></card-details-menu>
+        </v-navigation-drawer>
+
+        <v-row class="px-4 mr-0">
+            <v-col cols="3" sticky-container v-if="isDesktop">
+                <v-card v-sticky sticky-offset="{top: 68}" sticky-side="top">
+                    <card-details-menu
+                            :record="activeRecord"
+                            :user-is-author="userIsAuthor(activeRecord)"
+                            :skip-global="skipGlobal"
+                            :card="card"
+                            :field-types="fieldTypes"
+                            :add-menu-expanded="!Boolean(activeRecord)"
+
+                            @addEvent="addNewEvent"
+                            @addContent="addNewContent"
+                            @addField="addNewField"
+                            @deleteContent="onDeleteContent"
+
+                            :key="(activeRecord ? activeRecord.id || activeRecord.name : 'add') + '_menu'"
+                    ></card-details-menu>
+                </v-card>
+            </v-col>
+
+            <v-col :cols="isDesktop ? 9 : 12">
+                <v-container class="p-0">
+                    <v-card class="pt-2 px-4">
+                        <v-text-field
+                                v-model="card.name"
+                                label="ФИО кандидата"
+                                @input="sendSaveCardEvent"
+                        ></v-text-field>
+
+                        <v-select
+                                v-if="statuses"
+                                v-model="card.statusId"
+                                :items="statuses"
+                                item-text="title"
+                                item-value="id"
+                                label="Текущий этап"
+                                @change="sendSaveCardEvent"
+                        ></v-select>
+                    </v-card>
 
                     <draggable tag="div" class="v-list content-list v-sheet v-sheet--tile theme--light" role="list" v-model="card.content" handle=".handle">
                         <content-element
@@ -27,66 +73,22 @@
                                 :show-editor="record.isEditing || false"
                                 :user-is-author="userIsAuthor(record)"
                                 :skip-global="skipGlobal"
+
+                                :class="{'active': activeRecord === record}"
+
+                                @active="activateRecord"
+                                @updateContent="resetActiveRecord"
                         ></content-element>
                     </draggable>
                 </v-container>
+            </v-col>
+        </v-row>
 
-                <v-toolbar class="card-toolbar d-none d-sm-flex mb-4" bottom dark dense floating>
-                    <v-tooltip class="mb-2" top>
-                        <template v-slot:activator="{ on }">
-                            <v-btn small icon @click="addNewEvent('basic')" v-on="on"><v-icon>mdi-calendar</v-icon></v-btn>
-                        </template>
-                        <span>Событие</span>
-                    </v-tooltip>
-                    <v-tooltip class="mb-2" top>
-                        <template v-slot:activator="{ on }">
-                            <v-btn small icon @click="addNewEvent('reminder')" v-on="on"><v-icon>mdi-alarm</v-icon></v-btn>
-                        </template>
-                        <span>Напоминание</span>
-                    </v-tooltip>
-
-                    <v-tooltip class="mb-2" top>
-                        <template v-slot:activator="{ on }">
-                            <v-btn small icon @click="addNewContent('comment')" v-on="on"><v-icon>mdi-comment-outline</v-icon></v-btn>
-                        </template>
-                        <span>Комментарий</span>
-                    </v-tooltip>
-
-                    <v-tooltip class="mb-2" top v-for="(fieldType, index) in fieldTypes" :key="'btn'+fieldType.value+index">
-                        <template v-slot:activator="{ on }">
-                            <v-btn small icon @click="addNewField(fieldType)" v-on="on"><v-icon>{{fieldType.icon}}</v-icon></v-btn>
-                        </template>
-                        <span>{{fieldType.buttonText}}</span>
-                    </v-tooltip>
-                </v-toolbar>
-
-                <v-speed-dial v-model="fabActive" bottom right fixed direction="top" class="d-sm-none">
-                    <template v-slot:activator>
-                        <v-btn v-model="fabActive" fab class="pink darken-1" dark>
-                            <v-icon v-if="fabActive">mdi-close</v-icon>
-                            <v-icon v-else>mdi-plus</v-icon>
-                        </v-btn>
-                    </template>
-
-                    <v-container class="p-0 pr-1 d-flex justify-content-end align-items-center">
-                        <v-label small @click="addNewEvent('basic')">Событие</v-label>
-                        <v-btn fab small @click="addNewEvent('basic')"><v-icon>mdi-calendar</v-icon></v-btn>
-                    </v-container>
-                    <v-container class="p-0 pr-1 d-flex justify-content-end align-items-center">
-                        <v-label small @click="addNewEvent('reminder')">Напоминание</v-label>
-                        <v-btn fab small @click="addNewEvent('reminder')"><v-icon>mdi-alarm</v-icon></v-btn>
-                    </v-container>
-                    <v-container class="p-0 pr-1 d-flex justify-content-end align-items-center">
-                        <v-label small @click="addNewContent('comment')">Комментарий</v-label>
-                        <v-btn fab small @click="addNewContent('comment')"><v-icon>mdi-comment-outline</v-icon></v-btn>
-                    </v-container>
-                    <v-container class="p-0 pr-1 d-flex justify-content-end align-items-center" v-for="fieldType in fieldTypes" :key="fieldType.value">
-                        <v-label small @click="addNewField(fieldType)">{{fieldType.buttonText}}</v-label>
-                        <v-btn fab small @click="addNewField(fieldType)"><v-icon>{{fieldType.icon}}</v-icon></v-btn>
-                    </v-container>
-                </v-speed-dial>
-
-        </v-container>
+        <v-btn v-if="!isDesktop" fab class="pink darken-1" bottom right fixed dark @click="toggleEditDrawer">
+            <v-icon v-if="editDrawer">mdi-close</v-icon>
+            <v-icon v-else-if="activeRecord">mdi-settings</v-icon>
+            <v-icon v-else>mdi-plus</v-icon>
+        </v-btn>
     </v-content>
 </template>
 
@@ -94,12 +96,14 @@
     import draggable from "vuedraggable";
     import ContentElement from "./Fields/ContentElement";
     import {getFieldTypes} from "../unsorted/Helpers";
+    import CardDetailsMenu from "./Menus/CardDetailsMenu";
 
     export default {
         name: "CardDetails",
-        props: ['card', 'statuses', 'user', 'skipGlobal'],
+        props: ['card', 'statuses', 'user', 'skipGlobal', 'isDesktop'],
         components: {
             ContentElement,
+            CardDetailsMenu,
             draggable
         },
         data() {
@@ -109,18 +113,31 @@
                 newComment:  null,
                 newEvent: null,
                 fabActive: false,
-                fieldTypes: getFieldTypes()
+                fieldTypes: getFieldTypes(),
+                activeRecord: null,
+                editDrawer: false
             }
         },
         methods: {
+            toggleEditDrawer() {
+                this.editDrawer = !this.editDrawer;
+            },
+            activateRecord(newActiveRecord) {
+                let shouldDeactivate = this.activeRecord === newActiveRecord && !this.activeRecord.isEditing;
+
+                this.activeRecord = shouldDeactivate ? null : newActiveRecord;
+            },
+            resetActiveRecord() {
+                this.activeRecord = null;
+            },
             getRecordKey(record, index) {
                 let version = record.version || 0;
                 let isEditing = record.isEditing ? 1 : 0;
                 return [record.id, index, version, isEditing].join('_');
             },
             userIsAuthor(record) {
-                let hasAuthor = Boolean(record.author);
-                return  hasAuthor && record.author.id === this.user.id;
+                let hasAuthor = Boolean(record) && Boolean(record.author);
+                return hasAuthor && record.author.id === this.user.id;
             },
             isVisible(record) {
                 let isCurrentUserAuthor = this.userIsAuthor(record);
@@ -157,6 +174,7 @@
                 let varName = 'new'+ucType;
                 let record = this[varName];
 
+                this.activeRecord = record;
                 this.$root.$emit('newContentCard', record, this.card);
                 this.resetField();
             },
@@ -178,9 +196,12 @@
                 this.newField.name  = defaultFieldData.fieldName;
                 this.addNewContent('field');
             },
+            onDeleteContent() {
+                this.activeRecord = null;
+            },
             sendSaveCardEvent() {
                 this.$root.$emit('cardInput', this.card);
-            }
+            },
         },
         computed: {
             visibleRecords() {
@@ -198,6 +219,10 @@
 <style scoped>
     .card-details {
         background: #fff;
+    }
+
+    .content-list {
+        background: transparent;
     }
 
     .content-list .v-card {
@@ -219,15 +244,15 @@
         display: none;
     }
 
-    .bordered {
-        border: 1px solid rgba(0, 0, 0, 0.42);
-        border-radius: 4px;
-        /*box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12) !important;*/
+    .content-list .v-sheet {
+        background: transparent;
     }
 
-    .dash-bordered {
-        border: 1px dashed rgba(0, 0, 0, 0.42);
-        border-radius: 4px;
+    .content-list > .v-card {
+        background: #fff;
+    }
+    .content-list > .v-card.active {
+        background: #d4effa!important;
     }
 
     .v-speed-dial__list{

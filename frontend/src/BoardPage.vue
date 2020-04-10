@@ -67,19 +67,33 @@
                     </v-menu>
                 </template>
                 <template v-slot:menu v-else-if="isBoardShown">
+                    <v-btn icon text @click="toggleFilterDrawer" v-if="!isDesktop && currentBoard.type !== 'kanban'" ><v-icon>mdi-filter</v-icon></v-btn>
                     <v-menu bottom left offset-x @click.native.stop.prevent>
                         <template v-slot:activator="{ on }">
                             <v-btn icon text v-on="on" @click.stop><v-icon>mdi-dots-vertical</v-icon></v-btn>
                         </template>
-                        <board-menu :board="currentBoard"></board-menu>
+                        <board-menu
+                                :board="currentBoard"
+                                @toggleVacancy="toggleBoardVacancy(currentBoard)"
+                        ></board-menu>
                     </v-menu>
                 </template>
             </Header>
-            <CardDetails v-if="currentCard" :card="currentCard" :key="cardRedrawIndex" :statuses="statuses" :user="user" :skip-global="false"></CardDetails>
+            <CardDetails v-if="currentCard" :card="currentCard" :statuses="statuses" :user="user" :skip-global="false" :is-desktop="isDesktop"></CardDetails>
             <CardArchive v-else-if="showArchive" :type="showArchive" :user="user" :boards="boards" :is-loading="archiveLoading" :cards="whitelistCards"></CardArchive>
             <Timetable v-else-if="showTimetable" :is-desktop="isDesktop" :grouped-events="timetableEvents"></Timetable>
-            <Board v-else :is-desktop="isDesktop" :statuses="statuses" :cards="cards" :key="currentBoardId"></Board>
+            <full-screen-editor v-else-if="showVacancyEditor" :text="currentBoard.vacancyText" @input="updateVacancyText"></full-screen-editor>
+            <StatusBoard v-else-if="currentBoard.type === 'kanban'" :is-desktop="isDesktop" :statuses="statuses" :cards="cards" :key="'kanban'+currentBoard.type+currentBoardId"></StatusBoard>
+            <AnalyticsBoard v-else
+                    :is-desktop="isDesktop"
+                    :statuses="statuses"
+                    :cards="cards"
+                    :key="'analytics'+currentBoard.type+currentBoardId"
+                    :board="currentBoard"
+                    :filter-drawer="showFilterDrawer"
+            ></AnalyticsBoard>
         </v-container>
+        <v-alert type="error" v-if="appError">{{appError}}</v-alert>
         <v-dialog v-model="shareDialog" persistent max-width="600px">
             <v-card>
                 <v-card-title>
@@ -117,13 +131,15 @@
 </template>
 
 <script>
-    import Header from './components/Header.vue'
-    import Sidebar from './components/Sidebar.vue'
-    import Board from './components/Board.vue'
+    import Header from './components/Header.vue';
+    import Sidebar from './components/Sidebar.vue';
+    import StatusBoard from './components/Board.vue';
+    import AnalyticsBoard from "./components/AnalyticsBoard";
     import CardDetails from "./components/CardDetails";
     import Timetable from "./components/Timetable";
     import CardArchive from "./components/CardArchive";
     import Login from "./components/Login";
+    import FullScreenEditor from "./components/FullScreenEditor";
 
     import CardMenu from "./components/Menus/CardMenu";
     import BoardMenu from "./components/Menus/BoardMenu";
@@ -143,10 +159,12 @@
         name: 'BoardPage',
         props: ['useGoogleServices'],
         components: {
+            FullScreenEditor,
+            AnalyticsBoard,
+            StatusBoard,
             CardArchive,
             Header,
             Sidebar,
-            Board,
             CardDetails,
             Login,
             Timetable,
@@ -171,8 +189,11 @@
                 showTimetable: false,
                 showArchive: false,
                 onlyCardMode: false,
+                showFilterDrawer: false,
+                showVacancyEditor: false,
                 cardRedrawIndex: 0,
                 statuses: [],
+                appError: null,
             }
         },
         watch: {
@@ -183,6 +204,9 @@
         methods: {
             toggleDrawer() {
                 this.drawer = !this.drawer;
+            },
+            toggleFilterDrawer() {
+                this.showFilterDrawer = !this.showFilterDrawer;
             },
             setDrawerState(newState) {
                 this.drawer = newState;
@@ -283,6 +307,11 @@
                     this.currentCard = false;
                 }
 
+                if (this.showVacancyEditor) {
+                    await this.saveCurrentBoard();
+                    this.showVacancyEditor = false;
+                }
+
                 this.updateUrl();
 
                 if (this.showTimetable) {
@@ -304,6 +333,9 @@
                 this.shareDialog = false;
                 this.shareBoard = null;
                 this.shareCard = null;
+            },
+            toggleBoardVacancy() {
+                this.showVacancyEditor = !this.showVacancyEditor;
             }
         },
         computed: {
@@ -324,6 +356,10 @@
                     return archiveTitles[this.showArchive] || 'Архив';
                 }
 
+                if (this.showVacancyEditor) {
+                    return this.currentBoard.title + ' - текст вакансии';
+                }
+
                 if (this.currentBoard) {
                     return this.currentBoard.title;
                 }
@@ -331,14 +367,14 @@
                 return false;
             },
             showBack() {
-                return Boolean(this.currentCard);
+                return Boolean(this.currentCard) || this.showVacancyEditor;
             },
             cardShareLink() {
                 return this.shareCard ? location.origin + '/c#!/invite/card/'+this.shareCard.id : false;
             },
             boardShareLink() {
                 return this.shareBoard ? location.origin + '/b#!/invite/board/'+this.shareBoard.id : false;
-            }
+            },
         },
         async created() {
             moment.locale('ru');

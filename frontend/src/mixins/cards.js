@@ -223,6 +223,7 @@ export default {
                 }
             });
 
+            this.currentCard = null;
             this.reloadBoardData();
 
             return response.data.card;

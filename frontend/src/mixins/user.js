@@ -43,7 +43,15 @@ export default {
             return userProfile;
         },
         async checkAndLoadAuthorizedGoogleUser() {
-            let isSignedIn = await this.$gapi.isSignedIn();
+            let isSignedIn = null;
+
+            try {
+                isSignedIn = await this.$gapi.isSignedIn();
+            }
+            catch (exception) {
+                isSignedIn = false;
+                this.appError = 'Ошибка подключения к сервисам Google';
+            }
 
             if (isSignedIn) {
                 await this.loadGoogleUserProfileAndUpdateLocalData();

@@ -5,40 +5,30 @@
                 <v-row align="center">
                     <v-col class="d-flex py-0" cols="12" sm="12">
                         <v-text-field
-                                v-model="value.name"
+                                v-model="field.name"
                                 label="Название поля"
                                 hide-details
                         ></v-text-field>
                     </v-col>
                 </v-row>
-                <v-row v-if="userIsAuthor">
-                    <v-col class="d-flex pb-0" cols="12" sm="12">
-                        <v-switch class="ma-2" v-model="value.isPrivate" label="Показывать только мне" hide-details></v-switch>
-                    </v-col>
-                </v-row>
-                <v-row v-if="userIsAuthor && !skipGlobal">
-                    <v-col class="d-flex pb-0" cols="12" sm="12">
-                        <v-switch class="ma-2" v-model="value.isGlobal" label="Добавлять это поле в новые карточки доски" hide-details></v-switch>
-                    </v-col>
-                </v-row>
-                <v-row v-if="value.fieldType === 'color'">
+                <v-row v-if="field.fieldType === 'color'">
                     <v-col>
-                        <color-edit v-model="value.colors"></color-edit>
+                        <color-edit v-model="field.colors"></color-edit>
                     </v-col>
                 </v-row>
-                <v-row v-if="value.fieldType === 'checkbox'">
+                <v-row v-if="field.fieldType === 'checkbox'">
                     <v-col>
-                        <checkbox-edit v-model="value.tasks"></checkbox-edit>
+                        <checkbox-edit v-model="field.tasks"></checkbox-edit>
                     </v-col>
                 </v-row>
                 <v-alert
-                        v-if="value.linkToDefaultById"
+                        v-if="field.linkToDefaultById"
                         dense
                         outlined
                         type="warning"
                         class="mb-0"
                 >
-                    {{value.isGlobal
+                    {{field.isGlobal
                         ? 'Поле будет изменено в этой и новых карточках'
                         : 'Поле будет изменено только в этой карточке, а в новых останется прежним'}}
                 </v-alert>
@@ -75,15 +65,15 @@
         },
         methods: {
             ensureColorsInColorField() {
-                if (this.value.fieldType === 'color') {
-                    if (!this.value.colors) {
-                        this.value.colors = defaultColors;
+                if (this.field.fieldType === 'color') {
+                    if (!this.field.colors) {
+                        this.field.colors = defaultColors;
                         this.commitUpdate();
                     }
                 }
             },
             commitUpdate() {
-                this.$emit('input', this.value);
+                this.$emit('input', this.field);
             },
             getTypeData(type) {
                 return this.items.filter(data => data.value === type)[0] || false;
@@ -107,9 +97,11 @@
 
                 this.commitUpdate();
             },
-            isGlobal() {
-                this.field.isGlobal = this.isGlobal;
-                this.commitUpdate();
+            field: {
+                deep: true,
+                handler() {
+                    this.commitUpdate();
+                }
             },
         },
         computed: {

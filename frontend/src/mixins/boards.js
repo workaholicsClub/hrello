@@ -1,4 +1,5 @@
 import axios from "axios";
+import {clone} from "../unsorted/Helpers";
 
 export default {
     data() {
@@ -67,6 +68,18 @@ export default {
             this.boards.push(this.currentBoard);
             this.updateUrl();
         },
+        async copyBoard(srcBoard) {
+            let newBoard = clone(srcBoard);
+            newBoard.userId = this.user.id;
+            let boardResponse = await axios.post('/api/board/copy', newBoard);
+            this.statuses = boardResponse.data.status;
+            this.currentBoard = boardResponse.data.board;
+            this.boards.push(this.currentBoard);
+        },
+        updateVacancyText(newVacancyText) {
+            this.currentBoard.vacancyText = newVacancyText;
+            this.saveCurrentBoard();
+        },
         saveCurrentBoard() {
             axios.post('/api/board/update', this.currentBoard);
         },
@@ -74,13 +87,40 @@ export default {
             this.currentBoard.title = newTitle;
             this.saveCurrentBoard();
         },
-        async deleteBoard(boardId) {
-            return await axios.get('/api/board/delete', {
+        changeBoardType(newType) {
+            this.currentBoard.type = newType;
+            this.saveCurrentBoard();
+        },
+        async deleteBoard(board) {
+            await axios.get('/api/board/delete', {
                 params: {
-                    boardId: boardId
+                    boardId: board.id
                 }
             });
+
+            await this.loadBoards();
+            await this.reloadBoardData();
+            this.currentBoard = this.boards[0];
         },
+        async archiveBoard(board) {
+            await axios.get('/api/board/archive', {
+                params: {
+                    boardId: board.id
+                }
+            });
+
+            await this.loadBoards();
+            await this.reloadBoardData();
+            this.currentBoard = this.boards[0];
+        },
+        async changeBoardExpandState(newExpandState) {
+            this.currentBoard.expandState = newExpandState;
+            this.saveCurrentBoard();
+        },
+        async changeBoardFilter(newFilter) {
+            this.currentBoard.filterValues = newFilter;
+            this.saveCurrentBoard();
+        }
     },
     computed: {
         currentBoardId() {
@@ -92,7 +132,7 @@ export default {
             return this.boards.map(board => board.id);
         },
         isBoardShown() {
-            return this.currentBoard && !this.showTimetable && !this.currentCard && !this.showArchive;
+            return this.currentBoard && !this.showTimetable && !this.currentCard && !this.showArchive && !this.showVacancyEditor;
         },
         hasNoBoards() {
             return this.boards.length === 0;
@@ -100,8 +140,20 @@ export default {
     },
     mounted() {
         this.$root.$on('newBoard', this.addNewBoard);
+        this.$root.$on('archiveBoard', this.archiveBoard);
+        this.$root.$on('deleteBoard', this.deleteBoard);
+        this.$root.$on('copyBoard', this.copyBoard);
+        this.$root.$on('changeBoardType', this.changeBoardType);
+        this.$root.$on('expandBoardFilter', this.changeBoardExpandState);
+        this.$root.$on('filterBoard', this.changeBoardFilter);
     },
     beforeDestroy() {
         this.$root.$off('newBoard', this.addNewBoard);
+        this.$root.$off('archiveBoard', this.archiveBoard);
+        this.$root.$off('deleteBoard', this.deleteBoard);
+        this.$root.$off('copyBoard', this.copyBoard);
+        this.$root.$off('changeBoardType', this.changeBoardType);
+        this.$root.$off('expandBoardFilter', this.changeBoardExpandState);
+        this.$root.$off('filterBoard', this.changeBoardFilter);
     }
 }

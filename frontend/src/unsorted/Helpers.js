@@ -37,6 +37,24 @@ function getFieldTypes() {
     ];
 }
 
+function getFilteredRecords(cards, searchRecord) {
+    return cards.reduce( (acc, card) => {
+        if (card.content) {
+            card.content.forEach((iteratedRecord) => {
+                let isNeededRecord = searchRecord.linkToDefaultById
+                    ? searchRecord.linkToDefaultById === iteratedRecord.linkToDefaultById
+                    : searchRecord.name === iteratedRecord.name;
+
+                if (isNeededRecord) {
+                    acc.push(iteratedRecord);
+                }
+            });
+        }
+
+        return acc;
+    }, []);
+}
+
 export {
     zeroPad,
     sortByIndex,
@@ -44,4 +62,5 @@ export {
     isValidDate,
     getDefaultColors,
     getFieldTypes,
+    getFilteredRecords
 }

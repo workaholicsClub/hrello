@@ -3,6 +3,7 @@ import Vuetify from 'vuetify/lib';
 import DatetimePicker from 'vuetify-datetime-picker'
 import VueGoogleApi from 'vue-google-api'
 import Rollbar from 'vue-rollbar'
+import Sticky from 'vue-sticky-directive'
 
 const useGoogleServices = false;
 const isProduction = /localhost|127\.0\.0/.test(location.href) || false;
@@ -25,6 +26,7 @@ const gapiConfig = useGoogleServices
 Vue.use(Vuetify);
 Vue.use(DatetimePicker);
 Vue.use(VueGoogleApi, gapiConfig);
+Vue.use(Sticky)
 Vue.use(Rollbar, {
     accessToken: '62e0891d2c9d41e6971d135094781b74',
     captureUncaught: true,

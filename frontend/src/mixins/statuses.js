@@ -11,7 +11,7 @@ export default {
             return await axios.post('/api/status/update', changedStatus);
         },
         async addStatus(sortIndex) {
-            if (!sortIndex) {
+            if (typeof(sortIndex) !== 'number') {
                 sortIndex = 100;
             }
 

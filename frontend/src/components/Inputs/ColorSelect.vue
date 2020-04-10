@@ -1,7 +1,7 @@
 <template>
     <v-row class="px-3">
-        <v-col class="py-0">
-            <v-select :items="colors" :label="label" v-model="newValue" multiple clearable @change="sendUpdate">
+        <v-col class="pb-0 pt-2">
+            <v-select :items="colors" :label="label" v-model="newValue" multiple clearable hide-details dense @change="sendUpdate">
                 <template v-slot:selection="{ select, item }">
                     <v-chip :color="item.color">{{item.text || getColorName(item.value)}}</v-chip>
                 </template>

@@ -29,8 +29,8 @@
                         </v-sheet>
 
                         <v-sheet v-else class="w-100">
-                            <v-label>Прикрепить файл</v-label>
-                            <v-file-input class="mt-4" v-model="file" :label="field.name" placeholder="Выбрать файл" hide-details dense full-width outlined>
+                            <v-label>{{field.name}}</v-label>
+                            <v-file-input class="mt-4" v-model="file" :label="field.name" prepend-icon="" placeholder="Выбрать файл" hide-details dense full-width outlined>
                                 <template v-slot:append>
                                     <v-btn @click="sendFileUpload" text small color="success" :disabled="!file" :loading="fileUploadStarted">
                                         Прикрепить
@@ -119,13 +119,6 @@
             }
         },
         watch: {
-            field: {
-                handler() {
-                    this.newValue = this.field.value;
-                    this.newField = this.field;
-                },
-                deep: true
-            },
             newValue() {
                 this.saveValues();
             }

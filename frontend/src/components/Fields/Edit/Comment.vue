@@ -17,11 +17,6 @@
             </v-toolbar>
         </editor-menu-bar>
         <editor-content class="editor__content fill-height" :editor="editor" />
-        <v-row v-if="userIsAuthor">
-            <v-col class="d-flex pb-0" cols="12" sm="12">
-                <v-switch class="ma-2" v-model="value.isPrivate" label="Показывать только мне" hide-details></v-switch>
-            </v-col>
-        </v-row>
     </v-sheet>
 </template>
 <script>
@@ -75,7 +70,6 @@
 <style scoped>
     .editor {
         position: relative;
-        max-width: 30rem;
         margin: 0 auto 5rem auto;
     }
 

@@ -1,7 +1,7 @@
 <template>
-    <v-sheet>
+    <v-card @click="activate" :class="{'v-card__editing': record.isEditing, 'mb-1': record.isEditing}">
         <div v-if="record.isEditing">
-            <v-list-item  class="mb-1 p-0">
+            <v-list-item class="mb-1 p-0">
                 <v-list-item-content class="dash-bordered" :class="{'py-2': record.type !== 'comment', 'py-0': record.type === 'comment'}">
                     <edit-field v-if="record.type === 'field'"
                             v-model="newRecord"
@@ -19,14 +19,11 @@
                             :skip-global="skipGlobal"
                     ></edit-event>
                 </v-list-item-content>
-                <v-list-item-action>
-                    <v-btn color="success" icon @click="sendSaveRecordChange"><v-icon>mdi-check</v-icon></v-btn>
-                    <v-btn color="error" icon @click="record.isEditing = false"><v-icon>mdi-cancel</v-icon></v-btn>
-                </v-list-item-action>
             </v-list-item>
         </div>
         <div v-else>
-            <v-list-item class="mb-1 p-0">
+            <v-list-item class="mb-1 p-0 d-flex flex-row align-items-stretch">
+                <div class="handle"><div class="handle-bg"></div></div>
                 <v-list-item-content class="bordered p-0 pb-2">
                     <view-comment v-if="record.type === 'comment'"
                             :comment="record"
@@ -47,37 +44,9 @@
                             @input="sendUpdateEventValue"
                     ></view-event>
                 </v-list-item-content>
-                <v-list-item-action class="d-flex py-0 my-0">
-                    <v-btn icon text class="handle"><v-icon>mdi-cursor-move</v-icon></v-btn>
-                    <v-menu bottom right offset-x @click.native.stop.prevent v-if="showActions">
-                        <template v-slot:activator="{ on }">
-                            <v-btn icon text v-on="on" @click.stop><v-icon>mdi-dots-horizontal</v-icon></v-btn>
-                        </template>
-                        <v-list>
-                            <v-list-item @click="sendStartEditingEvent()">
-                                <v-list-item-icon>
-                                    <v-icon>mdi-pencil</v-icon>
-                                </v-list-item-icon>
-                                <v-list-item-title>Редактировать поле</v-list-item-title>
-                            </v-list-item>
-                            <v-list-item @click="sendDeleteRecord">
-                                <v-list-item-icon>
-                                    <v-icon>mdi-delete</v-icon>
-                                </v-list-item-icon>
-                                <v-list-item-title>{{record.isGlobal ? 'Удалить поле в этой карточке' : 'Удалить поле'}}</v-list-item-title>
-                            </v-list-item>
-                            <v-list-item @click="sendDeleteRecordAndDefault" v-if="record.isGlobal && !skipGlobal">
-                                <v-list-item-icon>
-                                    <v-icon>mdi-delete-alert</v-icon>
-                                </v-list-item-icon>
-                                <v-list-item-title>Удалить поле в этой и в новых карточках</v-list-item-title>
-                            </v-list-item>
-                        </v-list>
-                    </v-menu>
-                </v-list-item-action>
             </v-list-item>
         </div>
-    </v-sheet>
+    </v-card>
 </template>
 
 <script>
@@ -115,6 +84,9 @@
             }
         },
         methods: {
+            activate() {
+                this.$emit('active', this.record);
+            },
             resetChanges() {
                 this.newRecord = clone(this.record);
             },
@@ -130,6 +102,7 @@
             },
             sendSaveRecordChange() {
                 this.newRecord.isEditing = false;
+                this.$emit('updateContent', this.newRecord, this.record, this.card);
                 this.$root.$emit('updateContent', this.newRecord, this.record, this.card);
                 this.isEditing = false;
             },
@@ -139,13 +112,19 @@
             sendStopEditingEvent() {
                 this.$root.$emit('stopRecordEdit', this.record, this.card);
             },
-            sendDeleteRecord() {
-                let deleteDefault = false;
-                this.$root.$emit('deleteContent', this.record, this.card, deleteDefault);
+            receiveSaveDataEvent(recordToSave) {
+                let isMyEvent = this.record === recordToSave;
+                if (isMyEvent) {
+                    this.sendSaveRecordChange();
+                }
             },
-            sendDeleteRecordAndDefault() {
-                let deleteDefault = true;
-                this.$root.$emit('deleteContent', this.record, this.card, deleteDefault);
+            receiveCancelEditEvent(recordToCancelEdit) {
+                let isMyEvent = this.record === recordToCancelEdit;
+                if (isMyEvent) {
+                    this.newRecord.isEditing = false;
+                    this.isEditing = false;
+                    this.sendStopEditingEvent();
+                }
             },
             getFieldKey(field) {
                 let key = this.key ? this.key : '';
@@ -168,10 +147,30 @@
                 let isNotComment = this.record.type !== 'comment';
                 return isNotComment || this.userIsAuthor;
             }
+        },
+        mounted() {
+            this.$root.$on('saveContentButtonPressed', this.receiveSaveDataEvent);
+            this.$root.$on('cancelContentButtonPressed', this.receiveCancelEditEvent);
+        },
+        beforeDestroy() {
+            this.$root.$off('saveContentButtonPressed', this.receiveSaveDataEvent);
+            this.$root.$off('cancelContentButtonPressed', this.receiveCancelEditEvent);
         }
     }
 </script>
 
 <style scoped>
-
+    .v-card__editing {
+        border: 1px dashed rgba(0, 0, 0, 0.54);
+    }
+    .handle {
+        background: #fff;
+        padding: 6px;
+        cursor: grab;
+    }
+    .handle .handle-bg {
+        background: url('/assets/handle_dot.png') repeat;
+        width: 16px;
+        height: 100%;
+    }
 </style>

@@ -37,8 +37,10 @@ async function connectToDatabase (host, port, dbName) {
 
     app.get('/api/board/list', boardRoutes.list(db));
     app.post('/api/board/add', boardRoutes.add(db));
+    app.post('/api/board/copy', boardRoutes.copy(db));
     app.post('/api/board/update', boardRoutes.update(db));
-    app.post('/api/board/delete', boardRoutes.delete(db));
+    app.get('/api/board/delete', boardRoutes.delete(db));
+    app.get('/api/board/archive', boardRoutes.archive(db));
 
     app.get('/api/status/list', statusRoutes.list(db));
     app.get('/api/status/delete', statusRoutes.delete(db));

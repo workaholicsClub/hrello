@@ -63,6 +63,52 @@ module.exports = {
             });
         }
     },
+    copy: (db) => {
+        return async (request, response) => {
+            let boardsCollection = db.collection('boards');
+
+            let srcBoardData = request.body;
+            let srcBoardId = srcBoardData.id;
+            let newBoardData = srcBoardData;
+            let newBoardId = shortid.generate();
+
+            newBoardData.id = newBoardId;
+            newBoardData.title += ' (копия)';
+            delete newBoardData._id;
+            delete newBoardData.filterValues;
+            delete newBoardData.guestIds;
+            delete newBoardData.vacancyText;
+
+            let result = await boardsCollection.insertOne(newBoardData);
+            let insertedBoardRecord = result.ops[0];
+
+            let statusesCollection = db.collection('statuses');
+            let statuses = await statusesCollection
+                .find({
+                    boardId: srcBoardId,
+                    archive: {$in: [null, false]},
+                    deleted: {$in: [null, false]},
+                })
+                .sort({sort: 1})
+                .toArray();
+
+            let newStatuses = statuses.map((status) => {
+                let newStatus = status;
+                newStatus.boardId = newBoardId;
+                delete newStatus._id;
+                return newStatus;
+            });
+
+            let statusesResult = await statusesCollection.insertMany(newStatuses);
+            let insertedStatusRecords = statusesResult.ops;
+
+            response.send({
+                board: insertedBoardRecord,
+                status: insertedStatusRecords
+            });
+        }
+    },
+
     update: (db) => {
         return async (request, response) => {
             let boards = db.collection('boards');
@@ -106,6 +152,26 @@ module.exports = {
 
             response.send({
                 board: boards
+            });
+        }
+    },
+    archive: (db) => {
+        return async (request, response) => {
+            let boards = db.collection('boards');
+            let boardId = request.query.boardId || false;
+
+            if (!boardId) {
+                response.send({
+                    board: false
+                });
+            }
+
+            let query =  {id: boardId};
+            let updateResult = await boards.findOneAndUpdate(query, {$set: {archive: true}});
+            let updatedBoardRecord = updateResult.value || false;
+
+            response.send({
+                board: updatedBoardRecord,
             });
         }
     },
