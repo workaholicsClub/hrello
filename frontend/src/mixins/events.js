@@ -52,6 +52,7 @@ export default {
                 }
             });
 
+            await this.loadAndUpdateBoardCards();
             return await this.loadTimetableEvents();
         },
         async addEventComment(comment, event) {
@@ -66,6 +67,7 @@ export default {
                 fieldData: comment
             });
 
+            await this.loadAndUpdateBoardCards();
             return await this.loadTimetableEvents();
         }
     },
