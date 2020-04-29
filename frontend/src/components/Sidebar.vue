@@ -183,4 +183,8 @@
         margin-top: -12px;
         border-radius: 0 4px 4px 0;
     }
+    .v-navigation-drawer::-webkit-scrollbar,
+    .v-navigation-drawer__content::-webkit-scrollbar {
+        display: none;
+    }
 </style>

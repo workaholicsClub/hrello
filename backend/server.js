@@ -71,6 +71,8 @@ async function connectToDatabase (host, port, dbName) {
     app.get('/api/field/listGlobal', fieldRoutes.listGlobal(db));
     app.post('/api/field/updateGlobal', fieldRoutes.updateGlobal(db));
     app.post('/api/field/addGlobal', fieldRoutes.addGlobal(db));
+    app.post('/api/field/add', fieldRoutes.add(db));
+    app.post('/api/field/update', fieldRoutes.update(db));
 
     app.post('/api/file', fileRoutes.upload(db));
 

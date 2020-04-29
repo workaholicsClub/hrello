@@ -84,6 +84,81 @@ module.exports = {
                 field: fieldRecord,
             });
         }
+    },
+    add: (db) => {
+        return async (request, response) => {
+            let cards = db.collection('cards');
+            let cardId = request.body.cardId;
+            let boardId = request.body.boardId;
+
+            let newFieldData = request.body.fieldData;
+            let query = {
+                id: cardId,
+                boardId: boardId
+            };
+
+            if (!cardId || !boardId) {
+                response.send({
+                    success: false
+                });
+
+                return;
+            }
+
+            let card = await cards.findOne(query);
+            let docId = card._id;
+            delete card._id;
+            card.content.unshift(newFieldData);
+
+            let updateResult = await cards.findOneAndReplace({_id: docId}, card, {returnNewDocument: true});
+            let updatedCardRecord = updateResult.value || false;
+
+            response.send({
+                card: updatedCardRecord,
+            });
+        }
+    },
+    update: (db) => {
+        return async (request, response) => {
+            let cards = db.collection('cards');
+            let cardId = request.body.cardId;
+            let boardId = request.body.boardId;
+            let fieldId = request.body.fieldId;
+            let changedFieldData = request.body.changedData;
+            let query = {
+                id: cardId,
+                boardId: boardId
+            };
+
+            if (!cardId || !boardId || !fieldId) {
+                response.send({
+                    success: false
+                });
+
+                return;
+            }
+
+            let card = await cards.findOne(query);
+
+            let newCardData = card.content.map( contentItem => {
+                if (contentItem.id === fieldId) {
+                    return Object.assign(contentItem, changedFieldData);
+                }
+
+                return contentItem;
+            });
+
+            let docId = card._id;
+            delete card._id;
+            card.content = newCardData;
+
+            let updateResult = await cards.findOneAndReplace({_id: docId}, card, {returnNewDocument: true});
+            let updatedCardRecord = updateResult.value || false;
+
+            response.send({
+                card: updatedCardRecord,
+            });
+        }
     }
 
 };
