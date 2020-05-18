@@ -137,6 +137,8 @@ module.exports = {
     list: (db) => {
         return async (request, response) => {
             let boardsCollection = db.collection('boards');
+            let statusesCollection = db.collection('statuses');
+
             let userId = request.query.userId || false;
             let boards = [];
             if (userId) {
@@ -148,6 +150,24 @@ module.exports = {
                     archive: {$in: [null, false]},
                     deleted: {$in: [null, false]},
                 }).toArray();
+
+                let statusPromises = boards.map(board => {
+                    return new Promise(resolve => {
+                        statusesCollection
+                            .find({
+                                boardId: board.id,
+                                archive: {$in: [null, false]},
+                                deleted: {$in: [null, false]},
+                            })
+                            .sort({sort: 1})
+                            .toArray( (err, statuses) => {
+                                board.statuses = statuses;
+                                resolve(board);
+                            });
+                    });
+                });
+
+                boards = await Promise.all(statusPromises);
             }
 
             response.send({

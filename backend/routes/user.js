@@ -128,5 +128,50 @@ module.exports = {
                 user: userRecord,
             });
         }
+    },
+    team: (db) => {
+        return async (request, response) => {
+            let users = db.collection('users');
+            let boards = db.collection('boards');
+            let userId = request.query.userId || false;
+
+            if (!userId) {
+                response.send({
+                    user: false
+                });
+                return;
+            }
+
+            let foundBoards = await boards.find({
+                $or: [
+                    {userId: userId},
+                    {guestIds: { $elemMatch: {$eq: userId} }}
+                ],
+                archive: {$in: [null, false]},
+                deleted: {$in: [null, false]},
+            }).toArray();
+
+            let teamUsersIds = foundBoards
+                .reduce( (foundIds, board) => {
+                    if (board.guestIds && board.guestIds.length > 0) {
+                        foundIds = foundIds.concat(board.guestIds);
+                    }
+
+                    if (board.userId) {
+                        foundIds.push(board.userId);
+                    }
+
+                    return foundIds;
+                }, [])
+                .filter((current, index, array) => array.indexOf(current) === index);
+
+            let teamUsers = await users.find({
+                id: {$in: teamUsersIds}
+            }).toArray();
+
+            response.send({
+                user: teamUsers,
+            });
+        }
     }
 };

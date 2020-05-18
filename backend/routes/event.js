@@ -45,7 +45,10 @@ module.exports = {
 
             if (boardIds) {
                 cards = await cardsCollection.find({
-                    boardId: { $in: boardIds },
+                    $or: [
+                        { boardId: { $in: boardIds } },
+                        { guestIds: { $elemMatch: {$eq: userId} } },
+                    ],
                     archive: {$in: [null, false]},
                     whitelist: {$in: [null, false]},
                     blacklist: {$in: [null, false]},
@@ -54,8 +57,11 @@ module.exports = {
                 }).toArray();
             }
 
-            let events = await cardlessEventsCollection.find({
-                userId: userId,
+            let timetable = await cardlessEventsCollection.find({
+                $or: [
+                    { userId: userId },
+                    { 'task.users.id': userId },
+                ],
                 deleted: {$in: [null, false]}
             }).toArray();
 
@@ -72,47 +78,49 @@ module.exports = {
 
                 allContent.forEach( content => {
                     let isValidEvent = content.type === 'event' && Boolean(content.value);
+                    let isValidTask = content.type === 'field' && content.fieldType === 'task';
+
+                    let cardData = {
+                        id: card.id,
+                        boardId: card.boardId,
+                        statusId: card.statusId,
+                        name: card.name,
+                        position: card.position
+                    }
 
                     if (isValidEvent) {
                         let event = content;
                         let isOutdated = moment(event.value).isBefore( moment.now() );
 
-                        event.card = {
-                            id: card.id,
-                            boardId: card.boardId,
-                            statusId: card.statusId,
-                            name: card.name,
-                            position: card.position
-                        };
+                        event.card = cardData;
 
                         let showEvent = !isOutdated || (isOutdated && showOutdated);
 
                         if (showEvent) {
-                            events.push(event);
+                            timetable.push(event);
+                        }
+                    }
+
+                    if (isValidTask) {
+                        let task = content;
+                        let isCompleted = Boolean(task.value);
+
+                        task.card = cardData;
+
+                        let showTask = !isCompleted;
+                        if (showTask) {
+                            timetable.push(task);
                         }
                     }
                 });
             });
 
-            let sortedEvents  = events.sort((a,b) => {
+            let sortedTimetable  = timetable.sort((a,b) => {
                 return moment(a.value).diff(moment(b.value) );
             });
 
-            let dateGroupEvents = sortedEvents.reduce((result, event) => {
-                let formattedDate = moment(event.value).format('DD.MM.YYYY');
-
-                if (typeof (result[formattedDate]) === 'undefined') {
-                    result[formattedDate] = [];
-                }
-
-                result[formattedDate].push(event);
-
-                return result;
-            }, {});
-
             response.send({
-                events: sortedEvents,
-                groupedEvents: dateGroupEvents,
+                timetable: sortedTimetable
             });
         }
     },
@@ -154,6 +162,26 @@ module.exports = {
         return async (request, response) => {
             let responseData = await addEvent(db, 'cardlessEvents', request.body);
             response.send(responseData);
+        }
+    },
+    updateCardless: (db) => {
+        return async (request, response) => {
+            let cardlessItems = db.collection('cardlessEvents');
+            let fieldId = request.body.id;
+            let changedData = request.body.changedData;
+
+            let item = await cardlessItems.findOne({id: fieldId});
+            let updatedItem = Object.assign(item, changedData);
+
+            let docId = updatedItem._id;
+            delete updatedItem._id;
+
+            let updateResult = await cardlessItems.findOneAndReplace({_id: docId}, updatedItem, {new: true});
+            let updatedItemRecord = updateResult.value || false;
+
+            response.send({
+                item: updatedItemRecord,
+            });
         }
     },
     deleteCardless: (db) => {

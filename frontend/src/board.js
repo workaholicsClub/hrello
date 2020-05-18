@@ -4,6 +4,7 @@ import DatetimePicker from 'vuetify-datetime-picker'
 import VueGoogleApi from 'vue-google-api'
 import Rollbar from 'vue-rollbar'
 import Sticky from 'vue-sticky-directive'
+import store from './store'
 
 const useGoogleServices = false;
 const isProduction = /localhost|127\.0\.0/.test(location.href) || false;
@@ -71,6 +72,7 @@ new Vue({
             },
         }
     }),
+    store,
     propsData: {
         useGoogleServices: useGoogleServices
     },

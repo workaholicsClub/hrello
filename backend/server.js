@@ -61,11 +61,13 @@ async function connectToDatabase (host, port, dbName) {
     app.post('/api/user/login', userRoutes.login(db));
     app.post('/api/user/register', userRoutes.register(db));
     app.post('/api/user/googleLogin', userRoutes.googleLogin(db));
+    app.get('/api/user/team', userRoutes.team(db));
 
     app.get('/api/event/listTimetable', eventRoutes.listTimetable(db));
     app.get('/api/event/listGlobal', eventRoutes.listGlobal(db));
     app.post('/api/event/addGlobal', eventRoutes.addGlobal(db));
     app.post('/api/event/addCardless', eventRoutes.addCardless(db));
+    app.post('/api/event/updateCardless', eventRoutes.updateCardless(db));
     app.get('/api/event/deleteCardless', eventRoutes.deleteCardless(db));
 
     app.get('/api/field/listGlobal', fieldRoutes.listGlobal(db));

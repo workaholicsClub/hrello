@@ -16,7 +16,7 @@
                         </v-col>
                         <v-col md="9" cols="12" class="py-0">
                             <v-alert type="success" outlined text v-if="events.length === 0">Событий нет</v-alert>
-                            <timetable-event-card v-for="(event, index) in events" :key="index" :event="event" :user="user"></timetable-event-card>
+                            <timetable-event-card v-for="event in events" :key="event.id" :event="event" :user="user"></timetable-event-card>
                         </v-col>
                     </v-row>
                 </v-col>
@@ -25,6 +25,7 @@
                         :events="calendarEvents"
                         v-model="selectedDate_YYYYMMDD"
                         locale="ru"
+                        first-day-of-week="1"
                         no-title
                         full-width
                         fixed
@@ -41,11 +42,16 @@
                 </template>
                 <v-card>
                     <v-card-title>
-                        <span class="headline">Новое событие</span>
+                        <v-select
+                                :items="['Новое событие', 'Новая задача']"
+                                solo
+                                v-model="formTitle"
+                        ></v-select>
                     </v-card-title>
                     <v-card-text>
                         <v-container>
-                            <edit-event v-model="newEvent" :skip-global-switch="true" class="pb-4"></edit-event>
+                            <edit-task v-model="newTask" class="pb-4" v-if="isNewTask"></edit-task>
+                            <edit-event v-model="newEvent" :skip-global-switch="true" class="pb-4" v-else></edit-event>
                         </v-container>
                     </v-card-text>
                     <v-card-actions>
@@ -62,19 +68,24 @@
 <script>
     import moment from "moment";
     import EditEvent from "./Fields/Edit/Event";
+    import EditTask from "./Fields/Edit/Field";
     import TimetableEventCard from "./TimetableEventCard";
 
     export default {
         name: "Timetable",
-        props: ['groupedEvents', 'allEvents', 'isDesktop', 'user'],
+        props: ['isDesktop', 'user'],
         components: {
             EditEvent,
+            EditTask,
             TimetableEventCard
         },
         data() {
             return {
+                allEvents: this.$store.state.timetableEvents,
+                formTitle: 'Новое событие',
                 showNewEventForm: false,
-                newEvent: false,
+                newEvent: null,
+                newTask: null,
                 selectedDate_YYYYMMDD: moment().format('YYYY-MM-DD'),
             }
         },
@@ -101,9 +112,18 @@
                     isCardless: true
                 };
             },
+            resetTask() {
+                this.newTask = {
+                    type: 'field',
+                    fieldType: 'task',
+                    value: null,
+                    isCardless: true,
+                };
+            },
             sendSaveEventEvent() {
-                this.$root.$emit('newCardlessEvent', this.newEvent);
+                this.$root.$emit('newCardlessEvent', this.isNewTask ? this.newTask : this.newEvent);
                 this.resetEvent();
+                this.resetTask();
                 this.showNewEventForm = false;
             },
             changeDate(newDate) {
@@ -111,20 +131,26 @@
             }
         },
         computed: {
+            isNewTask() {
+                return this.formTitle === 'Новая задача';
+            },
             calendarEvents() {
-                return this.allEvents ? this.allEvents.map( event => moment(event.value).format('YYYY-MM-DD') ) : [];
+                return this.$store.getters.eventDatesForUser(this.user.id);
             },
             filteredEvents() {
-                let reformattedDate = moment(this.selectedDate_YYYYMMDD, 'YYYY-MM-DD').format('DD.MM.YYYY');
+                let searchDate = moment(this.selectedDate_YYYYMMDD, 'YYYY-MM-DD');
+                let reformattedDate = searchDate.format('DD.MM.YYYY');
+                let events = this.$store.getters.eventsByDateForUser(searchDate, this.user.id);
 
                 let oneDayEvents = {};
-                oneDayEvents[reformattedDate] = this.groupedEvents[reformattedDate] || [];
+                oneDayEvents[reformattedDate] = events || [];
 
                 return oneDayEvents;
             }
         },
         created() {
             this.resetEvent();
+            this.resetTask();
         }
     }
 </script>

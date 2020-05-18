@@ -4,11 +4,11 @@
             <v-row align="center">
                 <v-col class="d-flex p-0" cols="12">
 
-                    <v-container v-if="field.fieldType == 'text'" class="pt-2">
+                    <v-container v-if="field.fieldType === 'text'" class="pt-2">
                         <v-text-field v-model="newValue" :label="field.name" hide-details outlined></v-text-field>
                     </v-container>
 
-                    <v-container v-if="field.fieldType == 'checkbox'" class="checkbox-container p-2">
+                    <v-container v-if="field.fieldType === 'checkbox'" class="checkbox-container p-2">
                         <v-label>{{field.name}}</v-label>
                         <v-checkbox v-for="(task, index) in field.tasks" v-model="newValue"
                                 :label="task.text"
@@ -18,7 +18,17 @@
                                 hide-details></v-checkbox>
                     </v-container>
 
-                    <v-container v-if="field.fieldType == 'file'" class="p-1 pb-0">
+                    <v-container v-if="field.fieldType === 'task'" class="task-container p-2">
+                        <v-checkbox v-model="newValue"
+                                @change="saveValues()"
+                                hide-details>
+                            <template v-slot:label>
+                                <span v-html="field.task.text"></span>
+                            </template>
+                        </v-checkbox>
+                    </v-container>
+
+                    <v-container v-if="field.fieldType === 'file'" class="p-1 pb-0">
                         <v-sheet v-if="field && field.file" class="mx-2 my-0 align-items-center">
                             <v-icon>mdi-paperclip</v-icon>
                             <v-label class="mb-0">{{field.name}}</v-label>
@@ -160,5 +170,16 @@
 
     .checkbox-container .v-input .v-label {
         margin-bottom: 0px!important;
+    }
+
+    .task-container .v-label,
+    .task-container .v-label p {
+        margin-bottom: 0px;
+    }
+
+    .task-container .v-label .mention-solo,
+    .task-container .v-label .date-time-container {
+        margin: 0 4px;
+        font-weight: bold;
     }
 </style>

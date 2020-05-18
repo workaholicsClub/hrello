@@ -81,7 +81,7 @@
             </Header>
             <CardDetails v-if="currentCard" :card="currentCard" :statuses="statuses" :user="user" :skip-global="false" :is-desktop="isDesktop"></CardDetails>
             <CardArchive v-else-if="showArchive" :type="showArchive" :user="user" :boards="boards" :is-loading="archiveLoading" :cards="whitelistCards"></CardArchive>
-            <Timetable v-else-if="showTimetable" :is-desktop="isDesktop" :all-events="allEvents" :grouped-events="timetableEvents" :user="user"></Timetable>
+            <Timetable v-else-if="showTimetable" :is-desktop="isDesktop" :user="user"></Timetable>
             <full-screen-editor v-else-if="showVacancyEditor" :text="currentBoard.vacancyText" @input="updateVacancyText"></full-screen-editor>
             <StatusBoard v-else-if="currentBoard.type === 'kanban'" :is-desktop="isDesktop" :statuses="statuses" :cards="cards" :key="'kanban'+currentBoard.type+currentBoardId"></StatusBoard>
             <AnalyticsBoard v-else
@@ -192,6 +192,7 @@
                 showFilterDrawer: false,
                 showVacancyEditor: false,
                 cardRedrawIndex: 0,
+                teamMates: [],
                 statuses: [],
                 appError: null,
             }

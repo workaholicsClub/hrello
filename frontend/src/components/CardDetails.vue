@@ -100,7 +100,7 @@
 
     export default {
         name: "CardDetails",
-        props: ['card', 'statuses', 'user', 'skipGlobal', 'isDesktop'],
+        props: ['card', 'user', 'skipGlobal', 'isDesktop'],
         components: {
             ContentElement,
             CardDetailsMenu,
@@ -175,7 +175,7 @@
                 let record = this[varName];
 
                 this.activeRecord = record;
-                this.$root.$emit('newContentCard', record, this.card);
+                this.$root.$emit('newContentCard', record, this.card, this.board);
                 this.resetField();
             },
             addNewEvent(type) {
@@ -200,12 +200,18 @@
                 this.activeRecord = null;
             },
             sendSaveCardEvent() {
-                this.$root.$emit('cardInput', this.card);
+                this.$root.$emit('cardInput', this.card, this.board);
             },
         },
         computed: {
             visibleRecords() {
                 return this.card.content ? this.card.content.filter(this.isVisible) : [];
+            },
+            statuses() {
+                let board = this.$store.getters.boardByCard(this.card);
+                return board && board.statuses
+                    ? board.statuses
+                    : [];
             }
         },
         created() {

@@ -133,6 +133,7 @@ export default {
 
             await this.loadBoards();
             await this.loadUrlData();
+            await this.loadTeammates();
         },
         async logout() {
             await this.$gapi.signOut();
@@ -147,6 +148,13 @@ export default {
             let [,, inviteType, targetId] = location.hash.split('/');
             await axios.post(`/api/invite/${inviteType}`, {userId: this.user.id, targetId: targetId});
             await this.changeUrlAndAvoidResetByVue('!/'+targetId);
+        },
+        async loadTeammates() {
+            if (!this.user) {
+                return false;
+            }
+
+            return this.$store.dispatch('loadTeammates', this.user.id);
         },
     },
 

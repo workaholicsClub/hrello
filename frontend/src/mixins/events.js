@@ -10,14 +10,10 @@ export default {
     },
     methods: {
         async loadTimetableEvents() {
-            let eventsResponse = await axios.get('/api/event/listTimetable', {
-                params: {
-                    userId: this.userId,
-                    boardIds: this.boardIds
-                }
+            this.$store.dispatch('loadTimetableEvents', {
+                userId: this.userId,
+                boardIds: this.boardIds
             });
-            this.timetableEvents = eventsResponse.data.groupedEvents;
-            this.allEvents = eventsResponse.data.events;
         },
         async addCardlessEvent(newEvent) {
             newEvent.date = new Date();
@@ -69,6 +65,69 @@ export default {
 
             await this.loadAndUpdateBoardCards();
             return await this.loadTimetableEvents();
+        },
+        async postponeTask(task, date) {
+            let postponed = task.postponed || {};
+            postponed[this.user.id] = date;
+
+            if (task.isCardless) {
+                await axios.post('/api/event/updateCardless', {
+                    id: task.id,
+                    changedData: {
+                        postponed: postponed,
+                    }
+                });
+            }
+            else {
+                await axios.post('/api/field/update', {
+                    fieldId: task.id,
+                    cardId: task.card.id,
+                    boardId: task.card.boardId,
+                    changedData: {
+                        postponed: postponed,
+                    }
+                });
+            }
+
+            await this.loadAndUpdateBoardCards();
+            return await this.loadTimetableEvents();
+        },
+        async completeTask(task, user, newState) {
+            if (!user) {
+                user = this.user;
+            }
+
+            if (newState !== false) {
+                newState = true;
+            }
+
+            let complete = task.complete || {};
+            complete[user.id] = newState;
+
+            let changedData = {complete};
+
+            let totallyCompleted = task.author.id === user.id;
+            if (totallyCompleted) {
+                changedData['value'] = true;
+            }
+
+            if (task.isCardless) {
+                await axios.post('/api/event/updateCardless', {
+                    id: task.id,
+                    changedData
+                });
+            }
+            else {
+                await axios.post('/api/field/update', {
+                    fieldId: task.id,
+                    cardId: task.card.id,
+                    boardId: task.card.boardId,
+                    changedData
+                });
+            }
+
+            await this.loadAndUpdateBoardCards();
+            return await this.loadTimetableEvents();
         }
     },
     mounted() {
@@ -76,6 +135,8 @@ export default {
         this.$root.$on('completeEvent', this.completeEvent);
         this.$root.$on('newCardlessEvent', this.addCardlessEvent);
         this.$root.$on('deleteCardlessEvent', this.deleteCardlessEvent);
+        this.$root.$on('postponeTask', this.postponeTask);
+        this.$root.$on('completeTask', this.completeTask);
     },
     beforeDestroy() {
         this.$root.$off('addEventComment', this.addEventComment);

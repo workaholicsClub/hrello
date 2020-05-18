@@ -5,23 +5,12 @@ export default {
     data() {
         return {
             currentBoard: false,
-            shareBoard: false,
-
-            boards: [],
+            shareBoard: false
         }
     },
     methods: {
         async loadBoards() {
-            if (!this.userId) {
-                return [];
-            }
-
-            let response = await axios.get('/api/board/list', {
-                params: {
-                    userId: this.userId
-                }
-            });
-            this.boards = response.data.board;
+            return this.$store.dispatch('loadBoards', this.userId);
         },
         findBoard(searchId) {
             if (!searchId || !this.boards) {
@@ -123,6 +112,9 @@ export default {
         }
     },
     computed: {
+        boards() {
+            return this.$store.state.boards;
+        },
         currentBoardId() {
             return this.currentBoard
                 ? this.currentBoard.id || false

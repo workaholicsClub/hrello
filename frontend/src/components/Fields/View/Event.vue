@@ -69,9 +69,9 @@
             let formatted = this.formatDateTime(this.value);
 
             return {
-                newValue: formatted.dateTime,
-                date: formatted.date,
-                time: formatted.time,
+                newValue: formatted.dateTime || null,
+                date: formatted.date || null,
+                time: formatted.time || null,
             }
         },
         methods: {
@@ -93,6 +93,14 @@
                 this.$emit('input', this.newValue, this.event);
             },
             formatDateTime(value) {
+                if (!value) {
+                    return {
+                        dateTime: null,
+                        date: null,
+                        time: null
+                    }
+                }
+
                 let dateTimeValue = new Date(value);
                 if ( isValidDate(dateTimeValue) ) {
                     let dateValue = moment(dateTimeValue).format('YYYY-MM-DD');

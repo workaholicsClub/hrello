@@ -104,6 +104,19 @@ export default {
 
             return this.saveCard(card);
         },
+
+        userHasAccess(board, card, user) {
+            let isCardGuest = card.guestIds.indexOf(user.id) !== -1;
+
+            if (!board) {
+                return isCardGuest;
+            }
+
+            let isBoardOwner = board.userId === user.id;
+            let isBoardGuest = board.guestIds.indexOf(user.id) !== -1;
+            return isBoardOwner || isBoardGuest || isCardGuest;
+        },
+
         async updateContent(newContent, oldContent, card) {
             let contentIndex = card.content.indexOf(oldContent);
 
@@ -132,6 +145,19 @@ export default {
                 if (needToUnlinkDefaultField) {
                     delete newContent.linkToDefaultById;
                 }
+            }
+
+            let needAccessCheck = newContent.type === 'field' && newContent.fieldType === 'task';
+            if (needAccessCheck) {
+                let mentionedUsers = newContent.task.users;
+                mentionedUsers.forEach( user => {
+                    let board = this.$store.getters.boardByCard(card);
+                    let hasNoAccess = !this.userHasAccess(board, card, user);
+
+                    if (hasNoAccess) {
+                        card.guestIds.push(user.id);
+                    }
+                });
             }
 
             this.$set(card.content, contentIndex, newContent);

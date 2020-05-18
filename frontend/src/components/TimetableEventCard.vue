@@ -1,6 +1,60 @@
 <template>
     <div>
-        <v-sheet elevation="2" v-if="event.isComplete" class="p-2 pb-1 mb-2 event-card complete-event">
+        <v-sheet elevation="2" v-if="isTask && isUserAuthor"  class="p-4 pb-1 mb-2 task-card">
+            <v-btn icon @click="$root.$emit('selectCard', event.card.id)" class="event-button"><v-icon>mdi-file-edit-outline</v-icon></v-btn>
+            <div class="task-text" v-html="item.task.text"></div>
+
+            <v-list flat class="done-list">
+                <v-list-item v-for="user in item.task.users" two-line :key="user.id">
+                    <v-list-item-action>
+                        <v-checkbox
+                            :input-value="isTaskCompletedByUser(user)"
+                            color="success"
+                            @change="toggleCompleteTask(user)"
+                        ></v-checkbox>
+                    </v-list-item-action>
+
+                    <v-list-item-content>
+                        <v-list-item-title>{{user.fullName}}</v-list-item-title>
+                        <v-list-item-subtitle>{{isTaskCompletedByUser(user) ? 'Готово' : 'Ожидает выполнения'}}</v-list-item-subtitle>
+                    </v-list-item-content>
+                </v-list-item>
+            </v-list>
+
+            <p class="d-flex flex-row justify-content-between">
+                <v-menu offset-y>
+                    <template v-slot:activator="{ on }">
+                        <v-btn class="mr-2" v-on="on">Позднее</v-btn>
+                    </template>
+                    <v-list>
+                        <v-list-item @click="postponeTask('tomorrow')"><v-list-item-title>До завтра</v-list-item-title></v-list-item>
+                        <v-list-item @click="postponeTask('2days')"><v-list-item-title>На два дня</v-list-item-title></v-list-item>
+                        <v-list-item @click="postponeTask('nextWeek')"><v-list-item-title>До следующей недели</v-list-item-title></v-list-item>
+                    </v-list>
+                </v-menu>
+                <v-btn color="success" @click="completeTask(loggedInUser)">Принять задачу</v-btn>
+            </p>
+
+        </v-sheet>
+        <v-sheet elevation="2" v-else-if="isTask"  class="p-4 pb-1 mb-2 task-card">
+            <v-btn icon @click="$root.$emit('selectCard', event.card.id)" class="event-button"><v-icon>mdi-file-edit-outline</v-icon></v-btn>
+            <div class="task-text" v-html="item.task.text"></div>
+
+            <p class="d-flex flex-row justify-content-between">
+                <v-menu offset-y>
+                    <template v-slot:activator="{ on }">
+                        <v-btn class="mr-2" v-on="on">Отложить</v-btn>
+                    </template>
+                    <v-list>
+                        <v-list-item @click="postponeTask('tomorrow')"><v-list-item-title>До завтра</v-list-item-title></v-list-item>
+                        <v-list-item @click="postponeTask('2days')"><v-list-item-title>На два дня</v-list-item-title></v-list-item>
+                        <v-list-item @click="postponeTask('nextWeek')"><v-list-item-title>До следующей недели</v-list-item-title></v-list-item>
+                    </v-list>
+                </v-menu>
+                <v-btn color="success" @click="completeTask(loggedInUser)">Завершить</v-btn>
+            </p>
+        </v-sheet>
+        <v-sheet elevation="2" v-else-if="event.isComplete" class="p-2 pb-1 mb-2 event-card complete-event">
             <v-btn icon @click="$root.$emit('selectCard', event.card.id)" class="event-button"><v-icon>mdi-file-edit-outline</v-icon></v-btn>
 
             <h3><v-icon class="mr-2">mdi-check</v-icon>{{event.card.name}}</h3>
@@ -56,12 +110,24 @@
         },
         data() {
             return {
+                item: this.event,
                 commentSent: false,
                 newComment: {
                     type: 'comment',
                     author: this.user,
                     text: null,
                 },
+            }
+        },
+        computed: {
+            isTask() {
+                return this.item.fieldType === 'task';
+            },
+            isUserAuthor() {
+                return this.item.author.id === this.user.id;
+            },
+            loggedInUser() {
+                return this.user;
             }
         },
         methods: {
@@ -80,6 +146,38 @@
             },
             completeEvent() {
                 this.$root.$emit('completeEvent', this.event);
+            },
+            postponeTask(postponeCode) {
+                let postponeDate = this.item.postponed && this.item.postponed[this.user.id]
+                    ? moment(this.item.postponed[this.user.id])
+                    : moment();
+                
+                switch (postponeCode) {
+                    case 'tomorrow':
+                        postponeDate = postponeDate.add(1, 'day');
+                    break;
+                    case '2days':
+                        postponeDate = postponeDate.add(2, 'day');
+                    break;
+                    case 'nextWeek':
+                        postponeDate = postponeDate.add(1, 'week').startOf('week');
+                    break;
+                }
+
+                this.$root.$emit('postponeTask', this.item, postponeDate.toDate());
+            },
+            isTaskCompletedByUser(user) {
+                let completedUserIds = this.item.task && this.item.complete
+                    ? Object.keys(this.item.complete)
+                    : [];
+                return completedUserIds.indexOf(user.id) !== -1 && this.item.complete[user.id];
+            },
+            completeTask(user) {
+                this.$root.$emit('completeTask', this.item, user);
+            },
+            toggleCompleteTask(user) {
+                let newState = !this.isTaskCompletedByUser(user);
+                this.$root.$emit('completeTask', this.item, user, newState);
             }
         }
     }
@@ -98,5 +196,21 @@
 
     .event-card {
         position: relative;
+    }
+
+    .task-text {
+        width: 90%;
+    }
+</style>
+
+<style>
+    .task-card .mention-solo,
+    .task-card .date-time-container {
+        margin: 0 4px;
+        font-weight: bold;
+    }
+
+    .done-list .v-input--selection-controls__input input[role=checkbox] {
+        cursor: default;
     }
 </style>

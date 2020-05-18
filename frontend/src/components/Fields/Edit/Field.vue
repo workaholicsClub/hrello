@@ -2,7 +2,7 @@
     <v-sheet elevation="0" class="my-1 px-1 bordered">
         <v-form>
             <v-container fluid class="py-0">
-                <v-row align="center">
+                <v-row align="center" v-if="field.fieldType !== 'task'">
                     <v-col class="d-flex py-0" cols="12" sm="12">
                         <v-text-field
                                 v-model="field.name"
@@ -19,6 +19,11 @@
                 <v-row v-if="field.fieldType === 'checkbox'">
                     <v-col>
                         <checkbox-edit v-model="field.tasks"></checkbox-edit>
+                    </v-col>
+                </v-row>
+                <v-row v-if="field.fieldType === 'task'">
+                    <v-col>
+                        <task-edit v-model="field.task"></task-edit>
                     </v-col>
                 </v-row>
                 <v-alert
@@ -41,6 +46,7 @@
     import {getFieldTypes, getDefaultColors} from "../../../unsorted/Helpers";
     import ColorEdit from "../../Inputs/ColorEdit";
     import CheckboxEdit from "../../Inputs/CheckboxEdit";
+    import TaskEdit from "../../Inputs/TaskEdit";
 
     let defaultColors = getDefaultColors();
 
@@ -49,7 +55,8 @@
         props: ['value', 'userIsAuthor', 'skipGlobal'],
         components: {
             ColorEdit,
-            CheckboxEdit
+            CheckboxEdit,
+            TaskEdit
         },
         data() {
             return {

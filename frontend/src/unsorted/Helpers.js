@@ -28,6 +28,7 @@ function getDefaultColors() {
 }
 function getFieldTypes() {
     return [
+        {text: 'Задача', value: 'task', icon: 'mdi-clipboard-check-outline', fieldName: 'Новая задача', buttonText: 'Добавить задачу'},
         {text: 'Текст', value: 'text', icon: 'mdi-cursor-text', fieldName: 'Новое информационное поле', buttonText: 'Добавить информацию'},
         {text: 'Галочка', value: 'checkbox', icon: 'mdi-checkbox-marked-outline', fieldName: 'Новый чеклист', buttonText: 'Добавить чеклист'},
         {text: 'Оценка', value: 'mark', icon: 'mdi-emoticon-happy-outline', fieldName: 'Новая оценка', buttonText: 'Добавить оценку'},
