@@ -6,6 +6,10 @@ import moment from "moment";
 Vue.use(Vuex);
 
 function skipTask(item, userId) {
+    if (!item.task) {
+      return true;
+    }
+
     let totallyCompletedTask = item.value === true;
     let userCompletedThisTask = item.complete && item.complete[userId]
         ? item.complete[userId]
