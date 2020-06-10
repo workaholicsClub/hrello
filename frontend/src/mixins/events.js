@@ -10,10 +10,7 @@ export default {
     },
     methods: {
         async loadTimetableEvents() {
-            this.$store.dispatch('loadTimetableEvents', {
-                userId: this.userId,
-                boardIds: this.boardIds
-            });
+            this.$store.dispatch('loadTimetableEvents');
         },
         async addCardlessEvent(newEvent) {
             newEvent.date = new Date();

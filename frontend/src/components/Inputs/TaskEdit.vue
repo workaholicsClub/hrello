@@ -1,5 +1,5 @@
 <template>
-    <v-sheet class="p-0 d-flex flex-row">
+    <v-sheet class="p-0 d-flex flex-row task-edit">
         <editor-content class="editor editor__content fill-height flex-fill" :editor="editor" />
 
         <editor-menu-bar :editor="editor" v-slot="{ commands }">
@@ -262,7 +262,7 @@
 </style>
 
 <style>
-    .editor p.is-editor-empty:first-child::before {
+    .task-edit .editor p.is-editor-empty:first-child::before {
         content: attr(data-empty-text);
         float: left;
         color: #aaa;
@@ -271,7 +271,7 @@
         font-style: italic;
     }
 
-    .editor .mention {
+    .task-edit .editor .mention {
         align-items: center;
         cursor: default;
         display: inline-flex;
@@ -300,7 +300,7 @@
         margin-top: 8px;
     }
 
-    .editor .mention-solo {
+    .task-edit .editor .mention-solo {
         box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
         padding: 0 12px;
         background: #FFFFFF;
@@ -316,7 +316,7 @@
         line-height: 38px;
     }
 
-    .editor .date-time-container {
+    .task-edit .editor .date-time-container {
         background: #e0e0e0;
 
     }

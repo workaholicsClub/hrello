@@ -121,6 +121,43 @@ module.exports = {
             });
         }
     },
+
+    listAll: (db) => {
+        return async (request, response) => {
+            let cardsCollection = db.collection('cards');
+            let boardsCollection = db.collection('boards');
+
+            let userId = request.query.userId || false;
+
+            let boards = await boardsCollection.find({
+                $or: [
+                    {userId: userId},
+                    {guestIds: { $elemMatch: {$eq: userId} }}
+                ],
+                archive: {$in: [null, false]},
+                deleted: {$in: [null, false]},
+            }).toArray();
+
+            let boardIds = boards.map( board => board.id );
+
+            let cards = await cardsCollection.find({
+                $or: [
+                    {boardId: {$in: boardIds}},
+                    {guestIds: { $elemMatch: {$eq: userId} }}
+                ],
+                archive: {$in: [null, false]},
+                whitelist: {$in: [null, false]},
+                blacklist: {$in: [null, false]},
+                finishedlist: {$in: [null, false]},
+                deleted: {$in: [null, false]}
+            }).toArray();
+
+            response.send({
+                card: cards
+            });
+        }
+    },
+
     listArchive: (db) => {
         return async (request, response) => {
             let userId = request.query.userId || false;

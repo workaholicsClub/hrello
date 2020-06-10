@@ -52,7 +52,6 @@
             <Header
                     :is-desktop="isDesktop"
                     :title="currentTitle"
-                    :show-back="showBack"
                     :allow-title-edit="isBoardShown"
                     @drawer="toggleDrawer"
                     @back="goBack"
@@ -79,19 +78,8 @@
                     </v-menu>
                 </template>
             </Header>
-            <CardDetails v-if="currentCard" :card="currentCard" :statuses="statuses" :user="user" :skip-global="false" :is-desktop="isDesktop"></CardDetails>
-            <CardArchive v-else-if="showArchive" :type="showArchive" :user="user" :boards="boards" :is-loading="archiveLoading" :cards="whitelistCards"></CardArchive>
-            <Timetable v-else-if="showTimetable" :is-desktop="isDesktop" :user="user"></Timetable>
-            <full-screen-editor v-else-if="showVacancyEditor" :text="currentBoard.vacancyText" @input="updateVacancyText"></full-screen-editor>
-            <StatusBoard v-else-if="currentBoard.type === 'kanban'" :is-desktop="isDesktop" :statuses="statuses" :cards="cards" :key="'kanban'+currentBoard.type+currentBoardId"></StatusBoard>
-            <AnalyticsBoard v-else
-                    :is-desktop="isDesktop"
-                    :statuses="statuses"
-                    :cards="cards"
-                    :key="'analytics'+currentBoard.type+currentBoardId"
-                    :board="currentBoard"
-                    :filter-drawer="showFilterDrawer"
-            ></AnalyticsBoard>
+
+            <router-view></router-view>
         </v-container>
         <v-alert type="error" v-if="appError">{{appError}}</v-alert>
         <v-dialog v-model="shareDialog" persistent max-width="600px">
@@ -133,13 +121,7 @@
 <script>
     import Header from './components/Header.vue';
     import Sidebar from './components/Sidebar.vue';
-    import StatusBoard from './components/Board.vue';
-    import AnalyticsBoard from "./components/AnalyticsBoard";
-    import CardDetails from "./components/CardDetails";
-    import Timetable from "./components/Timetable";
-    import CardArchive from "./components/CardArchive";
     import Login from "./components/Login";
-    import FullScreenEditor from "./components/FullScreenEditor";
 
     import CardMenu from "./components/Menus/CardMenu";
     import BoardMenu from "./components/Menus/BoardMenu";
@@ -159,15 +141,9 @@
         name: 'BoardPage',
         props: ['useGoogleServices'],
         components: {
-            FullScreenEditor,
-            AnalyticsBoard,
-            StatusBoard,
-            CardArchive,
             Header,
             Sidebar,
-            CardDetails,
             Login,
-            Timetable,
             CardMenu,
             BoardMenu
         },
@@ -186,28 +162,19 @@
                 mini: this.$isDesktop(),
                 isDesktop: this.$isDesktop(),
                 initFinished: false,
-                showTimetable: false,
-                showArchive: false,
                 onlyCardMode: false,
-                showFilterDrawer: false,
-                showVacancyEditor: false,
                 cardRedrawIndex: 0,
                 teamMates: [],
                 statuses: [],
                 appError: null,
             }
         },
-        watch: {
-            currentBoardId: async function () {
-                this.reloadBoardData();
-            },
-        },
         methods: {
             toggleDrawer() {
                 this.drawer = !this.drawer;
             },
             toggleFilterDrawer() {
-                this.showFilterDrawer = !this.showFilterDrawer;
+                this.$store.commit('toggleFilterDrawer');
             },
             setDrawerState(newState) {
                 this.drawer = newState;
@@ -294,18 +261,11 @@
                 }
             },
             toggleArchive(type) {
-                this.currentCard = false;
-                this.showTimetable = false;
-                this.showArchive = type;
-
-                if (this.showArchive) {
-                    this.loadArchiveCards(this.archiveType);
-                }
+                this.$router.push({name: 'archive', params: {type: type}});
             },
             async goBack() {
                 if (this.currentCard) {
                     await this.saveCard(this.currentCard);
-                    this.currentCard = false;
                 }
 
                 if (this.showVacancyEditor) {
@@ -313,11 +273,7 @@
                     this.showVacancyEditor = false;
                 }
 
-                this.updateUrl();
-
-                if (this.showTimetable) {
-                    this.loadTimetableEvents();
-                }
+                this.$router.back();
             },
 
             showShareBoardDialog(board) {
@@ -335,11 +291,14 @@
                 this.shareBoard = null;
                 this.shareCard = null;
             },
-            toggleBoardVacancy() {
-                this.showVacancyEditor = !this.showVacancyEditor;
+            toggleBoardVacancy(board) {
+                this.$router.push({name: 'vacancy', params: {boardId: board.id}});
             }
         },
         computed: {
+            showFilterDrawer() {
+                return this.$store.state.showFilterDrawer;
+            },
             currentTitle() {
                 if (this.currentCard) {
                     return this.currentCardTitle;
@@ -367,9 +326,6 @@
 
                 return false;
             },
-            showBack() {
-                return Boolean(this.currentCard) || this.showVacancyEditor;
-            },
             cardShareLink() {
                 return this.shareCard ? location.origin + '/c#!/invite/card/'+this.shareCard.id : false;
             },
@@ -382,7 +338,7 @@
 
             let localUser = this.checkAndLoadAuthorizedLocalUser();
             if (localUser) {
-                this.finishLogin(localUser);
+                await this.finishLogin(localUser);
                 await this.afterLogin();
             }
             else {

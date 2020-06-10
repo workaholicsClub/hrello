@@ -100,7 +100,6 @@
 
     export default {
         name: "CardDetails",
-        props: ['card', 'user', 'skipGlobal', 'isDesktop'],
         components: {
             ContentElement,
             CardDetailsMenu,
@@ -115,7 +114,8 @@
                 fabActive: false,
                 fieldTypes: getFieldTypes(),
                 activeRecord: null,
-                editDrawer: false
+                editDrawer: false,
+                skipGlobal: false,
             }
         },
         methods: {
@@ -204,6 +204,15 @@
             },
         },
         computed: {
+            card() {
+                return this.$store.state.card.currentCard;
+            },
+            user() {
+                return this.$store.state.user.currentUser;
+            },
+            isDesktop() {
+                return this.$isDesktop();
+            },
             visibleRecords() {
                 return this.card.content ? this.card.content.filter(this.isVisible) : [];
             },

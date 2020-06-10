@@ -26,7 +26,6 @@
 
     export default {
         name: "CardArchive",
-        props: ['type', 'boards', 'cards', 'user', 'isLoading'],
         components: {
             Card,
         },
@@ -35,7 +34,30 @@
                 query: null,
             }
         },
+        async created() {
+            await this.refreshArchive();
+        },
+        methods: {
+            refreshArchive() {
+                return this.$store.dispatch('loadArchiveCards', this.type);
+            }
+        },
         computed: {
+            type() {
+                return this.$route.params.type;
+            },
+            boards() {
+                return this.$store.state.boards;
+            },
+            cards() {
+                return this.$store.getters.archiveCards(this.type);
+            },
+            user() {
+                return this.$store.state.user.currentUser;
+            },
+            isLoading() {
+                return false;
+            },
             filteredCards() {
                 return this.query
                     ? this.cards.filter(card => {

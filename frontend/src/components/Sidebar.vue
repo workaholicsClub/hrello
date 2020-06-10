@@ -22,7 +22,7 @@
                                 />
                             </v-list-item-avatar>
                         </v-list-item>
-                        <v-list-item class="p-0" @click="toggleTimetable" :class="{'active': localActiveItem === 'timetable'}">
+                        <v-list-item class="p-0" @click="toggleTimetable" :class="{'active': isActive('timetable')}">
                             <v-list-item-action>
                                 <v-btn icon outlined ><v-icon>mdi-calendar-blank-outline</v-icon></v-btn>
                             </v-list-item-action>
@@ -37,7 +37,7 @@
                                 v-for="(board, index) in boards"
                                 :key="'board'+index"
                                 class="p-0"
-                                :class="{'active': localActiveItem === 'board'+board.id}"
+                                :class="{'active': isActive('board', board.id)}"
                                 @click="toggleBoard(board)"
                         >
                             <v-list-item-action>
@@ -60,7 +60,7 @@
                     </v-list>
                     <v-spacer class="fill" />
                     <v-list>
-                        <v-list-item class="p-0" @click="toggleArchive" :class="{'active': localActiveItem === 'archive'}">
+                        <v-list-item class="p-0" @click="toggleArchive" :class="{'active': isActive('archive')}">
                             <v-list-item-action>
                                 <v-btn icon><v-icon>mdi-archive-arrow-down-outline</v-icon></v-btn>
                             </v-list-item-action>
@@ -105,6 +105,13 @@
             }
         },
         methods: {
+            isActive(checkItemCode, checkBoardId) {
+                if (checkItemCode === 'board') {
+                    return this.$route.params.boardId === checkBoardId;
+                }
+
+                return this.$route.name === checkItemCode;
+            },
             getBoardTitle(board, index) {
                 if (!board.title) {
                     return 'Д'+index;
@@ -126,7 +133,7 @@
             },
             toggleTimetable() {
                 this.localActiveItem = 'timetable';
-                this.$emit('timetable');
+                this.$router.push({name: 'timetable'});
             },
             toggleArchive() {
                 this.localActiveItem = 'archive';

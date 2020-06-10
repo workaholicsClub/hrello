@@ -70,7 +70,6 @@
 
     export default {
         name: "AnalyticsBoard",
-        props: ['cards', 'statuses', 'board', 'isDesktop', 'filterDrawer'],
         components: {
             AnalyticsWidget,
             Card
@@ -79,9 +78,15 @@
             return {
                 selectedWidget: false,
                 allStats: {},
-                filterValues: this.board.filterValues || {},
-                expandState: this.board.expandState || {},
+                filterValues: {},
+                expandState: {},
                 filterIncrement: 0
+            }
+        },
+        mounted() {
+            if (this.board) {
+                this.filterValues = this.board.filterValues || {};
+                this.expandState = this.board.expandState || {};
             }
         },
         methods: {
@@ -189,6 +194,23 @@
             }
         },
         computed: {
+            board() {
+                let boardId = this.$route.params.boardId;
+                return this.$store.getters.boardById(boardId);
+            },
+            statuses() {
+                return this.board ? this.board.statuses : [];
+            },
+            cards() {
+                let boardId = this.$route.params.boardId;
+                return this.$store.getters.cardsForBoardId(boardId);
+            },
+            filterDrawer() {
+                return this.$store.state.showFilterDrawer;
+            },
+            isDesktop() {
+                return this.$isDesktop();
+            },
             records() {
                 let skipFieldTypes = ['file'];
                 let skipEventTypes = ['reminder'];

@@ -5,8 +5,6 @@ import {clone} from "../unsorted/Helpers";
 export default {
     data() {
         return {
-            currentCard: false,
-            cards: [],
             whitelistCards: [],
             archiveType: 'whitelist',
             archiveLoading: false,
@@ -30,6 +28,9 @@ export default {
             });
             return cardResponse.data.card;
         },
+        async loadCards() {
+            return this.$store.dispatch('loadCards', this.userId);
+        },
         async loadAndUpdateBoardCards() {
             let cardsResponse = await axios.get('/api/card/list', {
                 params: {
@@ -40,18 +41,9 @@ export default {
             this.cards = cardsResponse.data.card;
         },
         async loadArchiveCards(type) {
-            this.isLoading = true;
-            let cardsResponse = await axios.get('/api/card/listArchive', {
-                params: {
-                    userId: this.user.id,
-                    archiveType: type,
-                }
-            });
-
-            this.isLoading = false;
-            this.whitelistCards = cardsResponse.data.card;
+            this.$store.dispatch('loadArchiveCards', type);
         },
-        async changeCard(newCardId, skipUrlUpdate) {
+        async changeCard(newCardId) {
             let foundCard = this.findCard(newCardId);
 
             if (!foundCard) {
@@ -59,11 +51,8 @@ export default {
             }
 
             if (foundCard) {
-                this.currentCard = foundCard;
-
-                if (!skipUrlUpdate) {
-                    this.updateUrl();
-                }
+                this.$store.commit('selectCard', foundCard);
+                this.$router.push({name: 'card', params: {boardId: this.currentBoard.id, cardId: newCardId}});
             }
         },
         async addCard(status) {
@@ -301,6 +290,12 @@ export default {
         },
     },
     computed: {
+        cards() {
+            return this.$store.getters.cardsForBoardId(this.currentBoardId);
+        },
+        currentCard() {
+            return this.$store.state.card.currentCard;
+        },
         currentCardId() {
             return this.currentCard ? this.currentCard.id : false;
         },

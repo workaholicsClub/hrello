@@ -73,7 +73,6 @@
 
     export default {
         name: "Timetable",
-        props: ['isDesktop', 'user'],
         components: {
             EditEvent,
             EditTask,
@@ -128,9 +127,18 @@
             },
             changeDate(newDate) {
                 this.selectedDate = newDate.date;
+            },
+            refreshEvents() {
+                this.$store.dispatch('loadTimetableEvents');
             }
         },
         computed: {
+            isDesktop() {
+                return this.$isDesktop();
+            },
+            user() {
+                return this.$store.state.user.currentUser;
+            },
             isNewTask() {
                 return this.formTitle === 'Новая задача';
             },
@@ -151,6 +159,7 @@
         created() {
             this.resetEvent();
             this.resetTask();
+            this.refreshEvents();
         }
     }
 </script>

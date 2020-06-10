@@ -3,7 +3,6 @@ import axios from "axios";
 export default {
     data() {
         return {
-            user: false,
             loginError: false,
             userChecked: false,
             loadedUserId: false,
@@ -65,15 +64,15 @@ export default {
 
             if (profile) {
                 let response = await axios.post('/api/user/googleLogin', profile);
-                this.finishLogin(response.data.user);
+                await this.finishLogin(response.data.user);
             }
 
             return this.user;
         },
-        finishLogin(profile) {
+        async finishLogin(profile) {
             this.loginError = false;
             this.userChecked = true;
-            this.user = profile;
+            await this.$store.commit('setUser', profile);
             localStorage.setItem('authorizedUser', JSON.stringify(this.user));
         },
         async login(userData) {
@@ -132,6 +131,7 @@ export default {
             }
 
             await this.loadBoards();
+            await this.loadCards();
             await this.loadUrlData();
             await this.loadTeammates();
         },
@@ -159,9 +159,12 @@ export default {
     },
 
     computed: {
+        user() {
+            return this.$store.state.user.currentUser;
+        },
         userId() {
             if (this.user) {
-                return this.user.id;
+                return this.$store.getters.userId;
             }
 
             return this.loadedUserId;

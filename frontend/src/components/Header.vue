@@ -15,7 +15,7 @@
 <script>
     export default {
         name: 'Header',
-        props: ['isDesktop', 'title', 'showBack', 'allowTitleEdit'],
+        props: ['isDesktop', 'title', 'allowTitleEdit'],
         data() {
             return {
                 isTitleEditing: false,
@@ -25,6 +25,11 @@
         watch: {
             title() {
                 this.newTitle = this.title;
+            }
+        },
+        computed: {
+            showBack() {
+                return this.$route.name === 'card' || this.$route.name === 'vacancy';
             }
         }
     }

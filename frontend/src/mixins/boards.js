@@ -22,16 +22,15 @@ export default {
         },
         changeBoard(newBoardId, skipUrlUpdate) {
             this.currentBoard = this.findBoard(newBoardId);
-            this.currentCard = false;
             this.showTimetable = false;
             this.showArchive = false;
             this.drawer = false;
 
-            if (!skipUrlUpdate) {
-                this.updateUrl();
-            }
+            this.$store.commit('deselectCard');
 
-            this.reloadBoardData();
+            if (!skipUrlUpdate) {
+                this.$router.push({name: 'board', params: {boardId: newBoardId}});
+            }
         },
         reloadBoardData() {
             this.loadAndUpdateBoardStatuses();
@@ -65,20 +64,11 @@ export default {
             this.currentBoard = boardResponse.data.board;
             this.boards.push(this.currentBoard);
         },
-        updateVacancyText(newVacancyText) {
-            this.currentBoard.vacancyText = newVacancyText;
-            this.saveCurrentBoard();
-        },
-        saveCurrentBoard() {
-            axios.post('/api/board/update', this.currentBoard);
-        },
         setBoardTitle(newTitle) {
-            this.currentBoard.title = newTitle;
-            this.saveCurrentBoard();
+            this.$store.commit('updateBoard', { boardId: this.currentBoard.id, field: 'title', value: newTitle });
         },
         changeBoardType(newType) {
-            this.currentBoard.type = newType;
-            this.saveCurrentBoard();
+            this.$store.commit('updateBoard', { boardId: this.currentBoard.id, field: 'type', value: newType });
         },
         async deleteBoard(board) {
             await axios.get('/api/board/delete', {

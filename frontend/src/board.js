@@ -1,10 +1,14 @@
-import Vue from 'vue'
+import Vue from 'vue';
+import VueRouter from 'vue-router';
 import Vuetify from 'vuetify/lib';
-import DatetimePicker from 'vuetify-datetime-picker'
-import VueGoogleApi from 'vue-google-api'
-import Rollbar from 'vue-rollbar'
-import Sticky from 'vue-sticky-directive'
-import store from './store'
+import VueGoogleApi from 'vue-google-api';
+import Rollbar from 'vue-rollbar';
+import Sticky from 'vue-sticky-directive';
+
+import store from './store';
+import routes from './routes';
+
+import BoardPage from './BoardPage.vue';
 
 const useGoogleServices = false;
 const isProduction = /localhost|127\.0\.0/.test(location.href) || false;
@@ -25,9 +29,9 @@ const gapiConfig = useGoogleServices
     };
 
 Vue.use(Vuetify);
-Vue.use(DatetimePicker);
+Vue.use(VueRouter);
 Vue.use(VueGoogleApi, gapiConfig);
-Vue.use(Sticky)
+Vue.use(Sticky);
 Vue.use(Rollbar, {
     accessToken: '62e0891d2c9d41e6971d135094781b74',
     captureUncaught: true,
@@ -44,8 +48,6 @@ Vue.use(Rollbar, {
         }
     }
 });
-
-import BoardPage from './BoardPage.vue'
 
 Vue.config.productionTip = false;
 
@@ -64,6 +66,11 @@ Vue.prototype.$isMobile = function () {
     return !this.$isDesktop;
 };
 
+
+const router = new VueRouter({
+    routes
+});
+
 new Vue({
     vuetify: new Vuetify({
         theme: {
@@ -72,13 +79,16 @@ new Vue({
             },
         }
     }),
+    router,
     store,
     propsData: {
         useGoogleServices: useGoogleServices
     },
-    render: createElement => createElement(BoardPage, {
-                props: {
-                    'use-google-services': useGoogleServices
-                }
-            }),
+    render(createElement) {
+        return createElement(BoardPage, {
+            props: {
+                'use-google-services': useGoogleServices
+            }
+        });
+    }
 }).$mount('#app');

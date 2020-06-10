@@ -6,18 +6,6 @@
             </v-list-item-icon>
             <v-list-item-title>Поделиться</v-list-item-title>
         </v-list-item>
-        <v-list-item v-if="board.type === 'kanban'" @click="sendChangeBoardTypeEvent('analytics')">
-            <v-list-item-icon>
-                <v-icon>mdi-google-analytics</v-icon>
-            </v-list-item-icon>
-            <v-list-item-title>Включить аналитический вид</v-list-item-title>
-        </v-list-item>
-        <v-list-item v-else @click="sendChangeBoardTypeEvent('kanban')">
-            <v-list-item-icon>
-                <v-icon>mdi-trello</v-icon>
-            </v-list-item-icon>
-            <v-list-item-title>Включить канбан</v-list-item-title>
-        </v-list-item>
         <v-list-item @click="sendToggleVacancyEvent">
             <v-list-item-icon>
                 <v-icon>mdi-file-document-outline</v-icon>
@@ -66,7 +54,7 @@
                 this.$root.$emit('copyBoard', this.board);
             },
             sendToggleVacancyEvent() {
-                this.$emit('toggleVacancy');
+                this.$emit('toggleVacancy', this.board);
             }
         }
     }

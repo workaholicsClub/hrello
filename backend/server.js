@@ -49,6 +49,7 @@ async function connectToDatabase (host, port, dbName) {
 
     app.get('/api/card/list', cardRoutes.list(db));
     app.get('/api/card/listArchive', cardRoutes.listArchive(db))
+    app.get('/api/card/listAll', cardRoutes.listAll(db))
     app.get('/api/card/findOne', cardRoutes.findOne(db));
     app.get('/api/card/blacklist', cardRoutes.blacklist(db));
     app.get('/api/card/whitelist', cardRoutes.whitelist(db));
