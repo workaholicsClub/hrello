@@ -79,7 +79,7 @@ export default {
 
             await this.loadBoards();
             await this.reloadBoardData();
-            this.currentBoard = this.boards[0];
+            this.changeBoard( this.boards[0].id );
         },
         async archiveBoard(board) {
             await axios.get('/api/board/archive', {
@@ -90,15 +90,13 @@ export default {
 
             await this.loadBoards();
             await this.reloadBoardData();
-            this.currentBoard = this.boards[0];
+            this.changeBoard( this.boards[0].id );
         },
         async changeBoardExpandState(newExpandState) {
-            this.currentBoard.expandState = newExpandState;
-            this.saveCurrentBoard();
+            this.$store.commit('updateBoard', { boardId: this.currentBoard.id, field: 'expandState', value: newExpandState });
         },
         async changeBoardFilter(newFilter) {
-            this.currentBoard.filterValues = newFilter;
-            this.saveCurrentBoard();
+            this.$store.commit('updateBoard', { boardId: this.currentBoard.id, field: 'filterValues', value: newFilter });
         }
     },
     computed: {

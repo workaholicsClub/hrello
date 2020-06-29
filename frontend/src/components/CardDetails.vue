@@ -1,5 +1,5 @@
 <template>
-    <v-content class="fill-height" @click="activateRecord(null)">
+    <v-main class="fill-height" @click="activateRecord(null)">
         <v-navigation-drawer v-if="!isDesktop"
                 v-model="editDrawer"
                 absolute
@@ -89,7 +89,7 @@
             <v-icon v-else-if="activeRecord">mdi-settings</v-icon>
             <v-icon v-else>mdi-plus</v-icon>
         </v-btn>
-    </v-content>
+    </v-main>
 </template>
 
 <script>

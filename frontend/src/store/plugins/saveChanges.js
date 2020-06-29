@@ -5,7 +5,6 @@ function saveBoard(boardId, state) {
     return axios.post('/api/board/update', board);
 }
 
-
 const saveChangesPlugin = store => {
     store.subscribe((mutation, state) => {
         if (mutation.type === 'updateBoard') {

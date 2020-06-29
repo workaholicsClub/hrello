@@ -5,7 +5,7 @@ module.exports = {
         return async (request, response) => {
 
             const uploadedFile = request.files.file;
-            const fileId = shortid.generate();
+            const fileId = request.body.fileId || shortid.generate();
             const fileName = fileId + '_' + uploadedFile.name;
             const saveToPath = __dirname + '/../uploads/' + fileName;
 

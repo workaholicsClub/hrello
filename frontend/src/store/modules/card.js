@@ -1,4 +1,5 @@
 import axios from "axios";
+import {getUniqueTags, getCardTags} from "../../unsorted/Helpers";
 
 export default {
     state: {
@@ -23,6 +24,19 @@ export default {
         },
         archiveCards(state) {
             return type => state.archiveCards[type];
+        },
+        cardById(state) {
+            return (searchId) => state.cards.find( card => card.id === searchId );
+        },
+        getAllTags(state) {
+            return tagname => {
+                let allTags = state.cards.reduce( (tags, card) => {
+                    let cardTags = getCardTags(card, tagname);
+                    return tags.concat(cardTags);
+                }, []);
+
+                return getUniqueTags(allTags).sort( (a, b) => a.text.localeCompare(b.text) );
+            }
         }
     },
     actions: {

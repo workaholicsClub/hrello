@@ -1,7 +1,7 @@
 <template>
-    <div>
-        <i v-for="emoji in emojiIcons" :class="emojiClasses(emoji)" :key="emoji.icon"></i>
-    </div>
+    <span>
+        <i v-for="emoji in emojiIcons" :class="emojiClasses(emoji)" :key="emoji.icon" @click="sendUpdate(emoji)"></i>
+    </span>
 </template>
 
 <script>
@@ -26,11 +26,14 @@
             emojiClasses(emoji) {
                 let classes = {
                     'em': true,
-                    'acive': this.field.value === emoji.value
+                    'active': this.field.value === emoji.value
                 }
 
                 classes[emoji.icon] = true;
                 return classes;
+            },
+            sendUpdate(emoji) {
+                this.$emit('change', emoji.value);
             }
         }
     }
@@ -38,8 +41,9 @@
 
 <style scoped>
     .em {
-        opacity: 0.5;
+        opacity: 0.3;
         margin-right: 0.5em;
+        cursor: pointer;
     }
 
     .em.active {

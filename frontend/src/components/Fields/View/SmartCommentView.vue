@@ -7,7 +7,7 @@
             </v-avatar>
         </v-col>
         <v-col>
-            <div class="mb-1 d-flex">
+            <div class="mb-1 d-flex" :class="{'flex-column': infoAsColumn}">
                 <a href="#"><small>{{field.author.fullName}}</small></a>
                 <span class="flex-fill"></span>
                 <small class="text-muted">{{commentDate}}</small>
@@ -28,6 +28,10 @@
                     {{field.file.name}}
                 </v-chip>
             </div>
+            <div v-else-if="field.fieldType === 'text'">
+                <p>{{field.name}}</p>
+                <p>{{field.value}}</p>
+            </div>
             <div v-else-if="field.fieldType === 'checkbox'">
                 <p>{{field.name}}</p>
                 <ul data-type="todo_list">
@@ -40,6 +44,9 @@
             <div v-else-if="field.fieldType === 'mark'">
                 <emojis :field="field"></emojis>
             </div>
+            <div v-else-if="field.fieldType === 'smartComment'">
+                <smart-comment :value="field" :read-only="true" @readonlyUpdate="readonlyUpdate"></smart-comment>
+            </div>
             <div v-else v-html="text"></div>
         </v-col>
     </v-row>
@@ -48,22 +55,27 @@
 <script>
     import moment from "moment";
     import Emojis from "./Emojis";
+    import SmartComment from "../../Inputs/SmartComment";
 
     export default {
         name: "SmartCommentView",
-        props: ['field'],
+        props: ['field', 'infoAsColumn'],
         components: {
+            SmartComment,
             Emojis
         },
         methods: {
             downloadFile(field) {
                 window.location.href = field.uploadData.downloadUrl;
+            },
+            readonlyUpdate(field) {
+                this.$emit('readonlyUpdate', field);
             }
         },
         computed: {
             colorValues() {
                 return this.field.colors.filter( colorData => {
-                    return this.field.value.indexOf(colorData.value) !== -1;
+                    return this.field.value && this.field.value.indexOf(colorData.value) !== -1;
                 });
             },
             eventDate() {

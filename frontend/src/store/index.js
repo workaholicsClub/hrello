@@ -10,7 +10,18 @@ import saveChangesPlugin from './plugins/saveChanges';
 
 Vue.use(Vuex);
 
-function skipTask(item, userId) {
+function getItemData(item, fieldName, defaultValue) {
+    let isComment = item.fieldType === 'smartComment';
+    let dataField = isComment ? 'data' : 'task';
+
+    let value = item[dataField] && item[dataField][fieldName]
+        ? item[dataField][fieldName]
+        : defaultValue;
+
+    return value;
+}
+
+function skipItem(item, userId) {
     let totallyCompletedTask = item.value === true;
     let userCompletedThisTask = item.complete && item.complete[userId]
         ? item.complete[userId]
@@ -20,7 +31,7 @@ function skipTask(item, userId) {
         return true;
     }
 
-    let userIds = item.task.users.map( user => user.id );
+    let userIds = getItemData(item, 'users', []).map( user => user.id );
 
     let isUserMentioned = userIds.indexOf(userId) !== -1;
     let isUserAuthor = item.author.id === userId;
@@ -45,9 +56,10 @@ export default new Vuex.Store({
             return userId => {
                 return state.timetableEvents.reduce( (dates, item) => {
                     let isTask = item.fieldType === 'task';
+                    let isComment = item.fieldType === 'smartComment';
 
-                    if (isTask) {
-                        if (skipTask(item, userId)) {
+                    if (isTask || isComment) {
+                        if (skipItem(item, userId)) {
                             return dates;
                         }
 
@@ -56,7 +68,7 @@ export default new Vuex.Store({
                             dates.push( moment(taskPostponedDate).format('YYYY-MM-DD') );
                         }
 
-                        let taskDates = item.task.dates.map( date => moment(date).format('YYYY-MM-DD') );
+                        let taskDates = getItemData(item,'dates', []).map( date => moment(date).format('YYYY-MM-DD') );
                         dates = dates.concat(taskDates);
                     }
                     else {
@@ -73,13 +85,14 @@ export default new Vuex.Store({
                 return state.timetableEvents.filter( item => {
                     let isEvent = item.type === 'event';
                     let isTask = item.fieldType === 'task';
+                    let isComment = item.fieldType === 'smartComment';
 
                     if (isEvent) {
                         return moment(item.value).isSame(searchDate, 'day');
                     }
 
-                    if (isTask) {
-                        if (skipTask(item, userId)) {
+                    if (isTask || isComment) {
+                        if (skipItem(item, userId)) {
                             return false;
                         }
 
@@ -91,7 +104,7 @@ export default new Vuex.Store({
                             return searchDate.isSameOrAfter(taskPostponedDate, 'day');
                         }
 
-                        let minDate = item.task.dates.reduce( (minDate, enumDate) => {
+                        let minDate = getItemData(item, 'dates', []).reduce( (minDate, enumDate) => {
                             if (minDate === false) {
                                 return moment(enumDate);
                             }

@@ -1,6 +1,8 @@
 <template>
     <div class="datetime-wrapper">
         <v-text-field
+                v-if="isEditing"
+
                 ref="input"
                 v-model="dateForTextfield"
                 label="Дата и время"
@@ -61,8 +63,12 @@
 
 
             </template>
-
         </v-text-field>
+        <span v-else
+            class="date-time-container"
+        >
+            {{dateForTextfield}}
+        </span>
     </div>
 </template>
 
@@ -239,6 +245,9 @@
         computed: {
             isOutdated() {
                 return moment(this.date).isBefore( moment.now() );
+            },
+            isEditing() {
+                return this.node.attrs.edit
             },
             backgroundColor() {
                 return this.isOutdated

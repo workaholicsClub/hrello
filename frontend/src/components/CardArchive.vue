@@ -1,5 +1,5 @@
 <template>
-    <v-content class="fill-height" :class="{'align-items-start': !isLoading, 'justify-content-start': !isLoading}">
+    <v-main class="fill-height" :class="{'align-items-start': !isLoading, 'justify-content-start': !isLoading}">
         <v-container fill-height fluid v-if="isLoading">
             <v-row align="center" justify="center">
                 <v-progress-circular
@@ -18,7 +18,7 @@
                 <v-col v-for="card in filteredCards" :key="card.id" cols="12" md="4"><card :card="card" :boards="boards"></card></v-col>
             </v-row>
         </v-container>
-    </v-content>
+    </v-main>
 </template>
 
 <script>
@@ -79,7 +79,7 @@
 </style>
 
 <style>
-    .v-content.fill-height .v-content__wrap {
+    .v-main.fill-height .v-main__wrap {
         height: 100%;
     }
 </style>

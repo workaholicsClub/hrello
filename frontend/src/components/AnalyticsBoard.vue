@@ -1,5 +1,5 @@
 <template>
-    <v-content class="fill-height">
+    <v-main class="fill-height">
         <v-navigation-drawer v-if="!isDesktop"
                 :value="filterDrawer"
                 absolute
@@ -15,12 +15,21 @@
                         @expand="updateFilterExpandState"
                         @input="updateFilterValues"
                 ></analytics-widget>
-                <analytics-widget v-for="(record, index) in records"
-                        :cards="cards"
-                        :record="record"
-                        :key="'widget-'+index"
-                        :is-expanded="expandState[record.id]"
-                        :value="filterValues[record.id]"
+                <analytics-widget
+                        :input-stats="hashtagStats"
+                        :record="{id: 'hashtag', name: '#Хэштэги'}"
+                        key="widget-hashtag"
+                        :is-expanded="expandState['hashtag']"
+                        :value="filterValues.hashtag"
+                        @expand="updateFilterExpandState"
+                        @input="updateFilterValues"
+                ></analytics-widget>
+                <analytics-widget
+                        :input-stats="achievementStats"
+                        :record="{id: 'achievement', name: '$Медали'}"
+                        key="widget-achievement"
+                        :is-expanded="expandState['achievement']"
+                        :value="filterValues.achievement"
                         @expand="updateFilterExpandState"
                         @input="updateFilterValues"
                 ></analytics-widget>
@@ -40,15 +49,23 @@
                                 @input="updateFilterValues"
                                 @stats="saveLocalStats"
                         ></analytics-widget>
-                        <analytics-widget v-for="(record, index) in records"
-                                :cards="cards"
-                                :record="record"
-                                :key="'widget-'+index"
-                                :is-expanded="expandState[record.id]"
-                                :value="filterValues[record.id]"
+                        <analytics-widget
+                                :input-stats="hashtagStats"
+                                :record="{id: 'hashtag', name: '#Хэштэги'}"
+                                key="widget-hashtag"
+                                :is-expanded="expandState['hashtag']"
+                                :value="filterValues.hashtag"
                                 @expand="updateFilterExpandState"
                                 @input="updateFilterValues"
-                                @stats="saveLocalStats"
+                        ></analytics-widget>
+                        <analytics-widget
+                                :input-stats="achievementStats"
+                                :record="{id: 'achievement', name: '$Медали'}"
+                                key="widget-achievement"
+                                :is-expanded="expandState['achievement']"
+                                :value="filterValues.achievement"
+                                @expand="updateFilterExpandState"
+                                @input="updateFilterValues"
                         ></analytics-widget>
                     </v-list>
                 </v-card>
@@ -60,13 +77,14 @@
         <v-btn fab class="pink darken-1" dark bottom right fixed @click="sendAddNewCardEvent">
             <v-icon>mdi-plus</v-icon>
         </v-btn>
-    </v-content>
+    </v-main>
 </template>
 
 <script>
     import AnalyticsWidget from "./AnalyticsWidget";
     import Card from './Card';
     import moment from "moment";
+    import {getCardTags, getUniqueTags} from "../unsorted/Helpers";
 
     export default {
         name: "AnalyticsBoard",
@@ -191,6 +209,31 @@
                     this.filterValues = updatedFilterValues;
                     this.sendFilterUpdate();
                 }
+            },
+            getTagStats(tagname) {
+                let tagStats = this.cards.reduce( (stats, card) => {
+
+                    let tags = getUniqueTags( getCardTags(card, tagname) ).map( tag => tag.text );
+
+                    tags.forEach( text => {
+                        let statsItem = stats.find( item => item.title === text );
+                        if (statsItem) {
+                            statsItem.count++;
+                        }
+                        else {
+                            stats.push({
+                                id: text,
+                                title: text,
+                                value: text,
+                                count: 1
+                            });
+                        }
+                    });
+
+                    return stats;
+                }, []);
+
+                return tagStats.sort( (a, b) => a.title.localeCompare(b.title) );
             }
         },
         computed: {
@@ -211,40 +254,6 @@
             isDesktop() {
                 return this.$isDesktop();
             },
-            records() {
-                let skipFieldTypes = ['file'];
-                let skipEventTypes = ['reminder'];
-
-                let fieldsHash = this.cards.reduce( (recordTypes, card) => {
-                    if (card.content) {
-                        card.content.forEach((record) => {
-                            let recordId = record.linkToDefaultById || record.name;
-                            let fieldIsAdded = typeof (recordTypes[recordId]) !== 'undefined';
-                            let skipThisRecordType = record.type === 'comment';
-                            let skipThisFieldType = record.type === 'field' && skipFieldTypes.indexOf(record.fieldType) !== -1;
-                            let skipThisEventType = record.type === 'event' && skipEventTypes.indexOf(record.eventType) !== -1;
-
-                            let skipThisRecord = fieldIsAdded || skipThisRecordType || skipThisFieldType || skipThisEventType;
-                            let takeThisRecord = !skipThisRecord;
-
-                            if (takeThisRecord) {
-                                recordTypes[recordId] = {
-                                    id: recordId,
-                                    linkToDefaultById: record.linkToDefaultById || null,
-                                    name: record.name,
-                                    type: record.type,
-                                    eventType: record.eventType || null,
-                                    fieldType: record.fieldType || null
-                                }
-                            }
-                        });
-                    }
-
-                    return recordTypes;
-                }, {});
-
-                return Object.values(fieldsHash);
-            },
             statusStats() {
                 return this.statuses.map( status => {
                     let statusCards = this.cards.filter( card => card.statusId === status.id );
@@ -255,6 +264,12 @@
                         count: statusCards.length
                     }
                 });
+            },
+            hashtagStats() {
+                return this.getTagStats('hashtag');
+            },
+            achievementStats() {
+                return this.getTagStats('achievement');
             },
             filteredCards() {
                 this.syncSavedFilter();
@@ -276,10 +291,15 @@
                             return isCardNeeded && cardStatusMatches;
                         }
 
-                        let cardField = this.findFilteredField(card, filterFieldId);
-                        let fieldMatches = typeof(cardField) === 'object'
-                            ? this.fieldMatches(cardField, filterFieldSelectedItems)
-                            : false;
+                        let isListField = ['hashtag', 'achievement'].indexOf(filterFieldId) !== -1;
+                        let fieldMatches = false;
+
+                        if (isListField) {
+                            let selectedTags = filterFieldSelectedItems.map(item => item.value );
+                            let cardTags = getCardTags(card, filterFieldId).map( tag => tag.text );
+                            let selectedTagsInCard = cardTags.filter(tag => selectedTags.includes(tag));
+                            fieldMatches = selectedTagsInCard.length > 0;
+                        }
 
                         return isCardNeeded && fieldMatches;
                     }, true);

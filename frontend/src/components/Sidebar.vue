@@ -24,7 +24,11 @@
                         </v-list-item>
                         <v-list-item class="p-0" @click="toggleTimetable" :class="{'active': isActive('timetable')}">
                             <v-list-item-action>
-                                <v-btn icon outlined ><v-icon>mdi-calendar-blank-outline</v-icon></v-btn>
+                                <v-badge :content="todayEvents" :value="todayEvents" color="error" overlap>
+                                    <v-btn icon outlined >
+                                        <v-icon>mdi-calendar-blank-outline</v-icon>
+                                    </v-btn>
+                                </v-badge>
                             </v-list-item-action>
                             <v-list-item-title class="font-weight-light">
                                 Расписание
@@ -156,6 +160,12 @@
         computed: {
             isMini() {
                 return this.isDesktop ? this.mini : false;
+            },
+            todayEvents() {
+                let user = this.$store.state.user.currentUser;
+                let today = Date.now();
+                let events = this.$store.getters.eventsByDateForUser(today, user.id);
+                return events.length;
             }
         }
     }

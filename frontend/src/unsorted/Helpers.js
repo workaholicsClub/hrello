@@ -56,6 +56,37 @@ function getFilteredRecords(cards, searchRecord) {
     }, []);
 }
 
+function getUnique(items) {
+    return items.filter( (item, index) => items.indexOf(item) === index );
+}
+
+function compareTags(tag1, tag2) {
+    return  (tag1.color === tag2.color) &&
+            (tag1.icon === tag2.icon) &&
+            (tag1.text === tag2.text);
+}
+
+function getUniqueTags(tags) {
+    return tags.filter( (item, currentIndex) => {
+        let foundIndex = tags.findIndex(indexItem => compareTags(item, indexItem));
+        return foundIndex === currentIndex;
+    } );
+}
+
+function getCardTags(card, tagname) {
+    if (!card.content) {
+        return [];
+    }
+    
+    return card.content.reduce( (collection, item) => {
+        if (item.fieldType === 'smartComment' && item.data && item.data[tagname] && item.data[tagname].length > 0) {
+            return collection.concat( item.data[tagname] );
+        }
+
+        return collection;
+    }, []);
+}
+
 export {
     zeroPad,
     sortByIndex,
@@ -63,5 +94,8 @@ export {
     isValidDate,
     getDefaultColors,
     getFieldTypes,
-    getFilteredRecords
+    getFilteredRecords,
+    getUnique,
+    getUniqueTags,
+    getCardTags
 }

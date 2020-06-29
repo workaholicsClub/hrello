@@ -79,6 +79,7 @@ module.exports = {
                 allContent.forEach( content => {
                     let isValidEvent = content.type === 'event' && Boolean(content.value);
                     let isValidTask = content.type === 'field' && content.fieldType === 'task';
+                    let isSmartComment = content.type === 'comment' && content.fieldType === 'smartComment';
 
                     let cardData = {
                         id: card.id,
@@ -110,6 +111,28 @@ module.exports = {
                         let showTask = !isCompleted;
                         if (showTask) {
                             timetable.push(task);
+                        }
+                    }
+
+                    if (isSmartComment) {
+                        let comment = content;
+                        let commentDates = comment.data && comment.data.dates ? comment.data.dates : [];
+                        let commentUsers = comment.data && comment.data.users ? comment.data.users : [];
+                        let hasAnyDates = commentDates.length > 0;
+                        let hasAnyUsers = commentUsers.length > 0;
+                        let hasUsersWithoutDates = hasAnyUsers && !hasAnyDates;
+                        let hasActualDates = commentDates.reduce( (result, dateInComment) => {
+                            let parsedDateInComment = moment(dateInComment);
+                            let isActual = moment().isBefore( parsedDateInComment );
+                            return result || isActual;
+                        }, false);
+
+                        let showIfActual = !showOutdated && (hasActualDates || hasUsersWithoutDates);
+                        let showIfOutdated = showOutdated && (hasAnyDates || hasAnyUsers);
+
+                        if (showIfActual || showIfOutdated) {
+                            comment.card = cardData;
+                            timetable.push(comment);
                         }
                     }
                 });

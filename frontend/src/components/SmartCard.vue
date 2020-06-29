@@ -1,6 +1,6 @@
 <template>
-    <v-container fluid class="card-details fill-height p-0">
-        <v-content app fluid class="content">
+    <v-container fluid class="card-details fill-height p-0" :class="{'is-desktop': isDesktop, 'is-mobile': !isDesktop}">
+        <v-main app fluid class="content">
             <v-container fluid class="fixed-header">
                 <v-container class="header-fields">
                     <v-text-field
@@ -12,19 +12,22 @@
             </v-container>
             <div class="fixed-toc"></div>
             <v-container>
-                <smart-comment-view v-for="(field, index) in card.content" :field="field" :key="index+(field.id || field.name || field.title)"></smart-comment-view>
+                <smart-comment-view v-for="(field, index) in sortedFields"
+                        :field="field"
+                        :key="index+(field.id || field.name || field.title)"
+                        @readonlyUpdate="(updatedField) => updateComment(updatedField, field)"
+                ></smart-comment-view>
             </v-container>
-        </v-content>
+        </v-main>
         <v-footer app inset color="white" class="fixed-footer">
             <v-container>
-                <smart-comment v-model="newField"></smart-comment>
+                <smart-comment :value="newComment" @input="saveComment" :key="'newComment'+commentIndex"></smart-comment>
             </v-container>
         </v-footer>
     </v-container>
 </template>
 
 <script>
-    import {getFieldTypes} from "../unsorted/Helpers";
     import SmartComment from "./Inputs/SmartComment";
     import SmartCommentView from "./Fields/View/SmartCommentView";
 
@@ -36,29 +39,47 @@
         },
         data() {
             return {
-                newField: {
+                commentIndex: 0,
+                newComment: {},
+                commentMandatoryFields: {
                     type: 'comment',
                     fieldType: 'smartComment'
                 },
             }
         },
+        mounted() {
+            this.$nextTick(this.scrollToBottom);
+        },
         methods: {
-            addNewContent() {
-
+            saveComment(commentData) {
+                let newComment = Object.assign(commentData, this.commentMandatoryFields);
+                this.$root.$emit('newContentCard', newComment, this.card, this.board);
+                this.newComment = {};
+                this.commentIndex++;
+                this.$nextTick(this.scrollToBottom);
             },
-            addNewField() {
-
+            updateComment(commentData, oldField) {
+                this.$root.$emit('updateContent', commentData, oldField, this.card);
+            },
+            scrollToBottom() {
+                window.scrollTo(0,document.body.scrollHeight);
             }
         },
         computed: {
-            fieldTypes() {
-                return getFieldTypes();
+            sortedFields() {
+                return this.card.content.slice().reverse();
             },
             card() {
                 return this.$store.state.card.currentCard;
             },
             user() {
                 return this.$store.state.user.currentUser;
+            },
+            board() {
+                return this.$store.getters.boardByCard( this.card );
+            },
+            isDesktop() {
+                return this.$isDesktop();
             },
         }
     }
@@ -94,6 +115,10 @@
         z-index: 10;
     }
 
+    .is-mobile .fixed-header {
+        top: 56px;
+    }
+
     /*.fixed-footer {*/
     /*    position: fixed;*/
     /*    bottom: 0;*/
@@ -125,5 +150,4 @@
         margin-bottom: .5rem!important;
         margin-top: -0.5rem!important;
     }
-
 </style>

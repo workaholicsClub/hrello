@@ -32,13 +32,7 @@ export default {
             return this.$store.dispatch('loadCards', this.userId);
         },
         async loadAndUpdateBoardCards() {
-            let cardsResponse = await axios.get('/api/card/list', {
-                params: {
-                    boardId: this.currentBoardId
-                }
-            });
-
-            this.cards = cardsResponse.data.card;
+            return this.$store.dispatch('loadCards', this.userId);
         },
         async loadArchiveCards(type) {
             this.$store.dispatch('loadArchiveCards', type);
@@ -52,7 +46,14 @@ export default {
 
             if (foundCard) {
                 this.$store.commit('selectCard', foundCard);
-                this.$router.push({name: 'card', params: {boardId: this.currentBoard.id, cardId: newCardId}});
+
+                try {
+                    let board = this.$store.getters.boardByCard(foundCard);
+                    await this.$router.push({name: 'card', params: {boardId: board.id, cardId: newCardId}});
+                }
+                catch (error) {
+                    return false;
+                }
             }
         },
         async addCard(status) {
@@ -108,6 +109,10 @@ export default {
 
         async updateContent(newContent, oldContent, card) {
             let contentIndex = card.content.indexOf(oldContent);
+
+            if (contentIndex === -1) {
+                contentIndex = card.content.findIndex( content => content.id === oldContent.id );
+            }
 
             if (!newContent.id) {
                 newContent.id = shortid.generate();

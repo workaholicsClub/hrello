@@ -1,5 +1,5 @@
 <template>
-    <v-content class="full-height">
+    <v-main class="full-height">
         <v-container class="full-height px-sm-4 align-items-start py-0" fluid >
             <v-row no-gutters class="flex-column-reverse flex-md-row">
                 <v-col md="7" cols="12">
@@ -62,7 +62,7 @@
                 </v-card>
             </v-dialog>
         </v-container>
-    </v-content>
+    </v-main>
 </template>
 
 <script>
@@ -179,8 +179,8 @@
     }
 </style>
 <style>
-    .v-content.full-height,
-    .v-content.full-height .v-content__wrap {
+    .v-main.full-height,
+    .v-main.full-height .v-main__wrap {
         height: 100%;
     }
 

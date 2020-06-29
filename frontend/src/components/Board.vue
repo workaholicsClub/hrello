@@ -1,5 +1,5 @@
 <template>
-    <v-content class="fill-height">
+    <v-main class="fill-height">
         <v-container class="fill-height board mt-2" :class="{'wide': isHorizontalScrollable }" v-dragscroll:nochilddrag="{'active': isHorizontalScrollable}" fluid >
             <div
                     class="row scrollable justify-start row--dense"
@@ -17,7 +17,7 @@
                 </v-col>
             </div>
         </v-container>
-    </v-content>
+    </v-main>
 </template>
 <script>
     import Status from "./Status.vue"
@@ -84,7 +84,7 @@
     }
 </script>
 <style scoped>
-    .v-content__wrap {
+    .v-main__wrap {
 
     }
 

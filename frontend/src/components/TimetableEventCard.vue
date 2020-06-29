@@ -1,11 +1,12 @@
 <template>
     <div>
-        <v-sheet elevation="2" v-if="isTask && isUserAuthor"  class="p-4 pb-1 mb-2 task-card">
-            <v-btn icon @click="$root.$emit('selectCard', event.card.id)" class="event-button"><v-icon>mdi-file-edit-outline</v-icon></v-btn>
-            <div class="task-text" v-html="item.task.text"></div>
+        <v-sheet elevation="2" v-if="(isTask || isComment) && isUserAuthor"  class="p-4 pb-1 mb-2 task-card">
+            <v-btn icon @click="$root.$emit('selectCard', item.card.id)" class="event-button"><v-icon>mdi-file-edit-outline</v-icon></v-btn>
+            <smart-comment-view v-if="isComment" :field="item" :info-as-column="true" @readonlyUpdate="updateComment"></smart-comment-view>
+            <div class="task-text" v-else v-html="item.task.text"></div>
 
             <v-list flat class="done-list">
-                <v-list-item v-for="user in item.task.users" two-line :key="user.id">
+                <v-list-item v-for="user in itemData('users')" two-line :key="user.id">
                     <v-list-item-action>
                         <v-checkbox
                             :input-value="isTaskCompletedByUser(user)"
@@ -24,7 +25,7 @@
             <p class="d-flex flex-row justify-content-between">
                 <v-menu offset-y>
                     <template v-slot:activator="{ on }">
-                        <v-btn class="mr-2" v-on="on">Позднее</v-btn>
+                        <v-btn class="mr-2" v-on="on">Отложить</v-btn>
                     </template>
                     <v-list>
                         <v-list-item @click="postponeTask('tomorrow')"><v-list-item-title>До завтра</v-list-item-title></v-list-item>
@@ -36,9 +37,10 @@
             </p>
 
         </v-sheet>
-        <v-sheet elevation="2" v-else-if="isTask"  class="p-4 pb-1 mb-2 task-card">
-            <v-btn icon @click="$root.$emit('selectCard', event.card.id)" class="event-button"><v-icon>mdi-file-edit-outline</v-icon></v-btn>
-            <div class="task-text" v-html="item.task.text"></div>
+        <v-sheet elevation="2" v-else-if="(isTask || isComment)"  class="p-4 pb-1 mb-2 task-card">
+            <v-btn icon @click="$root.$emit('selectCard', item.card.id)" class="event-button"><v-icon>mdi-file-edit-outline</v-icon></v-btn>
+            <smart-comment-view v-if="isComment" :field="item" :info-as-column="true" @readonlyUpdate="updateComment"></smart-comment-view>
+            <div class="task-text" v-else v-html="item.task.text"></div>
 
             <p class="d-flex flex-row justify-content-between">
                 <v-menu offset-y>
@@ -51,7 +53,7 @@
                         <v-list-item @click="postponeTask('nextWeek')"><v-list-item-title>До следующей недели</v-list-item-title></v-list-item>
                     </v-list>
                 </v-menu>
-                <v-btn color="success" @click="completeTask(loggedInUser)">Завершить</v-btn>
+                <v-btn color="success" @click="completeTask(loggedInUser)">Готово</v-btn>
             </p>
         </v-sheet>
         <v-sheet elevation="2" v-else-if="event.isComplete" class="p-2 pb-1 mb-2 event-card complete-event">
@@ -102,11 +104,13 @@
 
 <script>
     import moment from "moment";
+    import SmartCommentView from "./Fields/View/SmartCommentView";
 
     export default {
         name: "TimetableEventCard",
         props: ['event', 'user'],
         components: {
+            SmartCommentView
         },
         data() {
             return {
@@ -123,14 +127,27 @@
             isTask() {
                 return this.item.fieldType === 'task';
             },
+            isComment() {
+                return this.item.fieldType === 'smartComment';
+            },
             isUserAuthor() {
                 return this.item.author.id === this.user.id;
+            },
+            otherUsersMentioned() {
+                let usersMentioned = this.itemData('users') || [];
+                let otherUsers = usersMentioned.filter( user => user.id !== this.user.id);
+                return otherUsers.length > 0;
             },
             loggedInUser() {
                 return this.user;
             }
         },
         methods: {
+            itemData(fieldName) {
+                return this.isComment
+                    ? this.item.data && this.item.data[fieldName]
+                    : this.item.task && this.item.task[fieldName];
+            },
             isOldDate(date) {
                 return moment(date).isBefore( moment.now() );
             },
@@ -167,7 +184,7 @@
                 this.$root.$emit('postponeTask', this.item, postponeDate.toDate());
             },
             isTaskCompletedByUser(user) {
-                let completedUserIds = this.item.task && this.item.complete
+                let completedUserIds = (this.isTask || this.isComment) && this.item.complete
                     ? Object.keys(this.item.complete)
                     : [];
                 return completedUserIds.indexOf(user.id) !== -1 && this.item.complete[user.id];
@@ -178,7 +195,15 @@
             toggleCompleteTask(user) {
                 let newState = !this.isTaskCompletedByUser(user);
                 this.$root.$emit('completeTask', this.item, user, newState);
-            }
+            },
+            getCard(item) {
+                let cardId = item.card.id;
+                let fullCard = this.$store.getters.cardById(cardId);
+                return fullCard;
+            },
+            updateComment(commentData) {
+                this.$root.$emit('updateContent', commentData, this.item, this.getCard(this.item));
+            },
         }
     }
 </script>
@@ -188,13 +213,14 @@
         position: absolute;
         top: 24px;
         right: 24px;
+        z-index: 1000;
     }
 
     .complete-event {
         border: 3px solid #519839;
     }
 
-    .event-card {
+    .event-card, .task-card {
         position: relative;
     }
 
