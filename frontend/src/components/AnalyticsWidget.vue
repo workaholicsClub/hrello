@@ -1,9 +1,16 @@
 <template>
     <v-list-group
+            sub-group
             no-action
             :value="expanded"
             @input="sendExpandState"
     >
+        <template v-slot:prependIcon>
+            <v-icon v-text="expanded ? 'mdi-close-circle' : 'mdi-plus-circle-outline'"></v-icon>
+        </template>
+        <template v-slot:appendIcon>
+            <v-chip color="" label>{{stats.length}}</v-chip>
+        </template>
         <template v-slot:activator>
             <v-list-item-content>
                 <v-list-item-title>
@@ -15,7 +22,33 @@
             </v-list-item-content>
         </template>
 
-        <v-list-item-group v-model="selectedValues" multiple sub-group :no-action="false" @change="sendValuesUpdate">
+        <v-list-item-group v-if="showAsSelect">
+            <v-autocomplete
+                v-model="selectedValues"
+                :items="stats"
+                multiple
+                solo
+                hide-details
+                chips
+                deletable-chips
+                clearable
+                item-text="title"
+                item-value="value"
+                label="Укажите значение"
+                @input="sendValuesUpdate"
+            >
+                <template v-slot:no-data>
+                    Список пуст
+                </template>
+            </v-autocomplete>
+        </v-list-item-group>
+        <v-list-item-group v-else
+                v-model="selectedValues"
+                multiple
+                sub-group
+                :no-action="false"
+                @change="sendValuesUpdate"
+        >
             <template v-for="(statRecord, i) in stats">
                 <v-list-item
                         :key="`item-${i}`"
@@ -48,14 +81,27 @@
 
     export default {
         name: "AnalyticsWidget",
-        props: ['cards', 'record', 'inputStats', 'value', 'isExpanded'],
+        props: ['cards', 'record', 'inputStats', 'value', 'isExpanded', 'showAsSelect'],
         data() {
             let valuesOfArray = this.value instanceof Array
                 ? this.value.map( valueData => valueData.value )
                 : [];
             return {
                 selectedValues: valuesOfArray,
-                expanded: typeof(this.isExpanded) === 'boolean' ? this.isExpanded : true
+                expanded: typeof(this.isExpanded) === 'boolean' ? this.isExpanded : false
+            }
+        },
+        watch: {
+            value: {
+                deep: true,
+                handler() {
+                    this.selectedValues = this.value instanceof Array
+                        ? this.value.map(valueData => valueData.value)
+                        : [];
+                }
+            },
+            isExpanded() {
+                this.expanded = this.isExpanded;
             }
         },
         methods: {

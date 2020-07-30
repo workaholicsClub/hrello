@@ -46,23 +46,27 @@ export default {
         async addNewBoard() {
             let nextBoardNumber = this.boards.length + 1;
             let boardTemplate = {
-                title: 'Доска ' + nextBoardNumber,
-                userId: this.userId
+                title: 'Вакансия ' + nextBoardNumber,
+                userId: this.userId,
+                show: {
+                    info: true,
+                    hashtags: true,
+                    achievements: true
+                }
             };
 
             let boardResponse = await axios.post('/api/board/add', boardTemplate);
-            this.statuses = boardResponse.data.status;
-            this.currentBoard = boardResponse.data.board;
-            this.boards.push(this.currentBoard);
-            this.updateUrl();
+            this.$store.commit('addBoard', boardResponse.data.board);
+            this.$store.commit('addCards', boardResponse.data.card);
+            this.changeBoard(boardResponse.data.board.id);
         },
         async copyBoard(srcBoard) {
             let newBoard = clone(srcBoard);
             newBoard.userId = this.user.id;
             let boardResponse = await axios.post('/api/board/copy', newBoard);
-            this.statuses = boardResponse.data.status;
-            this.currentBoard = boardResponse.data.board;
-            this.boards.push(this.currentBoard);
+            this.$store.commit('addBoard', boardResponse.data.board);
+            this.$store.commit('addCards', boardResponse.data.card);
+            this.changeBoard(boardResponse.data.board.id);
         },
         setBoardTitle(newTitle) {
             this.$store.commit('updateBoard', { boardId: this.currentBoard.id, field: 'title', value: newTitle });

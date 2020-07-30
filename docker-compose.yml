@@ -3,7 +3,7 @@ version: "3"
 services:
   nginx:
     image: nginx
-    container_name: 'nginx'
+    container_name: 'recrutto_nginx'
     ports:
       - 8080:80
     volumes:
@@ -13,28 +13,44 @@ services:
     depends_on:
       - backend
 
+  unoconv:
+    image: ubuntu
+    container_name: 'recrutto_unoconv'
+    build:
+      context: "."
+      dockerfile: "./etc/unoconv/Dockerfile"
+    volumes:
+      - ./uploads:/data/files
+    ports:
+      - 2002:2002
+    command: unoconv --listener --server 0.0.0.0 --port 2002
+
   backend:
     image: node
-    container_name: 'backend'
+    container_name: 'recrutto_backend'
     ports:
       - 3000:3000
       - 9229:9229
     depends_on:
       - mongo
+      - unoconv
     env_file: ./dot.env
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
       - ./backend:/var/www
       - ./uploads:/var/www/uploads
+      - ./frontend/public/avatars:/var/www/avatars
     working_dir: /var/www
     environment:
       - NODE_ENV=development
-      - MONGO_HOST=mongo
+      - MONGO_HOST=recrutto_mongo
       - MONGO_DB=hrello
     command: npm run debug
 
   mongo:
     image: mongo
-    container_name: 'mongo'
+    container_name: 'recrutto_mongo'
     volumes:
       - ./etc/database:/data/db
     restart: always

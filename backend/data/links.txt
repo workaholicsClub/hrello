@@ -1,0 +1,2 @@
+https://github.com/pensnarik/russian-cities/blob/master/russian-cities.json
+https://github.com/datacoon/russiannames/blob/master/data/jsonl/russiannames_db_jsonl.zip

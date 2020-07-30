@@ -46,6 +46,7 @@
                 :data-edit="edit ? '1' : '0'"
                 :style="'background-color: '+color"
                 :class="nodeClasses"
+                @click="sendFilterByTagEvent"
         >{{tagText}}</span>
     </span>
 </template>
@@ -93,7 +94,9 @@
         },
         methods: {
             focusField() {
-                this.$refs.input.focus();
+                if (this.$refs.input) {
+                    this.$refs.input.focus();
+                }
             },
             focusEditor() {
                 this.view.focus();
@@ -136,6 +139,9 @@
                     edit: false
                 });
             },
+            sendFilterByTagEvent() {
+                this.$root.$emit('filterByTag', this.node.attrs);
+            }
         },
         computed: {
             isDark() {
@@ -150,6 +156,7 @@
                 let classes = {
                     'tag-chip': this.isExtendedChip,
                     'mdi': this.isExtendedChip,
+                    'text-white': this.isDark && this.isExtendedChip,
                 }
 
                 let tagClass = this.node.attrs.tagClass;
@@ -179,6 +186,7 @@
     .tag-edit-view {
         max-width: 300px;
         display: inline-block;
+        cursor: pointer;
     }
 
     .v-select__icon {

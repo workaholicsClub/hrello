@@ -10,7 +10,10 @@
             <div class="mb-1 d-flex" :class="{'flex-column': infoAsColumn}">
                 <a href="#"><small>{{field.author.fullName}}</small></a>
                 <span class="flex-fill"></span>
-                <small class="text-muted">{{commentDate}}</small>
+                <small class="text-muted">
+                    <span>{{commentDate}}</span>
+                    <span v-if="taskComplete"><br>сделано</span>
+                </small>
             </div>
             <div v-if="field.fieldType === 'task'" v-html="field.task.text"></div>
             <div v-else-if="field.type === 'event'">
@@ -45,7 +48,7 @@
                 <emojis :field="field"></emojis>
             </div>
             <div v-else-if="field.fieldType === 'smartComment'">
-                <smart-comment :value="field" :read-only="true" @readonlyUpdate="readonlyUpdate"></smart-comment>
+                <smart-comment :value="field" :card="card" :read-only="true" @readonlyUpdate="readonlyUpdate"></smart-comment>
             </div>
             <div v-else v-html="text"></div>
         </v-col>
@@ -59,7 +62,7 @@
 
     export default {
         name: "SmartCommentView",
-        props: ['field', 'infoAsColumn'],
+        props: ['field', 'infoAsColumn', 'card'],
         components: {
             SmartComment,
             Emojis
@@ -90,6 +93,15 @@
                 }
 
                 return '';
+            },
+            taskComplete() {
+                if (this.field.complete) {
+                    return Object.keys(this.field.complete).reduce( (totalComplete, userId) => {
+                        return totalComplete && this.field.complete[userId];
+                    }, true);
+                }
+
+                return false;
             }
         }
     }

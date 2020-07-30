@@ -21,8 +21,17 @@
   "dependencies": {
     "express": "^4.17.1",
     "express-fileupload": "^1.1.6",
+    "mammoth": "^1.4.9",
+    "mime-types": "^2.1.27",
     "moment": "^2.24.0",
     "mongodb": "^3.3.0-beta2",
-    "shortid": "^2.2.14"
+    "pdf-parse": "^1.1.1",
+    "sharp": "^0.25.4",
+    "shortid": "^2.2.14",
+    "unoconv2": "^1.0.0",
+    "word-extractor": "^0.3.0"
+  },
+  "devDependencies": {
+    "glob": "^7.1.6"
   }
 }

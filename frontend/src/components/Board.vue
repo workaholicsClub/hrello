@@ -5,13 +5,13 @@
                     class="row scrollable justify-start row--dense"
                     data-dragscroll
             >
-                <Status v-for="(status, index) in sortedStatuses"
+                <status v-for="(status, index) in sortedStatuses"
                         :key="status.id"
                         :status="status"
                         :last="index === statuses.length-1"
                         :cards="getStatusCards(status.id)"
                         @input="updateStatusTitle"
-                ></Status>
+                ></status>
                 <v-col class="new-status" cols="4">
                     <v-btn text ><v-icon>mdi-plus</v-icon> Добавить статус</v-btn>
                 </v-col>

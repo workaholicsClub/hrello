@@ -41,9 +41,15 @@
             </span>
         </div>
         <ul class="status-cards">
-            <Card v-for="card in cards" :key="card.id" :card="card" :almost-finished="last" :statuses="statuses"></Card>
+            <card v-for="card in cards" :key="card.id"
+                    :card="card"
+                    :almost-finished="last"
+                    :statuses="statuses"
+                    :show-avatar="true"
+                    :comment-index="0"
+            ></card>
         </ul>
-        <div class="status-footer">
+        <div class="status-footer" v-if="!hideFooter">
             <v-btn text @click="sendAddCardEvent"><v-icon>mdi-plus</v-icon> Добавить кандидата</v-btn>
         </div>
     </v-col>
@@ -54,7 +60,7 @@
 
     export default {
         name: 'Status',
-        props: ['status', 'cards', 'last', 'statuses'],
+        props: ['status', 'cards', 'last', 'statuses', 'hideFooter'],
         data() {
             return {
                 isTitleEditing: false,
@@ -93,8 +99,10 @@
         cursor: default;
         user-select: auto;
 
-        padding: 0 32px 32px 0;
-        min-width: 100vw!important;
+        /*padding: 0 32px 32px 0;
+        min-width: 100vw!important;*/
+        padding: 0 0 32px 0;
+        min-width: 100%;
     }
 
     .wide .status {

@@ -2,6 +2,9 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 import axios from "axios";
 import moment from "moment";
+import shortid from "shortid";
+import rfdc from "rfdc";
+const clone = rfdc();
 
 import user from './modules/user';
 import card from './modules/card';
@@ -50,6 +53,7 @@ export default new Vuex.Store({
         teamMates: [],
         timetableEvents: [],
         showFilterDrawer: false,
+        appError: false
     },
     getters: {
         eventDatesForUser(state) {
@@ -145,6 +149,25 @@ export default new Vuex.Store({
         },
         boardIds(state) {
             return state.boards.map( board => board.id );
+        },
+        isPinnedFieldDeletable(state) {
+            return searchField => {
+                return !state.card.cards.reduce( (anyCardHasValue, card) => {
+                    let valueData = card.pinnedFieldValues
+                        ? card.pinnedFieldValues.find( item => item.fieldId === searchField.id )
+                        : false;
+                    let cardHasValue = Boolean( valueData && valueData.value );
+
+                    return anyCardHasValue || cardHasValue;
+                }, false ) ;
+            }
+        },
+        activePinnedFields() {
+            return board => {
+                return board.pinnedFields
+                    ? clone(board.pinnedFields).filter(pinnedField => pinnedField.hidden !== true)
+                    : [];
+            }
         }
     },
     actions: {
@@ -175,6 +198,109 @@ export default new Vuex.Store({
             });
             commit('boards', response.data.board);
         },
+        updatePinnedName({commit}, {board, field, newName}) {
+            let updatedBoard = clone(board);
+            let fieldIndex = updatedBoard.pinnedFields
+                ? updatedBoard.pinnedFields.findIndex( pinnedField => pinnedField.id === field.id)
+                : -1;
+
+            if (fieldIndex !== -1) {
+                updatedBoard.pinnedFields[fieldIndex].name = newName;
+                commit('updateFullBoard', updatedBoard);
+            }
+        },
+        hidePinned({commit}, {board, field}) {
+            let updatedBoard = clone(board);
+            let fieldIndex = updatedBoard.pinnedFields
+                ? updatedBoard.pinnedFields.findIndex( pinnedField => pinnedField.id === field.id)
+                : -1;
+
+            if (fieldIndex !== -1) {
+                updatedBoard.pinnedFields[fieldIndex].hidden = true;
+                commit('updateFullBoard', updatedBoard);
+            }
+        },
+        deletePinned({commit}, {board, field}) {
+            let updatedBoard = clone(board);
+            let fieldIndex = updatedBoard.pinnedFields
+                ? updatedBoard.pinnedFields.findIndex( pinnedField => pinnedField.id === field.id)
+                : -1;
+
+            if (fieldIndex !== -1) {
+                updatedBoard.pinnedFields.splice(fieldIndex, 1);
+                commit('updateFullBoard', updatedBoard);
+            }
+        },
+        toggleTagFilterValue({dispatch}, {board, filterName, toggledValue}) {
+            let preparedTagValue = toggledValue.id
+                ? toggledValue
+                : {
+                    id: toggledValue.text,
+                    title: toggledValue.text,
+                    value: toggledValue.text,
+                };
+
+            dispatch('toggleFilterValue', {board, filterName, toggledValue: preparedTagValue});
+        },
+        toggleFilterValue({commit, dispatch}, {board, filterName, toggledValue}) {
+            let currentFilter = board.filterValues ? board.filterValues : {};
+            let currentValues = board.filterValues && board.filterValues[filterName]
+                ? board.filterValues[filterName]
+                : [];
+
+            let valueIndex = currentValues.findIndex(currentValue => currentValue.id === toggledValue.id);
+            let hasValue = valueIndex !== -1;
+            let updatedValues = clone(currentValues);
+
+            if (hasValue) {
+                updatedValues.splice(valueIndex, 1);
+            }
+            else {
+                updatedValues.push(toggledValue);
+            }
+
+            let newFilter = clone(currentFilter);
+            newFilter[filterName] = updatedValues;
+
+            let isExpanded = board.expandState && board.expandState[filterName] === true;
+            let isCollapsed = !isExpanded;
+            if (isCollapsed) {
+                let newExpandState = board.expandState
+                    ? clone(board.expandState)
+                    : {};
+
+                newExpandState[filterName] = true;
+                commit('updateBoard', { boardId: board.id, field: 'expandState', value: newExpandState });
+            }
+
+            dispatch('updateFilter', {board, newFilter});
+        },
+        updateFilter({commit}, {board, newFilter}) {
+            commit('updateBoard', { boardId: board.id, field: 'filterValues', value: newFilter });
+        },
+        updateShowStatus({commit}, {board, newShowStatus}) {
+            commit('updateBoard', { boardId: board.id, field: 'show', value: clone(newShowStatus) });
+        },
+        addPinnedField({commit, rootState}, {board, fieldName, fieldType}) {
+            let updatedBoard = clone(board);
+
+            if (!updatedBoard.pinnedFields) {
+                updatedBoard.pinnedFields = [];
+            }
+
+            let field = {
+                id: shortid.generate(),
+                name: fieldName,
+                type: 'field',
+                fieldType,
+                showOnCard: true,
+                date: (new Date).toISOString(),
+                author: rootState.user.currentUser
+            }
+
+            updatedBoard.pinnedFields.push(field);
+            commit('updateFullBoard', updatedBoard);
+        }
     },
     mutations: {
         teammates(state, newTeammates) {
@@ -186,12 +312,27 @@ export default new Vuex.Store({
         boards(state, newBoards) {
             state.boards = newBoards;
         },
+        addBoard(state, newBoard) {
+            state.boards.push(newBoard);
+        },
         toggleFilterDrawer(state) {
             state.showFilterDrawer = !state.showFilterDrawer;
         },
         updateBoard(state, {boardId, field, value}) {
             let board = state.boards.find( board => board.id === boardId );
             this._vm.$set(board, field, value);
+        },
+        updateFullBoard(state, newBoard) {
+            let boardIndex = state.boards.findIndex( board => board.id === newBoard.id );
+            if (boardIndex !== -1) {
+                state.boards[boardIndex] = newBoard;
+            }
+        },
+        setAppError(state, error) {
+            state.appError = error;
+        },
+        clearAppError(state) {
+            state.appError = false;
         }
     }
 });

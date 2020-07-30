@@ -1,44 +1,10 @@
 <template>
     <v-main class="fill-height">
-        <v-navigation-drawer v-if="!isDesktop"
-                :value="filterDrawer"
-                absolute
-                temporary
-        >
-            <v-list expand>
-                <analytics-widget
-                        :input-stats="statusStats"
-                        :record="{id: 'status', name: 'Статус'}"
-                        key="widget-status"
-                        :is-expanded="expandState['status']"
-                        :value="filterValues.status"
-                        @expand="updateFilterExpandState"
-                        @input="updateFilterValues"
-                ></analytics-widget>
-                <analytics-widget
-                        :input-stats="hashtagStats"
-                        :record="{id: 'hashtag', name: '#Хэштэги'}"
-                        key="widget-hashtag"
-                        :is-expanded="expandState['hashtag']"
-                        :value="filterValues.hashtag"
-                        @expand="updateFilterExpandState"
-                        @input="updateFilterValues"
-                ></analytics-widget>
-                <analytics-widget
-                        :input-stats="achievementStats"
-                        :record="{id: 'achievement', name: '$Медали'}"
-                        key="widget-achievement"
-                        :is-expanded="expandState['achievement']"
-                        :value="filterValues.achievement"
-                        @expand="updateFilterExpandState"
-                        @input="updateFilterValues"
-                ></analytics-widget>
-            </v-list>
-        </v-navigation-drawer>
-        <v-row class="mx-4">
-            <v-col cols="4" v-if="isDesktop">
-                <v-card class="mb-2">
-                    <v-list expand>
+        <v-row class="mx-2 mx-md-4">
+            <v-col cols="12" md="4">
+                <h5>Фильтры</h5>
+                <div class="mb-2">
+                    <v-list expand class="filter">
                         <analytics-widget
                                 :input-stats="statusStats"
                                 :record="{id: 'status', name: 'Статус'}"
@@ -67,30 +33,71 @@
                                 @expand="updateFilterExpandState"
                                 @input="updateFilterValues"
                         ></analytics-widget>
+
+
+                        <analytics-widget v-for="fieldName in activeFields" :key="fieldName"
+                                :input-stats="fieldStats(fieldName)"
+                                :record="{id: fieldName, name: fieldName}"
+                                :is-expanded="expandState[fieldName]"
+                                :value="filterValues[fieldName]"
+                                :show-as-select="true"
+                                @expand="updateFilterExpandState"
+                                @input="updateFilterValues"
+                        ></analytics-widget>
+
+                        <v-text-field
+                                ref="searchField"
+                                outlined
+                                clearable
+                                append-icon="mdi-magnify"
+                                placeholder="Полный поиск по карточкам и резюме"
+                                hint="Нажмите / для выбора"
+                                persistent-hint
+                                v-model="searchText"
+                                class="mt-4 white"
+                        ></v-text-field>
+
                     </v-list>
-                </v-card>
+                </div>
             </v-col>
-            <v-col class="cards-row" :cols="isDesktop ? 8 : 12" :key="filterIncrement">
-                <Card v-for="card in filteredCards" :key="card.id" :card="card" :almost-finished="false" :statuses="statuses"></Card>
+            <v-col class="cards-row" cols="12" md="8" :key="filterIncrement">
+                <div class="d-flex mb-2">
+                    <span class="flex-fill">Показано результатов: {{this.filteredCards.length}}</span>
+                    <v-btn text @click="selectFile" :loading="isResumeUploading"><v-icon>mdi-plus</v-icon> Загрузить резюме</v-btn>
+                </div>
+                <div v-for="(group, index) in filteredCardsGroupedByStatus" :key="group.status.id">
+                    <status :key="group.status.id"
+                            :status="group.status"
+                            :last="index === filteredCardsGroupedByStatus.length-1"
+                            :cards="group.cards"
+                            :hide-footer="true"
+                            @input="updateStatusTitle"
+                    ></status>
+                </div>
             </v-col>
         </v-row>
         <v-btn fab class="pink darken-1" dark bottom right fixed @click="sendAddNewCardEvent">
             <v-icon>mdi-plus</v-icon>
         </v-btn>
+        <input type="file" style="display: none" ref="fileInput" @change="addNewResume">
     </v-main>
 </template>
 
 <script>
     import AnalyticsWidget from "./AnalyticsWidget";
-    import Card from './Card';
+    import Status from "./Status.vue";
+//    import Card from './Card';
     import moment from "moment";
     import {getCardTags, getUniqueTags} from "../unsorted/Helpers";
+    import shortid from "shortid";
+    import axios from "axios";
 
     export default {
         name: "AnalyticsBoard",
         components: {
             AnalyticsWidget,
-            Card
+            Status,
+//            Card
         },
         data() {
             return {
@@ -98,7 +105,9 @@
                 allStats: {},
                 filterValues: {},
                 expandState: {},
-                filterIncrement: 0
+                filterIncrement: 0,
+                isResumeUploading: false,
+                searchText: '',
             }
         },
         mounted() {
@@ -106,8 +115,75 @@
                 this.filterValues = this.board.filterValues || {};
                 this.expandState = this.board.expandState || {};
             }
+
+            document.onkeydown = e => {
+                e = e || window.event;
+                if (
+                    e.keyCode === 191 && // Forward Slash '/'
+                    e.target !== this.$refs.searchField.$refs.input
+                ) {
+                    e.preventDefault();
+                    this.$refs.searchField.focus();
+                }
+            }
+        },
+        beforeDestroy () {
+            document.onkeydown = null;
+        },
+        watch: {
+            board: {
+                deep: true,
+                handler() {
+                    if (this.board.filterValues) {
+                        this.filterValues = this.board.filterValues;
+                    }
+                    if (this.board.expandState) {
+                        this.expandState = this.board.expandState;
+                    }
+                }
+            }
         },
         methods: {
+            focusSearchField() {
+                this.$refs.searchField.focus();
+            },
+            selectFile() {
+                this.$refs.fileInput.click();
+            },
+            async addNewResume() {
+                let file = this.$refs.fileInput.files[0];
+                let fileId = shortid.generate();
+                let userId = this.$store.getters.userId;
+
+                let requestData = new FormData();
+                requestData.append('file', file);
+                requestData.append('fileId', fileId);
+                requestData.append('boardId', this.boardId);
+                requestData.append('userId', userId);
+
+                try {
+                    this.isResumeUploading = true;
+                    let uploadResult = await axios.post('/api/file/addResume',
+                        requestData,
+                        {
+                            headers: {
+                                'Content-Type': 'multipart/form-data'
+                            }
+                        }
+                    );
+
+                    let newCard = uploadResult.data.card;
+                    newCard.name = newCard.name || '';
+
+                    this.$store.commit('updateFullBoard', uploadResult.data.board);
+                    this.$store.commit('addCards', newCard);
+                }
+                catch (e) {
+                    this.$root.$emit('error', 'Ошибка загрузки файла', e);
+                }
+
+                this.isResumeUploading = false;
+            },
             sendAddNewCardEvent() {
                 let newCardStatus = this.statuses[0];
                 this.$root.$emit('addCard', newCardStatus);
@@ -217,6 +293,7 @@
 
                     tags.forEach( text => {
                         let statsItem = stats.find( item => item.title === text );
+
                         if (statsItem) {
                             statsItem.count++;
                         }
@@ -234,19 +311,64 @@
                 }, []);
 
                 return tagStats.sort( (a, b) => a.title.localeCompare(b.title) );
+            },
+            groupByStatus(cards) {
+                return this.statuses ? this.statuses.map(status => {
+                    return {
+                        status,
+                        cards: cards.filter( card => card.statusId === status.id )
+                    }
+                }) : [];
+            },
+            updateStatusTitle(changedStatus, newTitle) {
+                changedStatus.title = newTitle;
+                this.$root.$emit('updateStatus', changedStatus);
+            },
+            fieldStats(fieldName) {
+                return this.cards ? this.cards.reduce( (values, card) => {
+                    let valueData = card.pinnedFieldValues
+                        ? card.pinnedFieldValues.find( pinnedField => pinnedField.fieldName === fieldName )
+                        : null;
+
+
+                    if (valueData) {
+                        let currentValue = valueData.value;
+                        let valueStats = values.find( stat => stat.title === currentValue );
+
+                        if (valueStats) {
+                            valueStats.count++;
+                        }
+                        else {
+                            valueStats = {
+                                id: currentValue,
+                                title: currentValue,
+                                value: currentValue,
+                                count: 1
+                            }
+
+                            values.push(valueStats);
+                        }
+                    }
+
+                    return values;
+                }, []) : [];
+            },
+            cardText(card) {
+                return JSON.stringify(card);
             }
         },
         computed: {
+            boardId() {
+                return this.$route.params.boardId;
+            },
             board() {
-                let boardId = this.$route.params.boardId;
-                return this.$store.getters.boardById(boardId);
+                return this.$store.getters.boardById(this.boardId);
             },
             statuses() {
                 return this.board ? this.board.statuses : [];
             },
             cards() {
-                let boardId = this.$route.params.boardId;
-                return this.$store.getters.cardsForBoardId(boardId);
+                return this.$store.getters.cardsForBoardId(this.boardId);
             },
             filterDrawer() {
                 return this.$store.state.showFilterDrawer;
@@ -255,7 +377,7 @@
                 return this.$isDesktop();
             },
             statusStats() {
-                return this.statuses.map( status => {
+                return this.statuses ? this.statuses.map( status => {
                     let statusCards = this.cards.filter( card => card.statusId === status.id );
                     return {
                         id: status.id,
@@ -263,7 +385,14 @@
                         value: status.id,
                         count: statusCards.length
                     }
-                });
+                }) : [];
+            },
+            activeFields() {
+                let defaultActiveFields = ['Город'];
+                let userAddedFields = this.$store.getters.activePinnedFields(this.board)
+                    .filter( field => field.autoAdded !== true )
+                    .map( field => field.name );
+                return userAddedFields.concat( defaultActiveFields );
             },
             hashtagStats() {
                 return this.getTagStats('hashtag');
@@ -274,10 +403,11 @@
             filteredCards() {
                 this.syncSavedFilter();
 
+                let textMatches = true;
                 let filterValues = this.filterValues;
 
                 return this.cards.filter( card => {
-                    return Object.keys(filterValues).reduce( (isCardNeeded, filterFieldId) => {
+                    let anyFieldMatches = Object.keys(filterValues).reduce( (isCardNeeded, filterFieldId) => {
                         let filterFieldSelectedItems = filterValues[filterFieldId];
 
                         if (filterFieldSelectedItems.length === 0) {
@@ -301,9 +431,32 @@
                             fieldMatches = selectedTagsInCard.length > 0;
                         }
 
+                        let cardHasPinnedFields = card.pinnedFieldValues && card.pinnedFieldValues.length > 0;
+                        let cardPinnedField = cardHasPinnedFields
+                            ? card.pinnedFieldValues.find( valueData => valueData.fieldName === filterFieldId )
+                            : false;
+
+                        if (cardPinnedField) {
+                            let selectedValues = filterFieldSelectedItems.map(item => item.value );
+                            fieldMatches = selectedValues.indexOf(cardPinnedField.value) !== -1;
+                        }
+
                         return isCardNeeded && fieldMatches;
                     }, true);
+
+                    if (this.searchText) {
+                        let cardText = this.cardText(card).toLocaleLowerCase();
+                        let findWords = this.searchText.toLocaleLowerCase().split(' ');
+                        textMatches = findWords.reduce( (anyMatches, word) => {
+                            return anyMatches || (word !== '' && cardText.indexOf( word ) !== -1);
+                        }, false);
+                    }
+
+                    return anyFieldMatches && textMatches;
                 });
+            },
+            filteredCardsGroupedByStatus() {
+                return this.groupByStatus(this.filteredCards);
             }
         }
     }
@@ -316,5 +469,57 @@
 <style>
     .cards-row .v-card {
         max-width: 100%!important;
+    }
+
+    .v-sheet.filter {
+        background: transparent!important;
+    }
+
+    .filter .v-list-item__icon {
+        margin: 8px 0;
+    }
+
+    .filter .v-list-group--sub-group .v-list-group__header {
+        padding-left: 16px!important;
+    }
+
+    .filter .v-list-group--sub-group .v-list-group__items .v-list-item {
+        padding: 0px!important;
+    }
+
+    .filter .v-item-group {
+        padding-left: 56px!important;
+        padding-right: 16px!important;
+    }
+
+    .filter .v-list-item--active {
+        color: #261440!important;
+    }
+    .filter .v-list-item__action {
+        margin: 0!important;
+    }
+
+    .filter .v-list-item {
+        min-height: 32px!important;
+    }
+
+    .filter .v-list-item__content {
+        padding: 0!important;
+    }
+
+    .filter .v-list-item__title {
+        white-space: normal!important;
+    }
+
+    .filter .v-input--selection-controls__input .primary--text {
+        color: #261440!important;
+    }
+
+    .v-input.white, .v-input.white .v-input__control {
+        background: transparent!important;
+    }
+
+    .v-input.white .v-input__slot {
+        background: white!important;
     }
 </style>

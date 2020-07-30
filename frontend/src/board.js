@@ -4,6 +4,7 @@ import Vuetify from 'vuetify/lib';
 import VueGoogleApi from 'vue-google-api';
 import Rollbar from 'vue-rollbar';
 import Sticky from 'vue-sticky-directive';
+import ShortKey from 'vue-shortkey';
 
 import store from './store';
 import routes from './routes';
@@ -28,6 +29,9 @@ const gapiConfig = useGoogleServices
         clientId: '401657247398-upt85a2i2spf4f61sfff5g6405cus68m.apps.googleusercontent.com',
     };
 
+let vueInstance = false;
+
+Vue.use(ShortKey, { prevent: ['input', 'textarea'] });
 Vue.use(Vuetify);
 Vue.use(VueRouter);
 Vue.use(VueGoogleApi, gapiConfig);
@@ -53,8 +57,9 @@ Vue.config.productionTip = false;
 
 Vue.config.errorHandler = function (err) {
     Vue.rollbar.error(err);
-    let a = console;
-    a.error(err);
+    if (vueInstance) {
+        vueInstance.$store.commit('setAppError', err);
+    }
 };
 
 Vue.prototype.$isDesktop = function () {
@@ -71,7 +76,7 @@ const router = new VueRouter({
     routes
 });
 
-new Vue({
+vueInstance = new Vue({
     vuetify: new Vuetify({
         theme: {
             options: {
@@ -82,7 +87,7 @@ new Vue({
     router,
     store,
     propsData: {
-        useGoogleServices: useGoogleServices
+        useGoogleServices
     },
     render(createElement) {
         return createElement(BoardPage, {

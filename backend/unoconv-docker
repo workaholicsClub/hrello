@@ -1,0 +1,2 @@
+#!/bin/sh
+/usr/bin/docker exec recrutto_unoconv unoconv --timeout=20 --no-launch "$@"

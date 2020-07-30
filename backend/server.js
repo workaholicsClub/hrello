@@ -77,7 +77,9 @@ async function connectToDatabase (host, port, dbName) {
     app.post('/api/field/add', fieldRoutes.add(db));
     app.post('/api/field/update', fieldRoutes.update(db));
 
-    app.post('/api/file', fileRoutes.upload(db));
+    app.post('/api/file/upload', fileRoutes.upload(db));
+    app.post('/api/file/addResume', fileRoutes.addResume(db));
+    app.get('/api/file/resumeAvatar', fileRoutes.resumeAvatar(db));
 
     app.post('/api/invite/card', inviteRoutes.card(db));
     app.post('/api/invite/board', inviteRoutes.board(db));

@@ -137,7 +137,7 @@ export default {
         },
         async logout() {
             await this.$gapi.signOut();
-            this.user = false;
+            this.$store.dispatch('logout');
             localStorage.removeItem('authorizedUser');
 
             if (!this.onlyCardMode) {

@@ -191,7 +191,7 @@ export default {
             let requestData = new FormData();
             requestData.append('file', file);
 
-            let uploadResult = await axios.post( '/api/file',
+            let uploadResult = await axios.post( '/api/file/upload',
                 requestData,
                 {
                     headers: {

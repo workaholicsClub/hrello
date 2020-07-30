@@ -1,5 +1,7 @@
 <template>
     <v-app id="hrello" v-resize="watchResize">
+        <v-alert type="error" v-model="showError" dismissible tile class="global-error">{{appError}}</v-alert>
+
         <v-container fill-height fluid v-if="!initFinished">
             <v-row align="center" justify="center">
                 <v-progress-circular
@@ -32,7 +34,7 @@
                 <v-col class="text-center">
                     <p class="display-1">Добро пожаловать!</p>
                     <p class="headline p-0">Для начала нужно</p>
-                    <v-btn x-large dark @click="addNewBoard">Создать первую доску</v-btn>
+                    <v-btn x-large dark @click="addNewBoard">Создать первую вакансию</v-btn>
                 </v-col>
             </v-row>
         </v-container>
@@ -45,48 +47,23 @@
                 :active-item="currentBoard ? 'board'+currentBoard.id : false"
                 @drawer="setDrawerState"
                 @changeBoard="changeBoard"
-                @timetable="toggleTimetable"
-                @archive="toggleArchive"
                 @logout="logout"
             ></Sidebar>
             <Header
                     :is-desktop="isDesktop"
-                    :title="currentTitle"
-                    :allow-title-edit="isBoardShown"
                     @drawer="toggleDrawer"
                     @back="goBack"
                     @input="setBoardTitle"
-            >
-                <template v-slot:menu v-if="currentCard">
-                    <v-menu bottom left offset-x @click.native.stop.prevent>
-                        <template v-slot:activator="{ on }">
-                            <v-btn icon text v-on="on" @click.stop><v-icon>mdi-dots-vertical</v-icon></v-btn>
-                        </template>
-                        <card-menu :card="currentCard"></card-menu>
-                    </v-menu>
-                </template>
-                <template v-slot:menu v-else-if="isBoardShown">
-                    <v-btn icon text @click="toggleFilterDrawer" v-if="!isDesktop && currentBoard.type !== 'kanban'" ><v-icon>mdi-filter</v-icon></v-btn>
-                    <v-menu bottom left offset-x @click.native.stop.prevent>
-                        <template v-slot:activator="{ on }">
-                            <v-btn icon text v-on="on" @click.stop><v-icon>mdi-dots-vertical</v-icon></v-btn>
-                        </template>
-                        <board-menu
-                                :board="currentBoard"
-                                @toggleVacancy="toggleBoardVacancy(currentBoard)"
-                        ></board-menu>
-                    </v-menu>
-                </template>
-            </Header>
+            ></Header>
 
             <router-view></router-view>
         </v-container>
-        <v-alert type="error" v-if="appError">{{appError}}</v-alert>
+
         <v-dialog v-model="shareDialog" persistent max-width="600px">
             <v-card>
                 <v-card-title>
                     <span class="headline" v-if="shareCard">Ссылка на карточку</span>
-                    <span class="headline" v-if="shareBoard">Ссылка на доску</span>
+                    <span class="headline" v-if="shareBoard">Ссылка на вакансию</span>
                 </v-card-title>
                 <v-card-text>
                     <v-container>
@@ -123,9 +100,6 @@
     import Sidebar from './components/Sidebar.vue';
     import Login from "./components/Login";
 
-    import CardMenu from "./components/Menus/CardMenu";
-    import BoardMenu from "./components/Menus/BoardMenu";
-
     import CardsMixin from "./mixins/cards";
     import BoardsMixin from "./mixins/boards";
     import StatusMixin from "./mixins/statuses";
@@ -139,13 +113,11 @@
 
     export default {
         name: 'BoardPage',
-        props: ['useGoogleServices'],
+        props: ['useGoogleServices', 'globalError'],
         components: {
             Header,
             Sidebar,
             Login,
-            CardMenu,
-            BoardMenu
         },
         mixins: [
             CardsMixin,
@@ -166,15 +138,17 @@
                 cardRedrawIndex: 0,
                 teamMates: [],
                 statuses: [],
-                appError: null,
+                showError: false,
+            }
+        },
+        watch: {
+            appError() {
+                this.showError = true;
             }
         },
         methods: {
             toggleDrawer() {
                 this.drawer = !this.drawer;
-            },
-            toggleFilterDrawer() {
-                this.$store.commit('toggleFilterDrawer');
             },
             setDrawerState(newState) {
                 this.drawer = newState;
@@ -251,18 +225,6 @@
             async loadAndUpdateBoardStatuses() {
                 this.statuses = await this.loadBoardStatuses(this.currentBoardId);
             },
-            toggleTimetable() {
-                this.currentCard = false;
-                this.showArchive = false;
-                this.showTimetable = !this.showTimetable;
-
-                if (this.showTimetable) {
-                    this.loadTimetableEvents();
-                }
-            },
-            toggleArchive(type) {
-                this.$router.push({name: 'archive', params: {type: type}});
-            },
             async goBack() {
                 if (this.currentCard) {
                     await this.saveCard(this.currentCard);
@@ -291,40 +253,13 @@
                 this.shareBoard = null;
                 this.shareCard = null;
             },
-            toggleBoardVacancy(board) {
-                this.$router.push({name: 'vacancy', params: {boardId: board.id}});
-            }
         },
         computed: {
+            appError() {
+                return this.$store.state.appError;
+            },
             showFilterDrawer() {
                 return this.$store.state.showFilterDrawer;
-            },
-            currentTitle() {
-                if (this.currentCard) {
-                    return this.currentCardTitle;
-                }
-
-                if (this.showTimetable) {
-                    return 'Расписание';
-                }
-
-                if (this.showArchive) {
-                    let archiveTitles = {
-                        whitelist: 'Резерв'
-                    };
-
-                    return archiveTitles[this.showArchive] || 'Архив';
-                }
-
-                if (this.showVacancyEditor) {
-                    return this.currentBoard.title + ' - текст вакансии';
-                }
-
-                if (this.currentBoard) {
-                    return this.currentBoard.title;
-                }
-
-                return false;
             },
             cardShareLink() {
                 return this.shareCard ? location.origin + '/c#!/invite/card/'+this.shareCard.id : false;
@@ -348,6 +283,8 @@
                 }
             }
 
+            this.loadTimetableEvents();
+
             this.initFinished = true;
         },
         mounted() {
@@ -364,5 +301,15 @@
 <style>
     #hrello {
         background-color: #e7f2f5;
+    }
+
+    :root {
+        --success: #16d1a5!important;
+    }
+
+    .global-error {
+        position: absolute;
+        z-index: 1000;
+        width: 100%;
     }
 </style>

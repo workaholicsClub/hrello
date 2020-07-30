@@ -1,17 +1,33 @@
 <template>
-    <v-container fluid class="card-details fill-height p-0" :class="{'is-desktop': isDesktop, 'is-mobile': !isDesktop}">
+    <v-container
+            fluid
+            class="card-details fill-height p-0"
+            :class="{'is-desktop': !$vuetify.breakpoint.mobile, 'is-mobile': $vuetify.breakpoint.mobile}"
+    >
         <v-main app fluid class="content">
             <v-container fluid class="fixed-header">
-                <v-container class="header-fields">
+                <v-container class="header-fields overflow">
                     <v-text-field
                             v-model="card.name"
-                            label="ФИО кандидата"
+                            hide-details
+                            dense
+                            placeholder="ФИО кандидата"
+                            class="mb-4 text-h4"
                             @input="$root.$emit('cardInput', card)"
                     ></v-text-field>
+
+                    <v-row :key="fieldRedrawIndex">
+                        <v-col cols="12" md="6" :key="field.id + fieldRedrawIndex" class="my-0 py-0" v-for="field in pinnedFields">
+                            <pinned-field :field="field" :card="card" @state="updateRedrawIndex"></pinned-field>
+                        </v-col>
+                    </v-row>
+                </v-container>
+                <v-container class="header-fields">
+                    <v-btn fab icon outlined absolute class="add-pinned-field" @click="addPinnedField"><v-icon large>mdi-plus</v-icon></v-btn>
                 </v-container>
             </v-container>
             <div class="fixed-toc"></div>
-            <v-container>
+            <v-container class="comments-list">
                 <smart-comment-view v-for="(field, index) in sortedFields"
                         :field="field"
                         :key="index+(field.id || field.name || field.title)"
@@ -30,12 +46,14 @@
 <script>
     import SmartComment from "./Inputs/SmartComment";
     import SmartCommentView from "./Fields/View/SmartCommentView";
+    import PinnedField from "./Fields/PinnedField";
 
     export default {
         name: "SmartCard",
         components: {
             SmartCommentView,
-            SmartComment
+            SmartComment,
+            PinnedField
         },
         data() {
             return {
@@ -45,12 +63,16 @@
                     type: 'comment',
                     fieldType: 'smartComment'
                 },
+                fieldRedrawIndex: 0
             }
         },
         mounted() {
             this.$nextTick(this.scrollToBottom);
         },
         methods: {
+            updateRedrawIndex() {
+                this.fieldRedrawIndex++;
+            },
             saveComment(commentData) {
                 let newComment = Object.assign(commentData, this.commentMandatoryFields);
                 this.$root.$emit('newContentCard', newComment, this.card, this.board);
@@ -63,11 +85,18 @@
             },
             scrollToBottom() {
                 window.scrollTo(0,document.body.scrollHeight);
+            },
+            async addPinnedField() {
+                await this.$store.dispatch('addPinnedField', {board: this.board, fieldName: '', fieldType: 'text'});
+                this.$nextTick(this.updateRedrawIndex);
             }
         },
         computed: {
+            pinnedFields() {
+                return this.$store.getters.getPinnedFieldsWithValues(this.card, this.fieldRedrawIndex);
+            },
             sortedFields() {
-                return this.card.content.slice().reverse();
+                return this.card.content ? this.card.content.slice().reverse() : [];
             },
             card() {
                 return this.$store.state.card.currentCard;
@@ -115,14 +144,20 @@
         z-index: 10;
     }
 
-    .is-mobile .fixed-header {
+    .is-mobile .header-fields {
         top: 56px;
+        max-height: 30vh;
     }
 
-    /*.fixed-footer {*/
-    /*    position: fixed;*/
-    /*    bottom: 0;*/
-    /*}*/
+    .is-mobile .header-fields.overflow {
+        overflow-y: auto;
+    }
+
+    .add-pinned-field {
+        color: #16d1a5 !important;
+        caret-color: #16d1a5 !important;
+        background-color: white;
+    }
 
     .content {
         position: relative;
@@ -133,6 +168,24 @@
         left: 0;
         top: 0;
     }
+
+    @media (min-width: 960px) {
+        .header-fields, .comments-list {
+            max-width: 900px!important;
+        }
+    }
+    @media (min-width: 1264px) {
+        .header-fields, .comments-list {
+            max-width: 900px!important;
+        }
+    }
+    @media (min-width: 1904px) {
+        .header-fields, .comments-list {
+            max-width: 1500px!important;
+        }
+    }
+
+
 </style>
 
 <style>
@@ -149,5 +202,9 @@
     .v-tooltip__content {
         margin-bottom: .5rem!important;
         margin-top: -0.5rem!important;
+    }
+
+    .v-input.text-h4 input {
+        max-height: 48px;
     }
 </style>

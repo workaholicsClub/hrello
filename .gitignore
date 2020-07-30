@@ -159,3 +159,4 @@ dot.env
 # Custom
 /etc/database/*
 /uploads/*
+/backend/uploads/

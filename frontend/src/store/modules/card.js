@@ -1,5 +1,8 @@
 import axios from "axios";
+import rfdc from "rfdc";
+const clone = rfdc();
 import {getUniqueTags, getCardTags} from "../../unsorted/Helpers";
+import md5 from "blueimp-md5";
 
 export default {
     state: {
@@ -37,6 +40,97 @@ export default {
 
                 return getUniqueTags(allTags).sort( (a, b) => a.text.localeCompare(b.text) );
             }
+        },
+        getPinnedFieldsWithValues(state, getters) {
+            return card => {
+                let board = getters.boardByCard(card);
+                if (!board) {
+                    return [];
+                }
+
+                let activePinnedFields = getters.activePinnedFields(board);
+
+                return activePinnedFields.map( pinnedField => {
+                    let value = card.pinnedFieldValues
+                        ? card.pinnedFieldValues.find( fieldValue => fieldValue.fieldName === pinnedField.name )
+                        : {value: ''};
+
+                    return Object.assign(pinnedField, value);
+                });
+            }
+        },
+        getCandidateAvatarUrl() {
+            return card => {
+                let links = card.pinnedFieldValues
+                    ? card.pinnedFieldValues.map(fieldValue => fieldValue.value).filter( value => Boolean(value && value.toString().match(/https*:\/\//i)) )
+                    : [];
+
+                let emails = card.pinnedFieldValues
+                    ? card.pinnedFieldValues.map(fieldValue => fieldValue.value).filter( value => Boolean(value && value.toString().match(/.*?@.*?\..*?/i)) )
+                    : [];
+
+                let files = card.content
+                    ? card.content
+                        .filter( content => content.fieldType === 'file' || typeof (content.file) !== 'undefined')
+                        .map(content => {
+                            let file = content.file;
+                            file.fileName = content.uploadData.downloadUrl.replace(/^.*\//, '');
+                            return file;
+                        })
+                    : [];
+
+                let facebookLink = links.filter( link => link.indexOf('facebook') !== -1 );
+                let vkLink = links.filter( link => link.indexOf('vk.com') !== -1 );
+
+                let hasFiles = files && files.length > 0;
+                let hasSocialLinks = (facebookLink && facebookLink.length > 0) || (vkLink && vkLink.length > 0);
+                let canGetAvatarFromCard = hasFiles || hasSocialLinks;
+
+                if (canGetAvatarFromCard) {
+                    return `/api/file/resumeAvatar?cardId=${card.id}`;
+                }
+
+                if (emails && emails[0]) {
+                    let hash = md5(emails[0].toLocaleLowerCase());
+                    return `https://www.gravatar.com/avatar/${hash}.jpg?d=identicon`;
+                }
+
+                return false;
+            }
+        },
+        nextCardStatus(state, getters) {
+            return card => {
+                let board = getters.boardByCard(card);
+                let currentStatusIndex = board.statuses.findIndex(status => status.id === card.statusId);
+                if (currentStatusIndex !== -1) {
+                    let nextIndex = currentStatusIndex < board.statuses.length - 1
+                        ? currentStatusIndex + 1
+                        : false;
+
+                    return nextIndex
+                        ? board.statuses[nextIndex]
+                        : false;
+                }
+
+                return false;
+            }
+        },
+        previousCardStatus(state, getters) {
+            return card => {
+                let board = getters.boardByCard(card);
+                let currentStatusIndex = board.statuses.findIndex(status => status.id === card.statusId);
+                if (currentStatusIndex !== -1) {
+                    let prevIndex = currentStatusIndex > 0
+                        ? currentStatusIndex - 1
+                        : false;
+
+                    return prevIndex !== false
+                        ? board.statuses[prevIndex]
+                        : false;
+                }
+
+                return false;
+            }
         }
     },
     actions: {
@@ -57,11 +151,44 @@ export default {
             });
 
             commit('setArchiveCards', {archiveCards: cardsResponse.data.card, type});
+        },
+        updatePinnedValue({commit, rootState}, {card, field, value}) {
+            let updatedCard = clone(card);
+            if (!updatedCard.pinnedFieldValues) {
+                updatedCard.pinnedFieldValues = [];
+            }
+
+            let currentValue = updatedCard.pinnedFieldValues.find(value => value.fieldId === field.id );
+            if (currentValue) {
+                let valueIndex = updatedCard.pinnedFieldValues.indexOf(currentValue);
+                let newValue = Object.assign(currentValue, {value});
+                updatedCard.pinnedFieldValues[valueIndex] = newValue;
+            }
+            else {
+                let defaultValue = {
+                    fieldId: field.id,
+                    fieldName: field.name,
+                    author: rootState.user.currentUser,
+                }
+
+                let newValue = Object.assign(defaultValue, {value});
+                updatedCard.pinnedFieldValues.push(newValue);
+            }
+
+            commit('updateCard', {cardId: updatedCard.id, fields: updatedCard});
         }
     },
     mutations: {
         setCards(state, newCards) {
             state.cards = newCards;
+        },
+        addCards(state, newCards) {
+            if (newCards instanceof Array) {
+                state.cards = state.cards.concat(newCards);
+            }
+            else {
+                state.cards.push(newCards);
+            }
         },
         setArchiveCards(state, {archiveCards, type}) {
             this._vm.$set(state.archiveCards, type, archiveCards);
@@ -77,6 +204,16 @@ export default {
 
             if (newCard) {
                 state.currentCard = newCard;
+            }
+        },
+        updateCard(state, {cardId, fields}) {
+            let cardIndex = state.cards.findIndex( cards => cards.id === cardId );
+            if (cardIndex !== -1) {
+                this._vm.$set(state.cards, cardIndex, fields);
+            }
+
+            if (state.currentCard.id === cardId) {
+                state.currentCard = fields;
             }
         }
     }

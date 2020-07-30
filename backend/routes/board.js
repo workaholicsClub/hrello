@@ -56,8 +56,11 @@ module.exports = {
             let cardsResult = await cards.insertMany(templateCards);
             let insertedCardsRecords = cardsResult.ops;
 
+            let boardWithStatuses = Object.assign({}, insertedBoardRecord);
+            boardWithStatuses.statuses = insertedStatusRecords;
+
             response.send({
-                board: insertedBoardRecord,
+                board: boardWithStatuses,
                 status: insertedStatusRecords,
                 card: insertedCardsRecords
             });
@@ -102,8 +105,11 @@ module.exports = {
             let statusesResult = await statusesCollection.insertMany(newStatuses);
             let insertedStatusRecords = statusesResult.ops;
 
+            let boardWithStatuses = Object.assign({}, insertedBoardRecord);
+            boardWithStatuses.statuses = insertedStatusRecords;
+
             response.send({
-                board: insertedBoardRecord,
+                board: boardWithStatuses,
                 status: insertedStatusRecords
             });
         }

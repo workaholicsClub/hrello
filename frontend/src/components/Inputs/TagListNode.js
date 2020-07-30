@@ -74,7 +74,15 @@ export default class TagListNode extends Node {
                     let color = dom.getAttribute('data-color');
                     let matcherChar = dom.getAttribute('data-char');
                     let edit = dom.getAttribute('data-edit') === '1';
-                    let tagClass = dom.classList[0];
+
+                    let tagClasses = dom.getAttribute('class').toLocaleLowerCase();
+                    let utilityClasses = ['tag-chip', 'mdi', icon, 'text-white'];
+                    for (const classToRemove of utilityClasses) {
+                        tagClasses = tagClasses.replace(classToRemove, '');
+                    }
+                    tagClasses = tagClasses.replace(/^ +/g, '').replace(/ +$/g, '');
+
+                    let tagClass = tagClasses.split(' ')[0];
                     return {icon, color, text, edit, matcherChar, tagClass};
                 }
             }]

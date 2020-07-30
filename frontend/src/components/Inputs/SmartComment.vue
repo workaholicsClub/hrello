@@ -19,11 +19,8 @@
                     </v-row>
                 </v-col>
             </v-row>
-            <v-row class="comment-controls flex-column-reverse flex-md-row">
-                <v-col cols="12" md="6">
-                    <v-btn color="success" large rounded @click="commitChanges">Отправить</v-btn>
-                </v-col>
-                <v-col cols="12" md="6">
+            <div class="d-flex flex-wrap comment-controls flex-column flex-md-row-reverse align-items-start">
+                <div>
                     <editor-menu-bar :editor="editor" v-slot="{ commands, isActive }">
                         <v-toolbar bottom flat>
                             <v-toolbar-items>
@@ -110,8 +107,18 @@
                         </v-toolbar>
 
                     </editor-menu-bar>
-                </v-col>
-            </v-row>
+                </div>
+                <div class="flex-fill pb-1">
+                    <v-btn color="success"
+                            large
+                            rounded
+                            v-shortkey="['ctrl', 'enter']"
+                            class="send-button"
+                            @click="commitChanges"
+                            @shortkey="commitChangesIfFocused"
+                    ><span>Отправить</span><small>(Ctrl+Enter)</small></v-btn>
+                </div>
+            </div>
 
             <editor-menu-bubble class="menu-bubble" :editor="editor" @hide="hideLinkMenu" v-slot="{ commands, isActive, getMarkAttrs, menu }">
                 <div
@@ -127,7 +134,7 @@
                         </button>
                     </form>
 
-                    <template v-else>
+                    <!--template v-else>
                         <button
                                 class="menububble__button"
                                 @click="showLinkMenu(getMarkAttrs('link'))"
@@ -136,7 +143,7 @@
                             <span>{{ isActive.link() ? 'Изменить ссылку' : 'Добавить ссылку'}}</span>
                             <v-icon>mdi-link</v-icon>
                         </button>
-                    </template>
+                    </template-->
 
                 </div>
             </editor-menu-bubble>
@@ -174,7 +181,7 @@
 
     export default {
         name: "SmartComment",
-        props: ['value', 'readOnly'],
+        props: ['value', 'readOnly', 'card'],
         components: {
             EditorContent,
             EditorMenuBar,
@@ -618,6 +625,14 @@
                     this.readonlyClickProcessedResolve(docChanged);
                 }
             },
+
+            gotoBoardAndFilterByTag(tag) {
+                let card = this.card || this.$store.state.card.currentCard;
+                let board = this.$store.getters.boardByCard( card );
+                this.$store.dispatch('toggleTagFilterValue', {board: board, filterName: tag.tagClass, toggledValue: tag});
+                return this.$router.push({name: 'board', params: {boardId: board.id}});
+            },
+
             async readOnlyClicked(event) {
                 if (event.isSyntetic) {
                     return;
@@ -626,6 +641,13 @@
                 let isHrefClicked = event.target.tagName === 'A' && event.target.getAttribute('href').length > 0;
                 if (isHrefClicked) {
                     return;
+                }
+
+                let isTagClicked = event.target.classList.contains('tag-chip') || event.target.classList.contains('hashtag');
+                if (isTagClicked) {
+                    let getAttrs = (new TagListNode).schema.parseDOM[0].getAttrs;
+                    let nodeAttrs = getAttrs(event.target);
+                    return this.gotoBoardAndFilterByTag(nodeAttrs);
                 }
 
                 let dispatchedClick = new Promise(resolve => {
@@ -803,7 +825,7 @@
                     requestData.append('file', fileToUpload.data);
                     requestData.append('fileId', fileToUpload.id);
 
-                    return axios.post( '/api/file',
+                    return axios.post( '/api/file/upload',
                         requestData,
                         {
                             headers: {
@@ -873,7 +895,6 @@
 
                 this.$emit('input', commentData);
             },
-
             async commitReadonlyChanges() {
                 let updatedComment = Object.assign(this.value, {
                     text: this.htmlContent,
@@ -888,6 +909,11 @@
                 });
 
                 this.$emit('readonlyUpdate', updatedComment);
+            },
+            commitChangesIfFocused() {
+                if (this.editor.focused) {
+                    return this.commitChanges();
+                }
             }
         },
         beforeDestroy() {
@@ -1071,5 +1097,9 @@
 
     .hide-cursor-when-editing-on [contenteditable] {
         caret-color: transparent;
+    }
+
+    .send-button .v-btn__content {
+        flex-direction: column !important;
     }
 </style>

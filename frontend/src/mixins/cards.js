@@ -205,14 +205,14 @@ export default {
             let nextStatus = this.getNextStatusForCard(card);
             if (nextStatus) {
                 card.statusId = nextStatus.id;
-                this.saveCard(card);
+                return this.saveCard(card);
             }
         },
         async moveCardToPrevStatus(card) {
             let previousStatus = this.getPreviousStatusForCard(card);
             if (previousStatus) {
                 card.statusId = previousStatus.id;
-                this.saveCard(card);
+                return this.saveCard(card);
             }
         },
         async moveCardToBoard(card, board) {
@@ -243,55 +243,22 @@ export default {
                 }
             });
 
-            this.currentCard = null;
+            this.$store.commit('deselectCard');
             this.reloadBoardData();
 
             return response.data.card;
         },
         async saveCard(cardToSave) {
-            let cardIndex = this.cards.findIndex(card => card.id === cardToSave.id);
-            if (cardIndex !== -1) {
-                this.cards[cardIndex] = cardToSave;
-            }
-
-            return axios.post('/api/card/update', cardToSave);
+            return this.$store.commit('updateCard', {cardId: cardToSave.id, fields: cardToSave});
         },
         findCard(cardId) {
             return this.cards.find(card => card.id === cardId) || false;
         },
         getNextStatusForCard(card) {
-            let nextStatus = this.statuses.reduce((result, iteratedStatus) => {
-                if (iteratedStatus.id === card.statusId) {
-                    return true;
-                }
-
-                if (result === true) {
-                    return iteratedStatus;
-                }
-
-                return result;
-            }, false);
-
-            if (nextStatus === true) {
-                nextStatus = false;
-            }
-
-            return nextStatus;
+            return this.$store.getters.nextCardStatus(card);
         },
         getPreviousStatusForCard(card) {
-            let currentStatusIndex = this.statuses.reduce((result, iteratedStatus, index) => {
-                if (iteratedStatus.id === card.statusId) {
-                    return index;
-                }
-
-                return result;
-            }, false);
-
-            if (currentStatusIndex > 0) {
-                return this.statuses[currentStatusIndex-1];
-            }
-
-            return false;
+            return this.$store.getters.previousCardStatus(card);
         },
     },
     computed: {
@@ -303,19 +270,6 @@ export default {
         },
         currentCardId() {
             return this.currentCard ? this.currentCard.id : false;
-        },
-        currentCardTitle() {
-            if (!this.currentCard) {
-                return false;
-            }
-
-            let isDefaultName = /Кандидат \d+/.test(this.currentCard.name);
-            let newCardTitle = 'Новый кандидат';
-            if (isDefaultName) {
-                return newCardTitle;
-            }
-
-            return this.currentCard.name || newCardTitle;
         },
         isInvitation() {
             return location.hash.indexOf('invite') !== -1;
