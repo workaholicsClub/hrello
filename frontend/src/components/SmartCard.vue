@@ -136,7 +136,6 @@
     }
 
     .fixed-header {
-        border-top: 6px solid #16d1a5;
         border-bottom: 2px solid rgba(0,0,0,.1);
         position: sticky;
         top: 64px;

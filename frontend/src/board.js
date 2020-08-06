@@ -31,7 +31,7 @@ const gapiConfig = useGoogleServices
 
 let vueInstance = false;
 
-Vue.use(ShortKey, { prevent: ['input', 'textarea'] });
+Vue.use(ShortKey);
 Vue.use(Vuetify);
 Vue.use(VueRouter);
 Vue.use(VueGoogleApi, gapiConfig);

@@ -88,6 +88,10 @@
                 return this.currentCard.name || newCardTitle;
             },
             currentTitle() {
+                if (this.$route.title) {
+                    return this.$route.title;
+                }
+
                 if (this.$route.name === 'card') {
                     return this.currentCardTitle;
                 }
@@ -115,7 +119,7 @@
                 return false;
             },
             showBack() {
-                return this.$route.name === 'card' || this.$route.name === 'vacancy';
+                return this.$route.name === 'card' || this.$route.name === 'vacancy' || this.$route.name === 'board';
             },
             currentCard() {
                 return this.$store.state.card.currentCard;

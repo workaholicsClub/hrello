@@ -69,7 +69,7 @@
         },
         methods: {
             downloadFile(field) {
-                window.location.href = field.uploadData.downloadUrl;
+                window.open(field.uploadData.downloadUrl, '_blank');
             },
             readonlyUpdate(field) {
                 this.$emit('readonlyUpdate', field);

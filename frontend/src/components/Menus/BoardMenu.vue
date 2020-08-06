@@ -1,6 +1,19 @@
 <template>
     <div class="white">
         <v-list>
+            <v-list-item v-if="board.type === 'kanban'" @click="sendChangeBoardTypeEvent('analytics')">
+                <v-list-item-icon>
+                    <v-icon>mdi-google-analytics</v-icon>
+                </v-list-item-icon>
+                <v-list-item-title>Включить вид списком</v-list-item-title>
+            </v-list-item>
+            <v-list-item v-else @click="sendChangeBoardTypeEvent('kanban')">
+                <v-list-item-icon>
+                    <v-icon>mdi-trello</v-icon>
+                </v-list-item-icon>
+                <v-list-item-title>Включить канбан</v-list-item-title>
+            </v-list-item>
+
             <v-list-item @click="sendShareEvent">
                 <v-list-item-icon>
                     <v-icon>mdi-share-variant</v-icon>

@@ -57,7 +57,7 @@
                                 <v-btn icon outlined ><v-icon>mdi-plus</v-icon></v-btn>
                             </v-list-item-action>
                             <v-list-item-title class="font-weight-light">
-                                Добавить доску
+                                Добавить вакансию
                             </v-list-item-title>
                         </v-list-item>
 

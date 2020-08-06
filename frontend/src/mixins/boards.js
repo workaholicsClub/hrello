@@ -47,6 +47,7 @@ export default {
             let nextBoardNumber = this.boards.length + 1;
             let boardTemplate = {
                 title: 'Вакансия ' + nextBoardNumber,
+                dateCreated: (new Date).toString(),
                 userId: this.userId,
                 show: {
                     info: true,

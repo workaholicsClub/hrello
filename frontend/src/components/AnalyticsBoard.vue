@@ -34,7 +34,6 @@
                                 @input="updateFilterValues"
                         ></analytics-widget>
 
-
                         <analytics-widget v-for="fieldName in activeFields" :key="fieldName"
                                 :input-stats="fieldStats(fieldName)"
                                 :record="{id: fieldName, name: fieldName}"
@@ -63,7 +62,20 @@
             <v-col class="cards-row" cols="12" md="8" :key="filterIncrement">
                 <div class="d-flex mb-2">
                     <span class="flex-fill">Показано результатов: {{this.filteredCards.length}}</span>
-                    <v-btn text @click="selectFile" :loading="isResumeUploading"><v-icon>mdi-plus</v-icon> Загрузить резюме</v-btn>
+
+                    <v-menu bottom offset-y>
+                        <template v-slot:activator="{ on }">
+                            <v-btn text :loading="isResumeUploading" v-on="on"><v-icon>mdi-plus</v-icon> Добавить кандидата</v-btn>
+                        </template>
+                        <v-list>
+                            <v-list-item @click="selectFile">
+                                <v-list-item-title>Загрузить резюме</v-list-item-title>
+                            </v-list-item>
+                            <v-list-item @click="sendAddNewCardEvent">
+                                <v-list-item-title>Добавить пустую карточку</v-list-item-title>
+                            </v-list-item>
+                        </v-list>
+                    </v-menu>
                 </div>
                 <div v-for="(group, index) in filteredCardsGroupedByStatus" :key="group.status.id">
                     <status :key="group.status.id"
@@ -71,14 +83,12 @@
                             :last="index === filteredCardsGroupedByStatus.length-1"
                             :cards="group.cards"
                             :hide-footer="true"
+                            :vertical="false"
                             @input="updateStatusTitle"
                     ></status>
                 </div>
             </v-col>
         </v-row>
-        <v-btn fab class="pink darken-1" dark bottom right fixed @click="sendAddNewCardEvent">
-            <v-icon>mdi-plus</v-icon>
-        </v-btn>
         <input type="file" style="display: none" ref="fileInput" @change="addNewResume">
     </v-main>
 </template>
@@ -144,9 +154,6 @@
             }
         },
         methods: {
-            focusSearchField() {
-                this.$refs.searchField.focus();
-            },
             selectFile() {
                 this.$refs.fileInput.click();
             },

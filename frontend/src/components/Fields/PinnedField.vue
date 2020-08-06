@@ -4,7 +4,7 @@
             <v-icon v-if="icon">{{icon}}</v-icon>
         </v-col>
         <v-col cols="5" class="middle-col edit-on-hover py-2">
-            <v-text-field v-if="isTitleEditing" v-model="name" placeholder="Добавить название" hide-details dense></v-text-field>
+            <v-text-field v-if="isTitleEditing" v-model="name" placeholder="Название поля" hide-details dense></v-text-field>
             <span v-else>{{name}}</span>
 
             <v-btn v-if="isTitleEditing" small icon @click="updateName" class="ml-2"><v-icon>mdi-check</v-icon></v-btn>

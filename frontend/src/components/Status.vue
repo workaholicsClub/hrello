@@ -47,10 +47,10 @@
                     :statuses="statuses"
                     :show-avatar="true"
                     :comment-index="0"
+                    :small="vertical"
             ></card>
         </ul>
         <div class="status-footer" v-if="!hideFooter">
-            <v-btn text @click="sendAddCardEvent"><v-icon>mdi-plus</v-icon> Добавить кандидата</v-btn>
         </div>
     </v-col>
 </template>
@@ -60,7 +60,7 @@
 
     export default {
         name: 'Status',
-        props: ['status', 'cards', 'last', 'statuses', 'hideFooter'],
+        props: ['status', 'cards', 'last', 'statuses', 'hideFooter', 'vertical'],
         data() {
             return {
                 isTitleEditing: false,
@@ -81,7 +81,7 @@
         methods: {
             sendAddCardEvent() {
                 this.$root.$emit('addCard', this.status);
-            }
+            },
         },
         computed: {
             cardCount() {
@@ -103,6 +103,12 @@
         min-width: 100vw!important;*/
         padding: 0 0 32px 0;
         min-width: 100%;
+
+        pointer-events: none;
+    }
+
+    .stauts-header, .status-cards, .status-footer {
+        pointer-events: all;
     }
 
     .wide .status {

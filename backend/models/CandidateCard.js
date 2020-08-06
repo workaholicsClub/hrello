@@ -110,7 +110,6 @@ module.exports = class CandidateCard {
     }
 
     getFiles() {
-        //let pinnedFiles = this.getPinnedFieldsWithValues().filter(field => field.fieldType === 'file');
         let contentFiles = this.fields.content
             ? this.fields.content
                 .filter( content => content.fieldType === 'file' || typeof (content.file) !== 'undefined')
