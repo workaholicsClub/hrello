@@ -60,6 +60,8 @@ Vue.config.errorHandler = function (err) {
     if (vueInstance) {
         vueInstance.$store.commit('setAppError', err);
     }
+    let c = console;
+    c.error(err);
 };
 
 Vue.prototype.$isDesktop = function () {

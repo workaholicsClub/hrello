@@ -320,7 +320,18 @@
                 return tagStats.sort( (a, b) => a.title.localeCompare(b.title) );
             },
             groupByStatus(cards) {
-                return this.statuses ? this.statuses.map(status => {
+                if (!this.statuses) {
+                    return [];
+                }
+
+                let statuses = this.statuses;
+
+                if (this.filterValues.status && this.filterValues.status.length > 0) {
+                    let selectedStatusIds = this.filterValues.status.map( status => status.id );
+                    statuses = statuses.filter( status => selectedStatusIds.indexOf( status.id ) !== -1 );
+                }
+
+                return statuses ? statuses.map(status => {
                     return {
                         status,
                         cards: cards.filter( card => card.statusId === status.id )

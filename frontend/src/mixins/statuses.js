@@ -21,9 +21,10 @@ export default {
                 title: 'Новый статус',
                 fields: [],
             };
-            await axios.post('/api/status/add', newStatusTemplate);
+            let response = await axios.post('/api/status/add', newStatusTemplate);
+            let newStatus = response.data.status;
 
-            return await this.loadAndUpdateBoardStatuses();
+            return await this.$store.commit('addBoardStatus', {searchBoard: this.currentBoard, newStatus});
         },
         getStatusIndex(targetStatus) {
             return this.statuses.indexOf(targetStatus);
@@ -69,17 +70,12 @@ export default {
             return await this.addStatus(newSortIndex);
         },
         async deleteStatus(targetStatus) {
-            let statusIndex = this.getStatusIndex(targetStatus);
-            if (statusIndex !== -1) {
-                let archivedStatus = this.statuses.splice(statusIndex, 1)[0];
-                return await axios.get('/api/status/delete', {
-                    params: {
-                        statusId: archivedStatus.id
-                    }
-                });
-            }
-
-            return false;
+            this.$store.commit('deleteBoardStatus', {searchBoard: this.currentBoard, statusToDelete: targetStatus});
+            return await axios.get('/api/status/delete', {
+                params: {
+                    statusId: targetStatus.id
+                }
+            });
         },
     },
     mounted() {

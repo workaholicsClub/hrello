@@ -107,7 +107,7 @@
         pointer-events: none;
     }
 
-    .stauts-header, .status-cards, .status-footer {
+    .status-header, .status-cards, .status-footer {
         pointer-events: all;
     }
 

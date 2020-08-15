@@ -315,6 +315,23 @@ export default new Vuex.Store({
         addBoard(state, newBoard) {
             state.boards.push(newBoard);
         },
+        addBoardStatus(state, {searchBoard, newStatus}) {
+            let targetBoard = state.boards.find( board => board.id === searchBoard.id );
+            if (!targetBoard.statuses) {
+                targetBoard.statuses = [];
+            }
+
+            targetBoard.statuses.push(newStatus);
+        },
+        deleteBoardStatus(state, {searchBoard, statusToDelete}) {
+            let targetBoard = state.boards.find( board => board.id === searchBoard.id );
+            if (targetBoard) {
+                let statusIndex = targetBoard.statuses.findIndex(status => status.id === statusToDelete.id);
+                if (statusIndex !== -1) {
+                    targetBoard.statuses.splice(statusIndex, 1)[0];
+                }
+            }
+        },
         toggleFilterDrawer(state) {
             state.showFilterDrawer = !state.showFilterDrawer;
         },
