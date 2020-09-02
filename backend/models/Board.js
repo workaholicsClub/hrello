@@ -14,6 +14,12 @@ module.exports = class Board {
         return this.fields.id || false;
     }
 
+    getSkills() {
+        return this.fields.skills && this.fields.skills.length > 0
+            ? this.fields.skills
+            : [];
+    }
+
     getPinnedFieldByName(fieldName) {
         let hasPinnedFields = this.fields.pinnedFields && this.fields.pinnedFields.length > 0;
 

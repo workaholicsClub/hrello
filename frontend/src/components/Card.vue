@@ -1,5 +1,11 @@
 <template>
-    <v-card outlined elevation="2" min-width="300" @click="sendSelectCardEvent" :ripple="false">
+    <v-card
+            outlined elevation="2"
+            min-width="300"
+            @click="sendSelectCardEvent"
+            :ripple="false"
+            :class="{'overtime': this.isOvertime, 'severe-overtime': this.isSevereOvertime}"
+    >
         <v-system-bar v-for="(color, index) in cardColor" :color="color" height="4" :key="index"></v-system-bar>
         <v-card-text>
             <v-list-item>
@@ -8,8 +14,27 @@
                     <span class="white--text text-h6 headline" v-else>{{avatarAbbr}}</span>
                 </v-list-item-avatar>
                 <v-list-item-content>
-                    <v-list-item-title class="text-h6 headline">{{card.name || 'Новый кандидат'}}</v-list-item-title>
+                    <v-list-item-title class="text-h6 headline">
+                        {{card.name || 'Новый кандидат'}}
+                        <v-chip x-small v-if="showBoard" @click="gotoBoard">{{board.title}}</v-chip>
+                    </v-list-item-title>
                     <div class="card-info" v-html="info" v-if="showInfo"></div>
+                    <v-chip v-if="showStatus"
+                            color="success"
+                            label
+                            outlined
+                            small
+                            style="max-width: 130px"
+                            class="justify-content-center"
+                    >{{statusName}}</v-chip>
+
+                    <v-chip v-if="isOvertime || isSevereOvertime"
+                            :color="isSevereOvertime ? 'red' : 'yellow'"
+                            :dark="isSevereOvertime"
+                            label
+                            style="max-width: 200px"
+                            class="justify-content-center"
+                    >Просрочка: {{humanTimeOverdue}}</v-chip>
 
                     <div class="card-hashtags mt-4" v-if="showHashtags" @click.native.stop.prevent>
                         <tag-edit-view v-for="(hashtag, index) in hashtags" :key="hashtag.text+index"
@@ -42,15 +67,17 @@
                         <smart-comment :value="newComment" @input="saveComment" :key="'newComment'+commentIndex" @click.native.stop.prevent></smart-comment>
                     </div>
 
-                    <div class="card-icons mt-4 d-block" :class="{'d-md-flex': !small}">
-                        <v-btn outlined rounded color="success" @click.stop="showAddComment = true" class="mr-4">Оставить комментарий</v-btn>
+                    <div class="card-icons mt-4 d-block flex-wrap" :class="{'d-md-flex': !small, 'single-menu': !showButtons}">
+                        <div v-if="showButtons">
+                            <v-btn outlined rounded color="success" @click.stop="showAddComment = true" class="mr-4">Оставить комментарий</v-btn>
 
-                        <v-btn v-if="almostFinished && isActiveCard" text color="success" @click.stop="sendFinishedListEvent" class="pl-0">
-                            <v-icon>mdi-check-bold</v-icon> В архив
-                        </v-btn>
-                        <v-btn v-if="!almostFinished && isActiveCard" text color="success" @click.stop="sendMoveCardEvent" class="pl-0">
-                            <v-icon>mdi-redo-variant</v-icon> {{nextStatusTitle}}
-                        </v-btn>
+                            <v-btn v-if="(almostFinished || !nextStatusTitle) && isActiveCard" text color="success" @click.stop="sendFinishedListEvent" class="pl-0">
+                                <v-icon>mdi-check-bold</v-icon> В архив
+                            </v-btn>
+                            <v-btn v-if="!almostFinished && isActiveCard && nextStatusTitle" text color="success" @click.stop="sendMoveCardEvent" class="pl-0">
+                                <v-icon>mdi-redo-variant</v-icon> {{nextStatusTitle}}
+                            </v-btn>
+                        </div>
 
                         <v-spacer></v-spacer>
 
@@ -90,7 +117,7 @@
 
     export default {
         name: 'Card',
-        props: ['card', 'almostFinished', 'boards', 'statuses', 'commentIndex', 'small', 'showAvatar', 'showCommentOverride'],
+        props: ['card', 'almostFinished', 'boards', 'statuses', 'commentIndex', 'small', 'showAvatar', 'showCommentOverride', 'showBoard'],
         components: {
             SmartComment,
             SmartCommentView,
@@ -108,6 +135,8 @@
                 showInfo: board.show ? board.show.info || false : false,
                 showHashtags: board.show ? board.show.hashtags || false : false,
                 showAchievements: board.show ? board.show.achievements || false : false,
+                showStatus: board.show ? board.show.status || false : false,
+                showButtons: board.show ? board.show.buttons || false : false,
                 showLastComment: board.show ? board.show.lastComment || false : false,
 
                 newComment: {},
@@ -125,12 +154,17 @@
                         this.showInfo = this.board.show.info || false;
                         this.showHashtags = this.board.show.hashtags || false;
                         this.showAchievements = this.board.show.achievements || false;
+                        this.showStatus = this.board.show.status || false;
+                        this.showButtons = this.board.show.buttons || false;
                         this.showLastComment = this.board.show.lastComment || false;
                     }
                 }
             }
         },
         methods: {
+            gotoBoard() {
+                this.$router.push({name: 'board', params: {boardId: this.board.id}});
+            },
             sendMoveCardEvent() {
                 this.$root.$emit('moveCardToNextStatus', this.card);
             },
@@ -161,6 +195,9 @@
             },
             updateComment(commentData) {
                 this.$root.$emit('updateContent', commentData, this.displayComment, this.card);
+            },
+            overdueTime(fieldName) {
+                return this.$store.getters.overTime(this.card, fieldName);
             },
         },
         computed: {
@@ -219,11 +256,6 @@
                         value = `<a class="info-link" href="${field.value}">${hostname}</a>`;
                     }
 
-                    /*let withoutTitle = ['mail', 'почта', 'телефон', 'позиц', 'должност', 'город', 'плата'];
-                    let needTitle = withoutTitle.reduce( (result, substring) => {
-                        let nameFitsSubstring = field.name && field.name.toString().toLocaleLowerCase().indexOf(substring) === -1;
-                        return result && nameFitsSubstring;
-                    }, true);*/
                     let needTitle = false;
 
                     if (needTitle) {
@@ -296,22 +328,46 @@
                     return 'Предстоящих событий нет';
                 }
             },
-            isPendingEventToday() {
-                if (!this.pendingEvent) {
-                    return false;
-                }
-
-                return moment(this.pendingEvent.value).isSame(Date.now(), 'day');
-            },
-            hasAlarm() {
-                return this.isPendingEventToday;
-            },
             board() {
                 return this.$store.getters.boardByCard( this.card );
+            },
+            status() {
+                let statuses = this.board.statuses || [];
+                let status = statuses.find( status => status.id === this.card.statusId );
+
+                if (status) {
+                    return status;
+                }
+
+                return false;
             },
             nextStatusTitle() {
                 let nextStatus = this.$store.getters.nextCardStatus(this.card);
                 return nextStatus ? "На " + nextStatus.title.toLocaleLowerCase() : false;
+            },
+            statusName() {
+                let status = this.status;
+
+                if (status) {
+                    return status.title;
+                }
+
+                return '';
+            },
+            timeInCurrentStatus() {
+                return this.$store.getters.timeInCurrentStatus(this.card);
+            },
+            humanTimeOverdue() {
+                return moment.duration(this.overdueTime('overTime'), 'seconds').humanize();
+            },
+            boardHasTimeStats() {
+                return this.board.stats && this.board.stats.time;
+            },
+            isOvertime() {
+                return this.overdueTime('overTime') && !this.isSevereOvertime;
+            },
+            isSevereOvertime() {
+                return Boolean( this.overdueTime('severeOverTime') );
             }
         }
     }
@@ -322,6 +378,13 @@
         margin-bottom: 8px;
         cursor: pointer;
         min-width: 375px;
+        position: relative;
+    }
+
+    .v-card .card-icons.single-menu {
+        position: absolute;
+        bottom: 0;
+        right: 0;
     }
 
     .v-card .elevation-2 {
@@ -382,6 +445,7 @@
 </style>
 
 <style>
+
     .card-icon .v-btn {
         text-transform: none;
     }

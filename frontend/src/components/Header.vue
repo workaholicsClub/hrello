@@ -3,15 +3,16 @@
         <v-app-bar-nav-icon v-if="!isDesktop && !showBack" @click.stop="$emit('drawer')" />
         <v-btn icon v-if="showBack" @click.stop="$emit('back')"><v-icon>mdi-chevron-left</v-icon></v-btn>
         <v-toolbar-title :class="{'d-flex': isTitleEditing}">
-            <v-text-field v-model="newTitle" v-if="isTitleEditing" @input="$emit('input', newTitle)"></v-text-field>
-            <span v-else>{{ currentTitle || 'Без названия' }}</span>
-            <v-btn v-if="allowTitleEdit && !isTitleEditing" icon @click="isTitleEditing = true"><v-icon>mdi-pencil</v-icon></v-btn>
-            <v-btn v-if="allowTitleEdit && isTitleEditing" icon @click="isTitleEditing = false"><v-icon>mdi-check</v-icon></v-btn>
+            {{ currentTitle || 'Без названия' }}
+            <small v-if="$route.name === 'card'" class="text--disabled text-caption d-block">Сохранено {{savedTime}} назад</small>
         </v-toolbar-title>
         <v-spacer/>
 
-        <v-btn v-if="$route.name === 'board'" icon text @click="sendShareBoardEvent"><v-icon>mdi-share-variant</v-icon></v-btn>
+        <v-btn v-if="$route.name === 'board'" icon @click="gotoBoardEdit"><v-icon>mdi-pencil</v-icon></v-btn>
+        <v-btn v-if="$route.name === 'board' || $route.name === 'stats'" icon text @click="sendShareBoardEvent"><v-icon>mdi-share-variant</v-icon></v-btn>
         <v-btn v-if="$route.name === 'card'" icon text @click="sendShareCardEvent"><v-icon>mdi-share-variant</v-icon></v-btn>
+        <v-btn v-if="$route.name === 'board'" icon text @click="gotoBoardAnalytics"><v-icon>mdi-chart-areaspline</v-icon></v-btn>
+        <v-btn v-if="$route.name === 'stats'" icon text @click="gotoBoard"><v-icon>mdi-view-grid</v-icon></v-btn>
         <slot name="menu">
             <v-menu bottom left offset-x @click.native.stop.prevent v-if="$route.name === 'card'" class="menu-top">
                 <template v-slot:activator="{ on }">
@@ -19,7 +20,7 @@
                 </template>
                 <card-menu :card="currentCard"></card-menu>
             </v-menu>
-            <div v-else-if="$route.name === 'board'">
+            <div v-else-if="$route.name === 'board' || $route.name === 'stats'">
                 <v-menu bottom left offset-x @click.native.stop.prevent class="menu-top">
                     <template v-slot:activator="{ on }">
                         <v-btn icon text v-on="on" @click.stop><v-icon>mdi-dots-vertical</v-icon></v-btn>
@@ -37,6 +38,7 @@
 <script>
     import CardMenu from "./Menus/CardMenu";
     import BoardMenu from "./Menus/BoardMenu";
+    import moment from "moment";
 
     export default {
         name: 'Header',
@@ -57,6 +59,15 @@
             }
         },
         methods: {
+            gotoBoardEdit() {
+                this.$router.push({name: 'vacancy', params: {boardId: this.currentBoard.id}});
+            },
+            gotoBoardAnalytics() {
+                this.$router.push({name: 'stats', params: {boardId: this.currentBoard.id}});
+            },
+            gotoBoard() {
+                this.$router.push({name: 'board', params: {boardId: this.currentBoard.id}});
+            },
             toggleFilterDrawer() {
                 this.$store.commit('toggleFilterDrawer');
             },
@@ -87,6 +98,11 @@
 
                 return this.currentCard.name || newCardTitle;
             },
+            savedTime() {
+                let now = moment();
+                let savedTime = moment(this.currentCard.lastUpdated);
+                return moment.duration( now.diff(savedTime) ).humanize();
+            },
             currentTitle() {
                 if (this.$route.title) {
                     return this.$route.title;
@@ -112,14 +128,22 @@
                     return this.currentBoard.title + ' - текст вакансии';
                 }
 
+                if (this.$route.name === 'stats') {
+                    return this.currentBoard.title + ' - статистика';
+                }
+
                 if (this.$route.name === 'board') {
                     return this.currentBoard.title;
+                }
+
+                if (this.$route.name === 'group') {
+                    return this.currentGroup.name;
                 }
 
                 return false;
             },
             showBack() {
-                return this.$route.name === 'card' || this.$route.name === 'vacancy' || this.$route.name === 'board';
+                return this.$route.name !== 'home';
             },
             currentCard() {
                 return this.$store.state.card.currentCard;
@@ -129,6 +153,11 @@
                     ? this.$store.getters.boardById( this.$route.params.boardId )
                     : false;
             },
+            currentGroup() {
+                return this.$route.params.groupId
+                    ? this.$store.getters.group( this.$route.params.groupId )
+                    : false;
+            }
         }
     }
 </script>

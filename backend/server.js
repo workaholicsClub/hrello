@@ -41,6 +41,7 @@ async function connectToDatabase (host, port, dbName) {
     app.post('/api/board/update', boardRoutes.update(db));
     app.get('/api/board/delete', boardRoutes.delete(db));
     app.get('/api/board/archive', boardRoutes.archive(db));
+    app.get('/api/board/stats', boardRoutes.stats(db));
 
     app.get('/api/status/list', statusRoutes.list(db));
     app.get('/api/status/delete', statusRoutes.delete(db));
@@ -60,6 +61,7 @@ async function connectToDatabase (host, port, dbName) {
 
     app.post('/api/user/add', userRoutes.add(db));
     app.post('/api/user/login', userRoutes.login(db));
+    app.post('/api/user/update', userRoutes.update(db));
     app.post('/api/user/register', userRoutes.register(db));
     app.post('/api/user/googleLogin', userRoutes.googleLogin(db));
     app.get('/api/user/team', userRoutes.team(db));

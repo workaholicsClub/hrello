@@ -1,6 +1,7 @@
 import axios from "axios";
 import shortid from "shortid";
 import {clone} from "../unsorted/Helpers";
+import moment from "moment";
 
 export default {
     data() {
@@ -58,7 +59,14 @@ export default {
         },
         async addCard(status) {
             let newCard = {
+                author: this.$store.state.user.currentUser,
+                lastUpdatedBy: this.$store.state.user.currentUser,
+                created: moment().toISOString(),
+                lastUpdated: moment().toISOString(),
                 statusId: status.id,
+                statusHistory: [
+                    { statusId: status.id, prevStatusId: false, dateChanged: moment().toISOString() },
+                ],
                 boardId: status.boardId
             };
 
@@ -73,7 +81,7 @@ export default {
             let response = await axios.post('/api/card/add', newCard);
             let createdCard = response.data.card;
 
-            this.cards.push(createdCard);
+            this.$store.commit('addCards', createdCard);
             this.changeCard(createdCard.id);
         },
         async addContentToCard(content, card) {
@@ -201,19 +209,31 @@ export default {
 
             return response.data.card;
         },
-        async moveCardToNextStatus(card) {
-            let nextStatus = this.getNextStatusForCard(card);
-            if (nextStatus) {
-                card.statusId = nextStatus.id;
+        async moveCardToStatus(card, status) {
+            if (status) {
+                let oldStatusId = card.statusId;
+                card.statusId = status.id;
+
+                if (!card.statusHistory) {
+                    card.statusHistory = [];
+                }
+
+                card.statusHistory.push({
+                    statusId: status.id,
+                    prevStatusId: oldStatusId,
+                    dateChanged: moment().toISOString()
+                });
+
                 return this.saveCard(card);
             }
         },
+        async moveCardToNextStatus(card) {
+            let nextStatus = this.getNextStatusForCard(card);
+            return this.moveCardToStatus(card, nextStatus);
+        },
         async moveCardToPrevStatus(card) {
             let previousStatus = this.getPreviousStatusForCard(card);
-            if (previousStatus) {
-                card.statusId = previousStatus.id;
-                return this.saveCard(card);
-            }
+            return this.moveCardToStatus(card, previousStatus);
         },
         async moveCardToBoard(card, board) {
             let archiveProps = ['blacklist', 'whitelist', 'finishedlist', 'archive', 'deleted'];
@@ -249,6 +269,9 @@ export default {
             return response.data.card;
         },
         async saveCard(cardToSave) {
+            cardToSave.lastUpdated = moment().toISOString();
+            cardToSave.lastUpdatedBy = this.$store.state.user.currentUser;
+
             return this.$store.commit('updateCard', {cardId: cardToSave.id, fields: cardToSave});
         },
         findCard(cardId) {
@@ -285,6 +308,7 @@ export default {
         this.$root.$on('updateContent', this.updateContent);
         this.$root.$on('deleteContent', this.deleteContent);
 
+        this.$root.$on('moveCardToStatus', this.moveCardToStatus);
         this.$root.$on('moveCardToNextStatus', this.moveCardToNextStatus);
         this.$root.$on('moveCardToPrevStatus', this.moveCardToPrevStatus);
         this.$root.$on('moveCardToWhiteList', this.moveCardToWhiteList);
@@ -302,6 +326,7 @@ export default {
         this.$root.$off('updateContent', this.updateContent);
         this.$root.$off('deleteContent', this.deleteContent);
 
+        this.$root.$off('moveCardToStatus', this.moveCardToStatus);
         this.$root.$off('moveCardToNextStatus', this.moveCardToNextStatus);
         this.$root.$off('moveCardToPrevStatus', this.moveCardToPrevStatus);
         this.$root.$off('moveCardToWhiteList', this.moveCardToWhiteList);

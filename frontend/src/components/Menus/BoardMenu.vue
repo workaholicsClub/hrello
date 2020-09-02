@@ -1,17 +1,36 @@
 <template>
     <div class="white">
         <v-list>
-            <v-list-item v-if="board.type === 'kanban'" @click="sendChangeBoardTypeEvent('analytics')">
+            <v-list-item v-if="board.type !== 'list'" @click="sendChangeBoardTypeEvent('list')">
                 <v-list-item-icon>
-                    <v-icon>mdi-google-analytics</v-icon>
+                    <v-icon>mdi-view-list</v-icon>
                 </v-list-item-icon>
                 <v-list-item-title>Включить вид списком</v-list-item-title>
             </v-list-item>
-            <v-list-item v-else @click="sendChangeBoardTypeEvent('kanban')">
+            <v-list-item v-if="board.type !== 'kanban'" @click="sendChangeBoardTypeEvent('kanban')">
                 <v-list-item-icon>
                     <v-icon>mdi-trello</v-icon>
                 </v-list-item-icon>
                 <v-list-item-title>Включить канбан</v-list-item-title>
+            </v-list-item>
+            <v-list-item v-if="board.type !== 'cli'" @click="sendChangeBoardTypeEvent('cli')">
+                <v-list-item-icon>
+                    <v-icon>mdi-console-line</v-icon>
+                </v-list-item-icon>
+                <v-list-item-title>Включить командный вид</v-list-item-title>
+            </v-list-item>
+
+            <v-list-item @click="gotoBoardAnalytics" v-if="$route.name === 'board'">
+                <v-list-item-icon>
+                    <v-icon>mdi-chart-areaspline</v-icon>
+                </v-list-item-icon>
+                <v-list-item-title>Статистика</v-list-item-title>
+            </v-list-item>
+            <v-list-item @click="gotoBoard" v-if="$route.name === 'stats'">
+                <v-list-item-icon>
+                    <v-icon>mdi-view-grid</v-icon>
+                </v-list-item-icon>
+                <v-list-item-title>К списку кандидатов</v-list-item-title>
             </v-list-item>
 
             <v-list-item @click="sendShareEvent">
@@ -24,7 +43,7 @@
                 <v-list-item-icon>
                     <v-icon>mdi-file-document-outline</v-icon>
                 </v-list-item-icon>
-                <v-list-item-title>Текст вакансии</v-list-item-title>
+                <v-list-item-title>Редактировать вакансию</v-list-item-title>
             </v-list-item>
             <v-list-item @click="sendCopyBoardEvent">
                 <v-list-item-icon>
@@ -68,9 +87,21 @@
             </v-list-item>
             <v-list-item>
                 <v-list-item-action>
+                    <v-switch v-model="showStatus.status" @change="updateShowStatus" @click.native.stop.prevent></v-switch>
+                </v-list-item-action>
+                <v-list-item-title>Этап</v-list-item-title>
+            </v-list-item>
+            <v-list-item>
+                <v-list-item-action>
                     <v-switch v-model="showStatus.lastComment" @change="updateShowStatus" @click.native.stop.prevent></v-switch>
                 </v-list-item-action>
                 <v-list-item-title>Последний комментарий</v-list-item-title>
+            </v-list-item>
+            <v-list-item>
+                <v-list-item-action>
+                    <v-switch v-model="showStatus.buttons" @change="updateShowStatus" @click.native.stop.prevent></v-switch>
+                </v-list-item-action>
+                <v-list-item-title>Кнопки</v-list-item-title>
             </v-list-item>
         </v-list>
     </div>
@@ -86,6 +117,12 @@
             }
         },
         methods: {
+            gotoBoardAnalytics() {
+                this.$router.push({name: 'stats', params: {boardId: this.board.id}});
+            },
+            gotoBoard() {
+                this.$router.push({name: 'board', params: {boardId: this.board.id}});
+            },
             sendShareEvent() {
                 this.$root.$emit('shareBoard', this.board);
             },

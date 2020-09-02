@@ -1,12 +1,12 @@
 <template>
-    <v-main class="fs-details fill-height">
-        <v-container class="align-start justify-start" fill-height>
+    <v-container class="fs-details fill-height p-0">
+        <v-container class="align-start justify-start p-0" fill-height>
             <edit-comment
                     v-model="commentMock"
                     @input="updateText"
             ></edit-comment>
         </v-container>
-    </v-main>
+    </v-container>
 </template>
 
 <script>

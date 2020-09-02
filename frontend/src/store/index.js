@@ -142,6 +142,17 @@ export default new Vuex.Store({
                 });
             }
         },
+        statusesByCard(state) {
+            return card => {
+                let board = state.boards.find( board => {
+                    return board.id === card.boardId;
+                });
+
+                return board && board.statuses
+                    ? board.statuses
+                    : []
+            }
+        },
         boardById(state) {
             return searchId => {
                 return state.boards.find( board => board.id === searchId );
@@ -164,10 +175,20 @@ export default new Vuex.Store({
         },
         activePinnedFields() {
             return board => {
-                return board.pinnedFields
+                return board && board.pinnedFields
                     ? clone(board.pinnedFields).filter(pinnedField => pinnedField.hidden !== true)
                     : [];
             }
+        },
+        allSkills(state) {
+            let allSkills = state.boards.reduce( (skills, board) => {
+                let boardSkills = board.skills || [];
+                return skills.concat(boardSkills);
+            }, []);
+            let lcSkills = allSkills.map( skill => skill.toLocaleLowerCase() );
+            let uniqueSkills = allSkills.filter( (skill, index) => lcSkills.indexOf( skill.toLocaleLowerCase() ) === index );
+
+            return uniqueSkills;
         }
     },
     actions: {
@@ -194,7 +215,7 @@ export default new Vuex.Store({
             }
 
             let response = await axios.get('/api/board/list', {
-                params: {userId}
+                params: {userId, stats: 1}
             });
             commit('boards', response.data.board);
         },

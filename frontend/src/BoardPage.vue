@@ -22,7 +22,7 @@
                 ></login>
             </v-row>
         </v-container>
-        <v-container fill-height v-else-if="hasNoBoards">
+        <v-container fill-height v-else-if="hasNoBoards && $route.name === 'home'">
             <Sidebar
                     :drawer="drawer"
                     :is-desktop="isDesktop"
@@ -30,13 +30,15 @@
                     @drawer="setDrawerState"
                     @logout="logout"
             ></Sidebar>
-            <v-row align="center" justify="center">
-                <v-col class="text-center">
-                    <p class="display-1">Добро пожаловать!</p>
-                    <p class="headline p-0">Для начала нужно</p>
-                    <v-btn x-large dark @click="addNewBoard">Создать первую вакансию</v-btn>
-                </v-col>
-            </v-row>
+            <v-main app>
+                <v-row align="center" justify="center">
+                    <v-col class="text-center">
+                        <p class="display-1">Добро пожаловать!</p>
+                        <p class="headline p-0">Для начала нужно</p>
+                        <v-btn x-large dark class="success" @click="$router.push({name: 'newBoard'})">Создать первую вакансию</v-btn>
+                    </v-col>
+                </v-row>
+            </v-main>
         </v-container>
         <v-container fill-height fluid class="p-0" v-else>
             <Sidebar
@@ -87,7 +89,7 @@
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="pink darken-1" dark @click="closeShareDialog">Закрыть</v-btn>
+                    <v-btn color="success" rounded dark @click="closeShareDialog">Закрыть</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>

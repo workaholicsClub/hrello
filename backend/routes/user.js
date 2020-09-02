@@ -16,11 +16,40 @@ module.exports = {
             userData.earlyAdopter = true;
             userData.dateRegistered = (new Date).toString();
 
+            if (!userData.workspace) {
+                userData.workspace = shortid.generate();
+            }
+
             let result = await users.insertOne(userData);
             let insertedUserRecord = result.ops[0];
 
             response.send({
                 user: insertedUserRecord,
+            });
+        }
+    },
+    update: (db) => {
+        return async (request, response) => {
+            let users = db.collection('users');
+            let userData = request.body;
+            let userId = userData.id;
+
+            if (!userId) {
+                response.send({
+                    user: false
+                });
+            }
+
+            if (userData._id) {
+                delete userData._id;
+            }
+
+            let query =  {id: userId};
+            let updateResult = await users.findOneAndReplace(query, userData, {returnNewDocument: true});
+            let updatedUserRecord = updateResult.value || false;
+
+            response.send({
+                user: updatedUserRecord,
             });
         }
     },

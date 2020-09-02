@@ -43,22 +43,37 @@ export default {
             this.showArchive = false;
             this.updateUrl();
         },
-        async addNewBoard() {
+        async addNewBoard(boardFields) {
             let nextBoardNumber = this.boards.length + 1;
             let boardTemplate = {
                 title: 'Вакансия ' + nextBoardNumber,
                 dateCreated: (new Date).toString(),
                 userId: this.userId,
+                workspace: this.user.workspace || false,
                 show: {
                     info: true,
                     hashtags: true,
-                    achievements: true
+                    achievements: true,
+                    buttons: true,
                 }
             };
 
-            let boardResponse = await axios.post('/api/board/add', boardTemplate);
-            this.$store.commit('addBoard', boardResponse.data.board);
-            this.$store.commit('addCards', boardResponse.data.card);
+            if (boardFields) {
+                boardFields = Object.assign(boardTemplate, boardFields)
+            }
+            else {
+                boardFields = boardTemplate;
+            }
+
+            let boardResponse = await axios.post('/api/board/add', boardFields);
+
+            if (boardResponse.data.board) {
+                this.$store.commit('addBoard', boardResponse.data.board);
+            }
+
+            if (boardResponse.data.card) {
+                this.$store.commit('addCards', boardResponse.data.card);
+            }
             this.changeBoard(boardResponse.data.board.id);
         },
         async copyBoard(srcBoard) {
@@ -72,8 +87,11 @@ export default {
         setBoardTitle(newTitle) {
             this.$store.commit('updateBoard', { boardId: this.currentBoard.id, field: 'title', value: newTitle });
         },
-        changeBoardType(newType) {
-            this.$store.commit('updateBoard', { boardId: this.currentBoard.id, field: 'type', value: newType });
+        changeBoardType(newType, board) {
+            if (!board) {
+                board = this.currentBoard;
+            }
+            this.$store.commit('updateBoard', { boardId: board.id, field: 'type', value: newType });
         },
         async deleteBoard(board) {
             await axios.get('/api/board/delete', {
@@ -82,9 +100,9 @@ export default {
                 }
             });
 
+            this.$router.push({name: 'home'});
             await this.loadBoards();
             await this.reloadBoardData();
-            this.changeBoard( this.boards[0].id );
         },
         async archiveBoard(board) {
             await axios.get('/api/board/archive', {

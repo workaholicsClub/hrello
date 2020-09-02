@@ -10,6 +10,11 @@ function saveCard(cardId, state) {
     return axios.post('/api/card/update', card);
 }
 
+function saveUser(state) {
+    let user = state.user.currentUser;
+    return axios.post('/api/user/update', user);
+}
+
 const saveChangesPlugin = store => {
     store.subscribe((mutation, state) => {
         if (mutation.type === 'updateBoard') {
@@ -22,6 +27,10 @@ const saveChangesPlugin = store => {
 
         if (mutation.type === 'updateCard') {
             saveCard(mutation.payload.cardId, state);
+        }
+
+        if (mutation.type === 'updateUser') {
+            saveUser(state);
         }
     });
 }

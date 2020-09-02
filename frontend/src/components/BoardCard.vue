@@ -1,14 +1,26 @@
 <template>
     <v-card outlined elevation="2" min-width="300" @click="sendSelectCardEvent" :ripple="false">
-        <v-card-text class="d-flex">
-            <v-list-item class="vacancy-data">
-                <v-list-item-content>
-                    <v-list-item-title class="text-h6 headline">{{board.title || 'Новая вакансия'}}</v-list-item-title>
-                </v-list-item-content>
-            </v-list-item>
-            <div class="d-flex flex-column align-items-end">
+        <v-card-text>
+            <v-row class="d-flex">
+                <v-list-item class="vacancy-data">
+                    <v-list-item-content>
+                        <v-list-item-title class="text-h6 headline">{{board.title || 'Новая вакансия'}}</v-list-item-title>
+                    </v-list-item-content>
+                </v-list-item>
                 <span class="dates mb-2" v-if="openedTime">{{ openedTime }} назад</span>
-                <div class="d-flex">
+            </v-row>
+            <v-row>
+                <v-col class="vacancy-data p-0">
+                    <v-list-item>
+                        <v-list-item-content>
+                            <div v-if="board.city">
+                                <v-icon>mdi-map-marker-outline</v-icon>
+                                {{board.city}}
+                            </div>
+                        </v-list-item-content>
+                    </v-list-item>
+                </v-col>
+                <v-col class="d-flex p-0">
                     <v-list-item class="info-chip">
                         <h6>{{countTotalCards()}}</h6>
                         <small>кандидатов</small>
@@ -17,8 +29,8 @@
                         <h6>{{countCards(status)}}</h6>
                         <small>{{status.title.toLocaleLowerCase()}}</small>
                     </v-list-item>
-                </div>
-            </div>
+                </v-col>
+            </v-row>
         </v-card-text>
     </v-card>
 </template>

@@ -3,6 +3,7 @@ import rfdc from "rfdc";
 const clone = rfdc();
 import {getUniqueTags, getCardTags} from "../../unsorted/Helpers";
 import md5 from "blueimp-md5";
+import moment from "moment";
 
 export default {
     state: {
@@ -21,7 +22,7 @@ export default {
                 }
 
                 return state.cards.filter( card => {
-                    return card.boardId === boardId;
+                    return card && card.boardId === boardId;
                 });
             }
         },
@@ -131,6 +132,52 @@ export default {
 
                 return false;
             }
+        },
+        timeInCurrentStatus() {
+            return card => {
+                let historyRecord = card.statusHistory
+                    ? card.statusHistory[ card.statusHistory.length - 1 ]
+                    : false;
+
+                let startInStatus = historyRecord
+                    ? moment(historyRecord.dateChanged)
+                    : moment(card.lastUpdated);
+
+                let today = moment();
+
+                return moment.duration(today.diff(startInStatus)).as('seconds');
+            }
+        },
+        overTime(state, getters) {
+            return (card, fieldName) => {
+                let board = getters.boardByCard(card);
+                let boardHasTimeStats = board && board.stats && board.stats.time;
+
+                if (!boardHasTimeStats) {
+                    return 0;
+                }
+
+                let statusStats = board.stats.time.find( statItem => statItem.statusId === card.statusId );
+                let timeInCurrentStatus = getters.timeInCurrentStatus(card);
+
+                if (statusStats && statusStats[fieldName]) {
+                    let minimalCardsForNormalStatistics = 10;
+                    if (statusStats.totalCardsWithTime < minimalCardsForNormalStatistics) {
+                        return 0;
+                    }
+
+                    return timeInCurrentStatus - statusStats[fieldName] > 0
+                        ? timeInCurrentStatus - statusStats[fieldName]
+                        : 0;
+                }
+
+                return 0;
+            }
+        },
+        getOvertimeCards(state, getters) {
+            return state.cards
+                ? state.cards.filter( card => getters.overTime(card, 'overTime') > 0 )
+                : [];
         }
     },
     actions: {

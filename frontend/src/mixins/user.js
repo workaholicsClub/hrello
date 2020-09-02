@@ -78,6 +78,7 @@ export default {
         async login(userData) {
             let response = await axios.post('/api/user/login', userData);
             if (response.data.user) {
+                this.$router.push({name: 'home'});
                 this.finishLogin(response.data.user);
                 this.afterLogin();
             }
@@ -89,6 +90,7 @@ export default {
         async register(userData) {
             let response = await axios.post('/api/user/register', userData);
             if (response.data.user) {
+                this.$router.push({name: 'home'});
                 this.finishLogin(response.data.user);
                 this.afterLogin();
             }
@@ -102,6 +104,7 @@ export default {
             let isOk = !result.error;
 
             if (isOk) {
+                this.$router.push({name: 'home'});
                 await this.loadGoogleUserProfileAndUpdateLocalData();
                 await this.afterLogin();
             }
@@ -138,6 +141,7 @@ export default {
         async logout() {
             await this.$gapi.signOut();
             this.$store.dispatch('logout');
+            this.$router.push({name: 'home'});
             localStorage.removeItem('authorizedUser');
 
             if (!this.onlyCardMode) {

@@ -85,7 +85,7 @@ module.exports = {
                 let card = await CandidateCard.makeNewForBoard(db, board, user);
 
                 let {fileName, path} = await uploadFile(uploadedFile, fileId);
-                let {docText, candidate} = await parseFile(path);
+                let {docText, candidate} = await parseFile(path, board);
                 let candidateFields = candidate;
 
                 if (candidateFields) {
@@ -95,7 +95,7 @@ module.exports = {
                     card.addCandidateFieldValues(candidate);
                 }
 
-                card.addFileField(fileName, path, uploadedFile.type, fileId, {docText});
+                card.addFileField(fileName, path, uploadedFile.type, fileId, {docText, candidate: candidateFields});
                 await card.save();
 
                 let boardFields = await board.asDTO();

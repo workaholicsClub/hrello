@@ -11,14 +11,21 @@
                                 <v-alert type="success" outlined text v-if="group.getter().length === 0">Дел нет</v-alert>
                                 <v-row v-for="event in group.getter()" :key="event.id">
                                     <v-col md="1" cols="12" class="time">
-                                        {{eventTime(event)}}
+                                        {{group.useCards ? '' : eventTime(event)}}
                                     </v-col>
                                     <v-col md="11" cols="12">
-                                        <card v-if="event.card && eventIndex(event) !== false"
+                                        <card v-if="group.useCards"
+                                                :card="event"
+                                                :show-comment-override="true"
+                                                :show-avatar="false"
+                                                :show-board="true"
+                                        ></card>
+                                        <card v-else-if="event.card && eventIndex(event) !== false"
                                                 :card="eventCard(event)"
                                                 :comment-index="eventIndex(event)"
                                                 :show-comment-override="true"
                                                 :show-avatar="false"
+                                                :show-board="true"
                                         >
                                             <template v-slot:footer>
                                                 <div class="d-flex flex-row justify-content-between footer-buttons mt-4">
@@ -68,6 +75,7 @@
                         <v-col>
                             <v-date-picker
                                     :events="calendarEvents"
+                                    elevation="2"
                                     v-model="selectedDate_YYYYMMDD"
                                     locale="ru"
                                     first-day-of-week="1"
@@ -136,9 +144,10 @@
                 selectedDate_YYYYMMDD: moment().format('YYYY-MM-DD'),
                 openedPanels: [1],
                 groups: [
-                    {title: 'Старые', getter: () => this.oldEvents, hasIndicator: false, isCurrent: false},
-                    {title: 'Дела на сегодня', getter: () => this.todayEvents, hasIndicator: true, isCurrent: true},
-                    {title: 'Можно поделать еще', getter: () => this.futureEvents, hasIndicator: false, isCurrent: false},
+                    {title: 'Старые', getter: () => this.oldEvents, hasIndicator: false, isCurrent: false, useCards: false},
+                    {title: 'Просроченные', getter: () => this.overTimeCards, hasIndicator: true, isCurrent: false, useCards: true},
+                    {title: 'Дела на сегодня', getter: () => this.todayEvents, hasIndicator: true, isCurrent: true, useCards: false},
+                    {title: 'Можно поделать еще', getter: () => this.futureEvents, hasIndicator: false, isCurrent: false, useCards: false},
                 ],
             }
         },
@@ -266,6 +275,9 @@
             },
             calendarEvents() {
                 return this.$store.getters.eventDatesForUser(this.user.id);
+            },
+            overTimeCards() {
+                return this.$store.getters.getOvertimeCards;
             },
             events() {
                 return this.$store.getters.eventsByDateForUser(this.searchDate, this.user.id);

@@ -41,6 +41,9 @@
             </span>
         </div>
         <ul class="status-cards">
+            <div class="empty-status" v-if="cards.length === 0">
+                Нет кандидатов в этом статусе
+            </div>
             <card v-for="card in cards" :key="card.id"
                     :card="card"
                     :almost-finished="last"
@@ -105,6 +108,15 @@
         min-width: 100%;
 
         pointer-events: none;
+    }
+
+    .empty-status {
+        color: #6ca4b3;
+        border: 2px dashed #6ca4b3;
+        border-radius: 4px;
+        padding: 8px;
+        text-align: center;
+        opacity: 0.5;
     }
 
     .status-header, .status-cards, .status-footer {

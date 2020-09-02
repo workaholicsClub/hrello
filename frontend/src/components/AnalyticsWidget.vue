@@ -27,7 +27,7 @@
                 v-model="selectedValues"
                 :items="stats"
                 multiple
-                solo
+                outlined
                 hide-details
                 chips
                 deletable-chips
@@ -35,6 +35,7 @@
                 item-text="title"
                 item-value="value"
                 label="Укажите значение"
+                class="solo-outlined"
                 @input="sendValuesUpdate"
             >
                 <template v-slot:no-data>
@@ -210,8 +211,16 @@
                 let selectedStats = this.stats.filter( stat => this.selectedValues.indexOf( stat.value ) !== -1 );
                 this.$emit('input', selectedStats, this.record);
             },
+            clearValues() {
+                this.selectedValues = [];
+                this.sendValuesUpdate();
+            },
             sendExpandState() {
                 this.expanded = !this.expanded;
+                if (!this.expanded) {
+                    this.clearValues();
+                }
+
                 this.$emit('expand', this.expanded, this.record);
             },
             sendStatsEvent(stats) {
@@ -247,6 +256,11 @@
     }
 </script>
 
-<style scoped>
-
+<style>
+    .v-input.solo-outlined {
+        background: white;
+    }
+    .solo-outlined .v-select__selections {
+        min-height: 42px!important;
+    }
 </style>

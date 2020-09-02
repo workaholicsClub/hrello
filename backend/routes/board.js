@@ -1,4 +1,5 @@
 const shortid = require('shortid');
+const moment = require('moment');
 
 function getBoardTemplateStatusesAndFields(boardId) {
     return [
@@ -22,7 +23,6 @@ function getBoardTemplateStatusesAndFields(boardId) {
         },
     ]
 }
-
 function getCardTemplates(statusIds, boardId) {
     return statusIds.map( (statusId, index) => {
         return {
@@ -32,6 +32,108 @@ function getCardTemplates(statusIds, boardId) {
             boardId: boardId
         }
     });
+}
+function getStatusStats(statuses, cards) {
+    return statuses.map( status => {
+        let statusCards = cards.filter( card => card.statusId === status.id );
+        return {
+            statusId: status.id,
+            statusTitle: status.title,
+            cardsCount: statusCards.length || 0,
+        }
+    });
+}
+function getStatusTime(statuses, cards) {
+    let baseStats = getStatusStats(statuses, cards);
+
+    let stats = cards.reduce( (stats, card) => {
+        if (!card.statusHistory) {
+            return stats;
+        }
+
+        for (const currentStep of card.statusHistory) {
+            let existingStats = stats.find( statusStats => statusStats.statusId === currentStep.statusId );
+
+            if (existingStats) {
+                let stepIndex = card.statusHistory.indexOf(currentStep);
+                let nextStep = stepIndex < card.statusHistory.length
+                    ? card.statusHistory[stepIndex+1]
+                    : false;
+
+                if (!existingStats.cardTime) {
+                    existingStats.cardTime = [];
+                }
+
+                let fromDate = moment(currentStep.dateChanged);
+                let toDate = nextStep
+                    ? moment(nextStep.dateChanged)
+                    : moment();
+
+                let timeInStatus = moment.duration(toDate.diff(fromDate)).as('seconds');
+                existingStats.cardTime.push({cardId: card.id, timeInStatus, fromDate, toDate});
+            }
+        }
+
+        return stats;
+    }, baseStats);
+
+    return stats.map(statItem => {
+        if (!statItem.cardTime) {
+            statItem.cardTime = [];
+        }
+
+        statItem.totalTime = statItem.cardTime.reduce( (sum, cardStats) => sum + cardStats.timeInStatus, 0 );
+        statItem.totalCardsWithTime = statItem.cardTime.length;
+        statItem.avgTime = statItem.totalTime/statItem.totalCardsWithTime;
+        statItem.variance = statItem.cardTime.reduce( (sum, cardStats) => {
+            return sum + Math.pow(statItem.avgTime - cardStats.timeInStatus, 2)
+        }, 0 )/(statItem.cardTime.length - 1);
+        statItem.stdev = Math.sqrt(statItem.variance);
+
+        let overTime = statItem.avgTime + statItem.stdev;
+        let severeOverTime = statItem.avgTime + 2 * statItem.stdev;
+        statItem.overdue = statItem.cardTime.reduce( (count, cardStats) => {
+            if (statItem.stdev && cardStats.timeInStatus > overTime && cardStats.timeInStatus <= severeOverTime) {
+                count++;
+            }
+            return count;
+        }, 0);
+        statItem.severeOverdue = statItem.cardTime.reduce( (count, cardStats) => {
+            if (statItem.stdev && cardStats.timeInStatus > severeOverTime) {
+                count++;
+            }
+            return count;
+        }, 0);
+        statItem.overTime = overTime;
+        statItem.severeOverTime = severeOverTime;
+
+        return statItem;
+    });
+}
+async function getBoardStats(boardId, cards, statuses, cardsCollection, statusesCollection) {
+
+    if (!cards) {
+        cards = await cardsCollection.find({
+            boardId: boardId,
+            deleted: {$in: [null, false]},
+        }).toArray();
+    }
+
+    if (!statuses) {
+        statuses = await statusesCollection
+            .find({
+                boardId: boardId,
+                archive: {$in: [null, false]},
+                deleted: {$in: [null, false]},
+            })
+            .sort({sort: 1})
+            .toArray();
+    }
+
+    return {
+        count: getStatusStats(statuses, cards),
+        time: getStatusTime(statuses, cards),
+    }
 }
 
 module.exports = {
@@ -50,19 +152,12 @@ module.exports = {
             let statusesResult = await statuses.insertMany(templateStatuses);
             let insertedStatusRecords = statusesResult.ops;
 
-            let cards = db.collection('cards');
-            let statusIds = templateStatuses.map( (status) => status.id );
-            let templateCards = getCardTemplates(statusIds, newBoardId);
-            let cardsResult = await cards.insertMany(templateCards);
-            let insertedCardsRecords = cardsResult.ops;
-
             let boardWithStatuses = Object.assign({}, insertedBoardRecord);
             boardWithStatuses.statuses = insertedStatusRecords;
 
             response.send({
                 board: boardWithStatuses,
                 status: insertedStatusRecords,
-                card: insertedCardsRecords
             });
         }
     },
@@ -144,8 +239,11 @@ module.exports = {
         return async (request, response) => {
             let boardsCollection = db.collection('boards');
             let statusesCollection = db.collection('statuses');
+            let cardsCollection = db.collection('cards');
 
             let userId = request.query.userId || false;
+            let useStats = Boolean(request.query.stats) || false;
+
             let boards = [];
             if (userId) {
                 boards = await boardsCollection.find({
@@ -168,7 +266,17 @@ module.exports = {
                             .sort({sort: 1})
                             .toArray( (err, statuses) => {
                                 board.statuses = statuses;
-                                resolve(board);
+
+                                if (useStats) {
+                                    getBoardStats(board.id, null, statuses, cardsCollection)
+                                        .then(boardStats => {
+                                            board.stats = boardStats;
+                                            resolve(board);
+                                        })
+                                }
+                                else {
+                                    resolve(board);
+                                }
                             });
                     });
                 });
@@ -221,4 +329,26 @@ module.exports = {
             });
         }
     },
+
+    stats: (db) => {
+        return async (request, response) => {
+            let cardsCollection = db.collection('cards');
+            let statusesCollection = db.collection('statuses');
+
+            let boardId = request.query.boardId || false;
+
+            if (boardId) {
+                let stats = await getBoardStats(boardId, null, null, cardsCollection, statusesCollection);
+
+                response.send({
+                    stats: stats,
+                });
+            }
+            else {
+                response.send({
+                    stats: false,
+                });
+            }
+        }
+    }
 };

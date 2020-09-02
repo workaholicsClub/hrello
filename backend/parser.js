@@ -375,8 +375,19 @@ function extractSalary(text) {
         currency
     };
 }
+function extractSkills(text, skills) {
+    if (!skills) {
+        return false;
+    }
 
-function extractDataFromText(docText, fileName) {
+    let foundSkills = skills.filter( skill => {
+        return text.toLocaleLowerCase().indexOf( skill.toLocaleLowerCase() ) !== -1;
+    }, []);
+
+    return foundSkills;
+}
+
+function extractDataFromText(docText, fileName, board) {
     let {age, birthday} = extractAgeAndBirthday(docText);
     let name = extractName(docText, fileName);
 
@@ -389,7 +400,8 @@ function extractDataFromText(docText, fileName) {
         age,
         birthday,
         contacts: extractContacts(docText),
-        social: extractSocialNets(docText)
+        social: extractSocialNets(docText),
+        skills: extractSkills(docText, board.getSkills()),
     }
 
     return extractedData;
@@ -505,7 +517,7 @@ function getHTMLFromAny(filePath) {
     return getTextFromAny(filePath, false, 'html');
 }
 
-async function parseFile(path, supportedFormats, onCandidate, onError) {
+async function parseFile(path, board, supportedFormats, onCandidate, onError) {
     let fileName = path.replace(/^.*\//, '');
     let origFileName = fileName.replace(/^.{9}_*/, '');
     let fileExtension = fileName.replace(/^.*\./, '').toLocaleLowerCase();
@@ -526,7 +538,7 @@ async function parseFile(path, supportedFormats, onCandidate, onError) {
                 break;
         }
 
-        let candidate = extractDataFromText(docText, origFileName);
+        let candidate = extractDataFromText(docText, origFileName, board);
 
         if (typeof (onCandidate) === 'function') {
             onCandidate(candidate);
@@ -541,7 +553,7 @@ async function parseFile(path, supportedFormats, onCandidate, onError) {
         return false;
     }
 }
-async function parseDir(dirName, onResume, onError) {
+async function parseDir(dirName, board, onResume, onError) {
     let parsedData = [];
 
     let files = await glob.sync(dirName+'/*', {});
@@ -549,7 +561,7 @@ async function parseDir(dirName, onResume, onError) {
     for (const path of files) {
         let fileName = path.replace(/^.*\//, '');
         let fileExtension = fileName.replace(/^.*\./, '').toLocaleLowerCase();
-        let {candidate} = await parseFile(path, supportedFormats, null, onError);
+        let {candidate} = await parseFile(path, board, supportedFormats, null, onError);
 
         if (candidate) {
             let result = {

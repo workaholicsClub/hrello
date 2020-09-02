@@ -1,3 +1,4 @@
+const moment = require("moment");
 const shortid = require('shortid');
 const Board = require('../models/Board');
 const User = require('../models/User');
@@ -155,11 +156,17 @@ module.exports = class CandidateCard {
         let cardTemplate = {
             id: shortid.generate(),
             boardId: board.id,
-            statusId: startingStatus.id
+            statusId: startingStatus.id,
+            created: moment().toISOString(),
+            lastUpdated: moment().toISOString(),
+            statusHistory: [
+                { statusId: startingStatus.id, prevStatusId: false, dateChanged: moment().toISOString() },
+            ],
         }
 
         if (user) {
-            cardTemplate['user'] = user.asDTO();
+            cardTemplate['author'] = user.asDTO();
+            cardTemplate['lastUpdatedBy'] = user.asDTO();
         }
 
         return new CandidateCard(db, cardTemplate, board, user);

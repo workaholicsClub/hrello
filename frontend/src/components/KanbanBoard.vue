@@ -64,8 +64,7 @@
     import Status from "./Status.vue";
     import { dragscroll } from 'vue-dragscroll';
     import {clone, sortByIndex} from "../unsorted/Helpers";
-    import shortid from "shortid";
-    import axios from "axios";
+    import BoardsCommon from "@/mixins/BoardsCommon";
 
     export default {
         name: 'KanbanBoard',
@@ -75,6 +74,7 @@
         components: {
             Status
         },
+        mixins: [BoardsCommon],
         data() {
             return {
                 searchText: '',
@@ -85,59 +85,13 @@
             }
         },
         mounted() {
-            document.onkeydown = e => {
-                e = e || window.event;
-                if (
-                    e.keyCode === 191 && // Forward Slash '/'
-                    e.target !== this.$refs.searchField.$refs.input
-                ) {
-                    e.preventDefault();
-                    this.$refs.searchField.focus();
-                }
-            }
+            this.enableKeyFocus();
         },
         beforeDestroy () {
-            document.onkeydown = null;
+            this.disableKeyFocus();
         },
 
         methods: {
-            selectFile() {
-                this.$refs.fileInput.click();
-            },
-            async addNewResume() {
-                let file = this.$refs.fileInput.files[0];
-                let fileId = shortid.generate();
-                let userId = this.$store.getters.userId;
-
-                let requestData = new FormData();
-                requestData.append('file', file);
-                requestData.append('fileId', fileId);
-                requestData.append('boardId', this.boardId);
-                requestData.append('userId', userId);
-
-                try {
-                    this.isResumeUploading = true;
-                    let uploadResult = await axios.post('/api/file/addResume',
-                        requestData,
-                        {
-                            headers: {
-                                'Content-Type': 'multipart/form-data'
-                            }
-                        }
-                    );
-
-                    let newCard = uploadResult.data.card;
-                    newCard.name = newCard.name || '';
-
-                    this.$store.commit('updateFullBoard', uploadResult.data.board);
-                    this.$store.commit('addCards', newCard);
-                }
-                catch (e) {
-                    this.$root.$emit('error', 'Ошибка загрузки файла', e);
-                }
-
-                this.isResumeUploading = false;
-            },
             sendAddNewCardEvent() {
                 let newCardStatus = this.statuses[0];
                 this.$root.$emit('addCard', newCardStatus);
@@ -145,15 +99,12 @@
             updateDesktop() {
                 this.isDesktop = this.$isDesktop();
             },
-            cardToText(card) {
-                return JSON.stringify(card).toLocaleLowerCase();
-            },
             matchCardText(card) {
                 if (!this.searchText) {
                     return true;
                 }
 
-                return this.cardToText(card).indexOf( this.searchText.toLocaleLowerCase() ) !== -1;
+                return this.cardText(card).indexOf( this.searchText.toLocaleLowerCase() ) !== -1;
             },
             getStatusCards(searchedStatusId, cards) {
                 return cards
@@ -173,12 +124,6 @@
             sortedStatuses() {
                 return sortByIndex(this.statuses);
             },
-            boardId() {
-                return this.$route.params.boardId;
-            },
-            board() {
-                return this.$store.getters.boardById(this.boardId);
-            },
             statusesWithFilteredCards() {
                 let filteredCards = this.cards.filter(this.matchCardText);
                 let statusesWithCards = clone(this.statuses).map( status => {
@@ -188,13 +133,6 @@
 
                 return statusesWithCards;
             },
-            statuses() {
-                return this.board ? this.board.statuses : [];
-            },
-            cards() {
-                return this.$store.getters.cardsForBoardId(this.boardId);
-            },
-
         }
     }
 </script>
