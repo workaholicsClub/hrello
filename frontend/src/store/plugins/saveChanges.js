@@ -7,7 +7,12 @@ function saveBoard(boardId, state) {
 
 function saveCard(cardId, state) {
     let card = state.card.cards.find(card => card.id === cardId);
-    return axios.post('/api/card/update', card);
+    if (!card) {
+        let archive = state.card.archiveCards ? state.card.archiveCards.whitelist || [] : [];
+        card = archive.find(card => card.id === cardId);
+    }
+
+    return card ? axios.post('/api/card/update', card) : false;
 }
 
 function saveUser(state) {

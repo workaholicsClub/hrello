@@ -19,44 +19,125 @@
                 <v-row>
                     <v-col class="full-height d-flex flex-column pt-0">
                         <v-list>
-                            <v-list-item class="p-0" @click="toggleBoardList" :class="{'active': isActive('board', false)}" v-ripple="false">
+                            <v-list-item class="p-0">
                                 <v-list-item-action>
-                                    <v-btn icon :rounded="isActive('board', false)">
-                                        <v-icon>mdi-view-grid</v-icon>
-                                    </v-btn>
+                                    <v-img :src="logo"></v-img>
                                 </v-list-item-action>
                             </v-list-item>
-                            <v-list-item class="p-0" @click="toggleTimetable" :class="{'active': isActive('timetable')}" v-ripple="false">
-                                <v-list-item-action>
-                                    <v-badge :content="todayEvents" :value="todayEvents" color="error" overlap>
-                                        <v-btn icon :rounded="isActive('timetable')">
-                                            <v-icon>mdi-calendar-blank-outline</v-icon>
-                                        </v-btn>
-                                    </v-badge>
-                                </v-list-item-action>
-                            </v-list-item>
+                            <v-tooltip right>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-list-item class="p-0"
+                                            @click="toggleBoardList"
+                                            :class="{'active': isActive('board', false)}"
+                                            v-ripple="false"
+                                            v-on="on"
+                                            v-bind="attrs"
+                                    >
+                                        <v-list-item-action>
+                                            <v-btn icon :rounded="isActive('board', false)">
+                                                <v-icon>mdi-briefcase-account</v-icon>
+                                            </v-btn>
+                                        </v-list-item-action>
+                                    </v-list-item>
+                                </template>
+                                <span>Вакансии и кандидаты</span>
+                            </v-tooltip>
+                            <v-tooltip right>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-list-item class="p-0"
+                                            @click="toggleTimetable"
+                                            :class="{'active': isActive('timetable')}"
+                                            v-ripple="false"
+                                            v-on="on"
+                                            v-bind="attrs"
+                                    >
+                                        <v-list-item-action>
+                                            <v-badge :content="todayEvents" :value="todayEvents" color="error" overlap>
+                                                <v-btn icon :rounded="isActive('timetable')">
+                                                    <v-icon>mdi-calendar</v-icon>
+                                                </v-btn>
+                                            </v-badge>
+                                        </v-list-item-action>
+                                    </v-list-item>
+                                </template>
+                                <span>Список дел</span>
+                            </v-tooltip>
+
+                            <v-tooltip right>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-list-item class="p-0"
+                                            v-ripple="false"
+                                            v-on="on"
+                                            v-bind="attrs"
+                                    >
+                                        <v-list-item-action>
+                                            <v-btn icon disabled>
+                                                <v-icon>mdi-chart-areaspline</v-icon>
+                                            </v-btn>
+                                        </v-list-item-action>
+                                    </v-list-item>
+                                </template>
+                                <span>Скоро будет расширеная аналитика</span>
+                            </v-tooltip>
+
+                            <v-tooltip right>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-list-item class="p-0"
+                                            v-ripple="false"
+                                            v-on="on"
+                                            v-bind="attrs"
+                                    >
+                                        <v-list-item-action>
+                                            <v-btn icon disabled>
+                                                <v-icon>mdi-toy-brick-plus</v-icon>
+                                            </v-btn>
+                                        </v-list-item-action>
+                                    </v-list-item>
+                                </template>
+                                <span>Скоро будут приложения</span>
+                            </v-tooltip>
+
                         </v-list>
                         <v-spacer class="fill" />
                         <v-list>
-                            <v-list-item class="p-0" @click="toggleArchive" :class="{'active': isActive('archive')}">
-                                <v-list-item-action>
-                                    <v-btn icon :rounded="isActive('archive')">
-                                        <v-icon>mdi-archive-arrow-down-outline</v-icon>
-                                    </v-btn>
-                                </v-list-item-action>
-                                <v-list-item-title class="font-weight-light">
-                                    Показать резерв
-                                </v-list-item-title>
-                            </v-list-item>
+                            <v-tooltip right>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-list-item class="p-0"
+                                            @click="toggleArchive"
+                                            :class="{'active': isActive('archive')}"
+                                            v-on="on"
+                                            v-bind="attrs"
+                                    >
+                                        <v-list-item-action>
+                                            <v-btn icon :rounded="isActive('archive')">
+                                                <v-icon>mdi-archive-arrow-down-outline</v-icon>
+                                            </v-btn>
+                                        </v-list-item-action>
+                                        <v-list-item-title class="font-weight-light">
+                                            Показать резерв
+                                        </v-list-item-title>
+                                    </v-list-item>
+                                </template>
+                                <span>Показать резерв</span>
+                            </v-tooltip>
                             <v-divider/>
-                            <v-list-item class="p-0" @click="$emit('logout')">
-                                <v-list-item-action>
-                                    <v-btn icon><v-icon>mdi-logout</v-icon></v-btn>
-                                </v-list-item-action>
-                                <v-list-item-title class="font-weight-light">
-                                    Выход
-                                </v-list-item-title>
-                            </v-list-item>
+                            <v-tooltip right>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-list-item class="p-0"
+                                            @click="$emit('logout')"
+                                            v-on="on"
+                                            v-bind="attrs"
+                                    >
+                                        <v-list-item-action>
+                                            <v-btn icon><v-icon>mdi-logout</v-icon></v-btn>
+                                        </v-list-item-action>
+                                        <v-list-item-title class="font-weight-light">
+                                            Выход
+                                        </v-list-item-title>
+                                    </v-list-item>
+                                </template>
+                                <span>Выход</span>
+                            </v-tooltip>
                             <v-divider v-if="!isDesktop"/>
                             <v-list-item class="p-0" v-if="!isDesktop">
                                 <v-list-item-action>
@@ -70,7 +151,7 @@
                     </v-col>
                 </v-row>
             </v-navigation-drawer>
-            <v-list class="grow right-sidebar" dark dense>
+            <v-list class="grow right-sidebar" dark dense width="248px">
                 <v-list-item class="d-flex flex-column align-items-center no-bottom-padding">
                     <v-list-item-avatar
                             color="white"
@@ -107,9 +188,6 @@
                     <v-list-item-title class="font-weight-light">
                         Все вакансии
                     </v-list-item-title>
-                    <v-list-item-action>
-                        <v-btn x-small icon outlined @click.stop="gotoNewBoard"><v-icon small>mdi-plus</v-icon></v-btn>
-                    </v-list-item-action>
                 </v-list-item>
                 <v-list-item class="p-0" :class="{'active': isActive('candidates')}" @click="toggleCandidateList">
                     <v-list-item-action>
@@ -119,56 +197,105 @@
                         Все кандидаты
                     </v-list-item-title>
                 </v-list-item>
-                <v-list-item
-                        v-for="(board, index) in boards"
-                        :key="'board'+index"
-                        class="p-0"
-                        :class="{'active': isActive('board', board.id)}"
-                        @click="toggleBoard(board)"
-                >
-                    <v-list-item-action>
-                        <v-icon small>mdi-lock</v-icon>
-                    </v-list-item-action>
-                    <v-list-item-title class="font-weight-light">
-                        {{board.title}}
-                    </v-list-item-title>
-                </v-list-item>
-                <v-list-item
-                        v-for="(group, index) in groups"
-                        :key="'group'+index"
-                        class="p-0"
-                        :class="{'active': isActive('group', group.id)}"
-                        @click="toggleGroup(group)"
-                >
-                    <v-list-item-action>
-                        <v-icon small>mdi-pound</v-icon>
-                    </v-list-item-action>
-                    <v-list-item-title class="font-weight-light">
-                        {{group.name}}
-                    </v-list-item-title>
-                </v-list-item>
 
-                <v-list-item class="p-0 muted" @click="gotoNewBoard">
-                    <v-list-item-action>
-                        <v-icon>mdi-plus</v-icon>
-                    </v-list-item-action>
-                    <v-list-item-title class="font-weight-light">
-                        Добавить вакансию
-                    </v-list-item-title>
-                </v-list-item>
+                <v-list-group
+                        class="sidebar-subgroup"
+                        no-action
+                        sub-group
+                        color="white"
+                        value="true"
+                >
+                    <template v-slot:activator>
+                        <v-list-item-content>
+                            <v-list-item-title>Вакансии</v-list-item-title>
+                        </v-list-item-content>
+                        <v-list-item-action>
+                            <v-btn x-small icon outlined @click.stop="gotoNewBoard" class="add-button"><v-icon small>mdi-plus</v-icon></v-btn>
+                        </v-list-item-action>
+                    </template>
+
+                    <v-list-item
+                            v-for="(board, index) in boards"
+                            :key="'board'+index"
+                            class="p-0 pl-6"
+                            :class="{'active': isActive('board', board.id)}"
+                            @click="toggleBoard(board)"
+                    >
+                        <v-list-item-action>
+                            <v-icon small>mdi-lock</v-icon>
+                        </v-list-item-action>
+                        <v-list-item-title class="font-weight-light">
+                            {{board.title}}
+                        </v-list-item-title>
+                    </v-list-item>
+
+                    <v-list-item class="p-0 muted" @click="gotoNewBoard">
+                        <v-list-item-action>
+                            <v-icon>mdi-plus</v-icon>
+                        </v-list-item-action>
+                        <v-list-item-title class="font-weight-light">
+                            Добавить вакансию
+                        </v-list-item-title>
+                    </v-list-item>
+
+                </v-list-group>
+
+                <v-list-group
+                        class="sidebar-subgroup"
+                        color="white"
+                        no-action
+                        sub-group
+                        value="true"
+                >
+                    <template v-slot:activator>
+                        <v-list-item-content>
+                            <v-list-item-title>Группы</v-list-item-title>
+                        </v-list-item-content>
+                        <v-list-item-action>
+                            <v-btn x-small icon outlined @click.stop="gotoNewGroup" class="add-button"><v-icon small>mdi-plus</v-icon></v-btn>
+                        </v-list-item-action>
+                    </template>
+
+                    <v-list-item
+                            v-for="(group, index) in groups"
+                            :key="'group'+index"
+                            class="p-0 pl-6"
+                            :class="{'active': isActive('group', group.id)}"
+                            @click="toggleGroup(group)"
+                    >
+                        <v-list-item-action>
+                            <v-icon small>mdi-pound</v-icon>
+                        </v-list-item-action>
+                        <v-list-item-title class="font-weight-light">
+                            {{group.name}}
+                        </v-list-item-title>
+                    </v-list-item>
+
+                    <v-list-item class="p-0 muted" @click="gotoNewGroup">
+                        <v-list-item-action>
+                            <v-icon>mdi-plus</v-icon>
+                        </v-list-item-action>
+                        <v-list-item-title class="font-weight-light">
+                            Добавить группу
+                        </v-list-item-title>
+                    </v-list-item>
+                </v-list-group>
 
             </v-list>
         </v-row>
     </v-navigation-drawer>
 </template>
 <script>
+    import logo from "../assets/logo/logotype.png";
+
     export default {
         name: 'Sidebar',
         props: ['drawer', 'isDesktop', 'boards', 'user', 'activeItem'],
         data() {
             return {
                 isDrawerVisible: false,
-                localActiveItem: this.activeItem
+                localActiveItem: this.activeItem,
+                logo,
             }
         },
         methods: {
@@ -208,11 +335,14 @@
             },
             toggleArchive() {
                 this.localActiveItem = 'archive';
-                this.$emit('archive', 'whitelist');
+                this.$router.push({name: 'archive', params: {type: 'whitelist'}});
             },
             gotoNewBoard() {
                 this.$router.push({name: 'newBoard'});
             },
+            gotoNewGroup() {
+                this.toggleCandidateList();
+            }
         },
         watch: {
             activeItem() {
@@ -251,7 +381,20 @@
         }
     }
 </script>
+<style>
+    .v-list-group--sub-group.sidebar-subgroup .v-list-group__header {
+        padding-left: 12px!important;
+    }
+    .v-list-group--sub-group.sidebar-subgroup .v-list-item__icon:first-child {
+        margin-right: 6px!important;
+        margin-left: -6px;
+    }
+</style>
 <style scoped>
+    .add-button,
+    .add-button .v-icon {
+        color: white!important;
+    }
     .theme--dark.v-navigation-drawer {
         background-color: #261440;
     }
@@ -307,16 +450,13 @@
     }
 
     .right-sidebar .v-list-item__action:first-child {
-        margin-right: 0!important;
-        margin-left: 16px!important;
+        margin-right: 4px!important;
+        margin-left: 12px!important;
     }
     .right-sidebar .v-list-item__action {
         min-width: 20px!important;
         font-size: 14px!important;
         margin: 0!important;
-    }
-    .right-sidebar .v-list-item__action:last-of-type:not(:only-child) {
-        margin-right: 16px!important;
     }
     .right-sidebar .v-list-item__action .v-icon {
         font-size: 14px!important;
@@ -349,8 +489,5 @@
     }
     .right-sidebar .stats small {
         color: #aaa !important;
-    }
-    .right-sidebar .v-list-item.no-bottom-padding::after {
-
     }
 </style>

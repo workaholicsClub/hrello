@@ -252,6 +252,7 @@ export default {
             card.statusId = firstStatus.id;
 
             await this.saveCard(card);
+            await this.loadCards();
             await this.loadArchiveCards(this.archiveType);
 
             this.archiveLoading = false;

@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="card-details-menu">
         <div v-if="activeRecord">
             <v-subheader>{{activeRecord.name || (activeRecord.type === 'comment' ? 'Комментарий' : 'Поле')}}</v-subheader>
             <v-list-item @click="messageEditComponentToSaveRecord(activeRecord)" v-if="activeRecord.isEditing">
@@ -139,6 +139,8 @@
     }
 </script>
 
-<style scoped>
-
+<style>
+    .card-details-menu .v-icon {
+        color: #261440!important;
+    }
 </style>

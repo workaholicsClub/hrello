@@ -321,6 +321,82 @@ export default new Vuex.Store({
 
             updatedBoard.pinnedFields.push(field);
             commit('updateFullBoard', updatedBoard);
+        },
+        addBoardStatus({commit}, {board, newStatus}) {
+            let updatedBoard = clone(board);
+
+            if (!newStatus) {
+                newStatus = {
+                    id: shortid.generate(),
+                    boardId: board.id,
+                    title: 'Новый этап',
+                }
+            }
+
+            if (!updatedBoard.statuses) {
+                updatedBoard.statuses = [];
+            }
+
+            updatedBoard.statuses.push(newStatus);
+            return commit('updateFullBoard', updatedBoard);
+        },
+        addBoardStatusToIndex({commit, state}, {board, newStatus, targetIndex}) {
+            let currentBoard = state.boards.find(stateBoard => stateBoard.id === board.id);
+            if (!currentBoard) {
+                return;
+            }
+
+            let updatedBoard = clone(currentBoard);
+            if (!updatedBoard.statuses) {
+                return;
+            }
+
+            updatedBoard.statuses.splice(targetIndex, 0, newStatus);
+            return commit('updateFullBoard', updatedBoard);
+        },
+        moveBoardStatusToIndex({commit, state}, {movedStatus, indexDelta}) {
+            let currentBoard = state.boards.find(stateBoard => stateBoard.id === movedStatus.boardId);
+            if (!currentBoard) {
+                return;
+            }
+
+            let updatedBoard = clone(currentBoard);
+            if (!updatedBoard.statuses) {
+                return;
+            }
+
+            let currentIndex = updatedBoard.statuses.findIndex(status => status.id === movedStatus.id);
+            if (currentIndex === -1) {
+                return;
+            }
+
+            let newIndex = currentIndex + indexDelta;
+            updatedBoard.statuses.splice(currentIndex, 1);
+            updatedBoard.statuses.splice(newIndex, 0, movedStatus);
+
+            return commit('updateFullBoard', updatedBoard);
+        },
+        deleteBoardStatus({commit, state}, {status}) {
+            let board = state.boards.find( board => board.id === status.boardId );
+            let updatedBoard = clone(board);
+            let deleteIndex = updatedBoard.statuses.findIndex( boardStatus => boardStatus.id === status.id );
+            if (deleteIndex !== -1) {
+                updatedBoard.statuses.splice(deleteIndex, 1);
+            }
+            return commit('updateFullBoard', updatedBoard);
+        },
+        updateBoardStatus({state, commit}, status) {
+            let board = state.boards.find( board => board.id === status.boardId );
+            if (board) {
+                let updatedBoard = clone(board);
+                let statusIndex = updatedBoard.statuses.findIndex(boardStatus => boardStatus.id === status.id);
+                if (statusIndex !== -1) {
+                    updatedBoard.statuses[statusIndex] = status;
+                    return commit('updateFullBoard', updatedBoard);
+                }
+            }
+
+            return;
         }
     },
     mutations: {
@@ -336,23 +412,6 @@ export default new Vuex.Store({
         addBoard(state, newBoard) {
             state.boards.push(newBoard);
         },
-        addBoardStatus(state, {searchBoard, newStatus}) {
-            let targetBoard = state.boards.find( board => board.id === searchBoard.id );
-            if (!targetBoard.statuses) {
-                targetBoard.statuses = [];
-            }
-
-            targetBoard.statuses.push(newStatus);
-        },
-        deleteBoardStatus(state, {searchBoard, statusToDelete}) {
-            let targetBoard = state.boards.find( board => board.id === searchBoard.id );
-            if (targetBoard) {
-                let statusIndex = targetBoard.statuses.findIndex(status => status.id === statusToDelete.id);
-                if (statusIndex !== -1) {
-                    targetBoard.statuses.splice(statusIndex, 1)[0];
-                }
-            }
-        },
         toggleFilterDrawer(state) {
             state.showFilterDrawer = !state.showFilterDrawer;
         },
@@ -363,8 +422,9 @@ export default new Vuex.Store({
         updateFullBoard(state, newBoard) {
             let boardIndex = state.boards.findIndex( board => board.id === newBoard.id );
             if (boardIndex !== -1) {
-                state.boards[boardIndex] = newBoard;
+                return this._vm.$set(state.boards, boardIndex, newBoard);
             }
+            return false;
         },
         setAppError(state, error) {
             state.appError = error;

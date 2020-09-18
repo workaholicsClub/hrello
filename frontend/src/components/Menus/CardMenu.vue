@@ -1,5 +1,5 @@
 <template>
-    <v-list>
+    <v-list class="card-menu">
         <v-list-item @click="sendShareEvent">
             <v-list-item-icon>
                 <v-icon>mdi-share-variant</v-icon>
@@ -75,6 +75,8 @@
     }
 </script>
 
-<style scoped>
-
+<style>
+    .card-menu .v-icon {
+        color: #261440!important;
+    }
 </style>

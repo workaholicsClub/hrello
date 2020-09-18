@@ -255,9 +255,21 @@ export default {
         },
         updateCard(state, {cardId, fields}) {
             let cardIndex = state.cards.findIndex( cards => cards.id === cardId );
+
             if (cardIndex !== -1) {
                 this._vm.$set(state.cards, cardIndex, fields);
             }
+            else {
+                let archive = state.archiveCards
+                    ? state.archiveCards.whitelist || []
+                    : [];
+
+                let archiveIndex = archive.findIndex( cards => cards.id === cardId );
+                if (archiveIndex !== -1) {
+                    this._vm.$set(state.archiveCards.whitelist, archiveIndex, fields);
+                }
+            }
+
 
             if (state.currentCard.id === cardId) {
                 state.currentCard = fields;

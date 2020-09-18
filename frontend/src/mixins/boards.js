@@ -4,7 +4,6 @@ import {clone} from "../unsorted/Helpers";
 export default {
     data() {
         return {
-            currentBoard: false,
             shareBoard: false
         }
     },
@@ -21,7 +20,6 @@ export default {
             return foundBoard || false;
         },
         changeBoard(newBoardId, skipUrlUpdate) {
-            this.currentBoard = this.findBoard(newBoardId);
             this.showTimetable = false;
             this.showArchive = false;
             this.drawer = false;
@@ -81,8 +79,7 @@ export default {
             newBoard.userId = this.user.id;
             let boardResponse = await axios.post('/api/board/copy', newBoard);
             this.$store.commit('addBoard', boardResponse.data.board);
-            this.$store.commit('addCards', boardResponse.data.card);
-            this.changeBoard(boardResponse.data.board.id);
+            this.$router.push({name: 'vacancy', params: {boardId: boardResponse.data.board.id}});
         },
         setBoardTitle(newTitle) {
             this.$store.commit('updateBoard', { boardId: this.currentBoard.id, field: 'title', value: newTitle });
@@ -127,19 +124,17 @@ export default {
             return this.$store.state.boards;
         },
         currentBoardId() {
-            return this.currentBoard
-                ? this.currentBoard.id || false
-                : false;
+            return this.$route.params.boardId;
         },
         boardIds() {
             return this.boards.map(board => board.id);
         },
-        isBoardShown() {
-            return this.currentBoard && !this.showTimetable && !this.currentCard && !this.showArchive && !this.showVacancyEditor;
-        },
         hasNoBoards() {
             return this.boards.length === 0;
-        }
+        },
+        currentBoard() {
+            return this.$store.getters.boardById(this.currentBoardId);
+        },
     },
     mounted() {
         this.$root.$on('newBoard', this.addNewBoard);

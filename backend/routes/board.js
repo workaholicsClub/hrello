@@ -110,7 +110,7 @@ function getStatusTime(statuses, cards) {
         return statItem;
     });
 }
-async function getBoardStats(boardId, cards, statuses, cardsCollection, statusesCollection) {
+async function getBoardStats(boardId, cards, statuses, cardsCollection, statusesCollection, boardsCollection) {
 
     if (!cards) {
         cards = await cardsCollection.find({
@@ -120,14 +120,20 @@ async function getBoardStats(boardId, cards, statuses, cardsCollection, statuses
     }
 
     if (!statuses) {
-        statuses = await statusesCollection
-            .find({
-                boardId: boardId,
-                archive: {$in: [null, false]},
-                deleted: {$in: [null, false]},
-            })
-            .sort({sort: 1})
-            .toArray();
+        let board = await boardsCollection.findOne({id: boardId});
+        if (board.statuses) {
+            statuses = board.statuses;
+        }
+        else {
+            statuses = await statusesCollection
+                .find({
+                    boardId: boardId,
+                    archive: {$in: [null, false]},
+                    deleted: {$in: [null, false]},
+                })
+                .sort({sort: 1})
+                .toArray();
+        }
     }
 
     return {
@@ -143,21 +149,14 @@ module.exports = {
             let boardData = request.body;
             let newBoardId = shortid.generate();
             boardData.id = newBoardId;
+            boardData.statuses = getBoardTemplateStatusesAndFields(newBoardId);
 
             let result = await boardsCollection.insertOne(boardData);
             let insertedBoardRecord = result.ops[0];
 
-            let statuses = db.collection('statuses');
-            let templateStatuses = getBoardTemplateStatusesAndFields(newBoardId);
-            let statusesResult = await statuses.insertMany(templateStatuses);
-            let insertedStatusRecords = statusesResult.ops;
-
-            let boardWithStatuses = Object.assign({}, insertedBoardRecord);
-            boardWithStatuses.statuses = insertedStatusRecords;
-
             response.send({
-                board: boardWithStatuses,
-                status: insertedStatusRecords,
+                board: insertedBoardRecord,
+                status: insertedBoardRecord.statuses,
             });
         }
     },
@@ -177,35 +176,37 @@ module.exports = {
             delete newBoardData.guestIds;
             delete newBoardData.vacancyText;
 
+            let statuses = newBoardData.statuses || false;
+
+            if (!statuses) {
+                let statusesCollection = db.collection('statuses');
+                let statuses = await statusesCollection
+                    .find({
+                        boardId: srcBoardId,
+                        archive: {$in: [null, false]},
+                        deleted: {$in: [null, false]},
+                    })
+                    .sort({sort: 1})
+                    .toArray();
+
+                let newStatuses = statuses.map((status) => {
+                    let newStatus = status;
+                    newStatus.boardId = newBoardId;
+                    delete newStatus._id;
+                    return newStatus;
+                });
+
+                let statusesResult = await statusesCollection.insertMany(newStatuses);
+                statuses = statusesResult.ops;
+                newBoardData.statuses = statuses;
+            }
+
             let result = await boardsCollection.insertOne(newBoardData);
             let insertedBoardRecord = result.ops[0];
 
-            let statusesCollection = db.collection('statuses');
-            let statuses = await statusesCollection
-                .find({
-                    boardId: srcBoardId,
-                    archive: {$in: [null, false]},
-                    deleted: {$in: [null, false]},
-                })
-                .sort({sort: 1})
-                .toArray();
-
-            let newStatuses = statuses.map((status) => {
-                let newStatus = status;
-                newStatus.boardId = newBoardId;
-                delete newStatus._id;
-                return newStatus;
-            });
-
-            let statusesResult = await statusesCollection.insertMany(newStatuses);
-            let insertedStatusRecords = statusesResult.ops;
-
-            let boardWithStatuses = Object.assign({}, insertedBoardRecord);
-            boardWithStatuses.statuses = insertedStatusRecords;
-
             response.send({
-                board: boardWithStatuses,
-                status: insertedStatusRecords
+                board: insertedBoardRecord,
+                status: statuses
             });
         }
     },
@@ -224,6 +225,10 @@ module.exports = {
 
             if (newBoardData._id) {
                 delete newBoardData._id;
+            }
+
+            if (newBoardData.stats) {
+                delete newBoardData.stats;
             }
 
             let query =  {id: boardId};
@@ -256,29 +261,41 @@ module.exports = {
                 }).toArray();
 
                 let statusPromises = boards.map(board => {
-                    return new Promise(resolve => {
-                        statusesCollection
-                            .find({
-                                boardId: board.id,
-                                archive: {$in: [null, false]},
-                                deleted: {$in: [null, false]},
-                            })
-                            .sort({sort: 1})
-                            .toArray( (err, statuses) => {
-                                board.statuses = statuses;
+                    if (!board.statuses) {
+                        return new Promise(resolve => {
+                            statusesCollection
+                                .find({
+                                    boardId: board.id,
+                                    archive: {$in: [null, false]},
+                                    deleted: {$in: [null, false]},
+                                })
+                                .sort({sort: 1})
+                                .toArray((err, statuses) => {
+                                    board.statuses = statuses;
 
-                                if (useStats) {
-                                    getBoardStats(board.id, null, statuses, cardsCollection)
-                                        .then(boardStats => {
-                                            board.stats = boardStats;
-                                            resolve(board);
-                                        })
-                                }
-                                else {
-                                    resolve(board);
-                                }
-                            });
-                    });
+                                    if (useStats) {
+                                        getBoardStats(board.id, null, statuses, cardsCollection)
+                                            .then(boardStats => {
+                                                board.stats = boardStats;
+                                                resolve(board);
+                                            })
+                                    } else {
+                                        resolve(board);
+                                    }
+                                });
+                        });
+                    }
+                    else {
+                        if (useStats) {
+                            return getBoardStats(board.id, null, board.statuses, cardsCollection)
+                                .then(boardStats => {
+                                    board.stats = boardStats;
+                                    return board;
+                                });
+                        } else {
+                            return board;
+                        }
+                    }
                 });
 
                 boards = await Promise.all(statusPromises);
@@ -334,11 +351,12 @@ module.exports = {
         return async (request, response) => {
             let cardsCollection = db.collection('cards');
             let statusesCollection = db.collection('statuses');
+            let boardsCollection = db.collection('boards');
 
             let boardId = request.query.boardId || false;
 
             if (boardId) {
-                let stats = await getBoardStats(boardId, null, null, cardsCollection, statusesCollection);
+                let stats = await getBoardStats(boardId, null, null, cardsCollection, statusesCollection, boardsCollection);
 
                 response.send({
                     stats: stats,

@@ -4,6 +4,7 @@
             min-width="300"
             @click="sendSelectCardEvent"
             :ripple="false"
+            class="candidate-card"
             :class="{'overtime': this.isOvertime, 'severe-overtime': this.isSevereOvertime}"
     >
         <v-system-bar v-for="(color, index) in cardColor" :color="color" height="4" :key="index"></v-system-bar>
@@ -69,7 +70,7 @@
 
                     <div class="card-icons mt-4 d-block flex-wrap" :class="{'d-md-flex': !small, 'single-menu': !showButtons}">
                         <div v-if="showButtons">
-                            <v-btn outlined rounded color="success" @click.stop="showAddComment = true" class="mr-4">Оставить комментарий</v-btn>
+                            <v-btn outlined rounded color="success" @click.stop="showAddComment = true" class="mr-4">Комментировать</v-btn>
 
                             <v-btn v-if="(almostFinished || !nextStatusTitle) && isActiveCard" text color="success" @click.stop="sendFinishedListEvent" class="pl-0">
                                 <v-icon>mdi-check-bold</v-icon> В архив
@@ -175,8 +176,8 @@
                 this.$root.$emit('moveCardToFinishedList', this.card);
             },
             sendMoveToBoardEvent(board) {
-                this.showMenu = false;
-                this.showSubmenu = false;
+                this.showActiveMenu = false;
+                this.showArchiveMenu = false;
                 this.$root.$emit('moveCardToBoard', this.card, board);
             },
             saveComment(commentData) {
@@ -445,6 +446,13 @@
 </style>
 
 <style>
+    .candidate-card .v-icon {
+        color: #261440!important;
+    }
+
+    .success--text .v-icon {
+        color: inherit!important;
+    }
 
     .card-icon .v-btn {
         text-transform: none;

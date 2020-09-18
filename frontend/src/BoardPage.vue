@@ -307,11 +307,42 @@
 
     :root {
         --success: #16d1a5!important;
+        --v-success-base: #16d1a5!important;
     }
 
     .global-error {
         position: absolute;
         z-index: 1000;
         width: 100%;
+    }
+
+    .theme--light.v-list-item--active::before {
+        color: var(--v-success-base)!important;
+        opacity: 0.3;
+    }
+
+    .v-list .v-list-item--active .v-icon {
+        color: var(--v-success-base);
+    }
+
+    .theme--light.v-list-item:not(.v-list-item--active):not(.v-list-item--disabled) {
+        color: #261440!important;
+    }
+
+    .theme--light.v-subheader {
+        color: #261440!important;
+        font-weight: bold;
+    }
+
+    .v-btn {
+        text-transform: none!important;
+    }
+
+    .theme--light.v-btn {
+        color: #261440;
+    }
+
+    .theme--light.v-btn.success {
+        color: #fff;
     }
 </style>

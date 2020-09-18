@@ -1,4 +1,4 @@
-import axios from "axios";
+import shortid from "shortid";
 
 export default {
     data() {
@@ -8,23 +8,18 @@ export default {
     },
     methods: {
         async updateStatus(changedStatus) {
-            return await axios.post('/api/status/update', changedStatus);
+            return this.$store.dispatch('updateBoardStatus', changedStatus);
         },
-        async addStatus(sortIndex) {
-            if (typeof(sortIndex) !== 'number') {
-                sortIndex = 100;
-            }
-
-            let newStatusTemplate = {
+        statusTemplate() {
+            return {
+                id: shortid.generate(),
                 boardId: this.currentBoard.id,
-                sort: sortIndex,
-                title: 'Новый статус',
+                title: 'Новый этап',
                 fields: [],
             };
-            let response = await axios.post('/api/status/add', newStatusTemplate);
-            let newStatus = response.data.status;
-
-            return await this.$store.commit('addBoardStatus', {searchBoard: this.currentBoard, newStatus});
+        },
+        async addStatus() {
+            return this.$store.dispatch('addBoardStatus', {board: this.currentBoard, newStatus: this.statusTemplate()})
         },
         getStatusIndex(targetStatus) {
             return this.statuses.indexOf(targetStatus);
@@ -50,32 +45,31 @@ export default {
             return this.statuses[targetIndex-1];
         },
         async addStatusLeft(targetStatus) {
-            let newSortIndex = targetStatus.sort - 100;
-            let previousStatus = this.getPreviousStatusForStatus(targetStatus);
-
-            if (previousStatus) {
-                newSortIndex = Math.round( (previousStatus.sort + targetStatus.sort)/2 );
+            let targetIndex = this.currentBoard.statuses.findIndex(boardStatus => boardStatus.id === targetStatus.id);
+            if (targetIndex === -1) {
+                targetIndex = this.currentBoard.statuses.length;
             }
 
-            return await this.addStatus(newSortIndex);
+            return this.$store.dispatch('addBoardStatusToIndex', {
+                board: this.currentBoard,
+                newStatus: this.statusTemplate(),
+                targetIndex,
+            });
         },
         async addStatusRight(targetStatus) {
-            let newSortIndex = targetStatus.sort + 100;
-            let nextStatus = this.getNextStatusForStatus(targetStatus);
-
-            if (nextStatus) {
-                newSortIndex = Math.round( (nextStatus.sort + targetStatus.sort)/2 );
+            let targetIndex = this.currentBoard.statuses.findIndex(boardStatus => boardStatus.id === targetStatus.id);
+            if (targetIndex === -1) {
+                targetIndex = this.currentBoard.statuses.length-1;
             }
 
-            return await this.addStatus(newSortIndex);
-        },
-        async deleteStatus(targetStatus) {
-            this.$store.commit('deleteBoardStatus', {searchBoard: this.currentBoard, statusToDelete: targetStatus});
-            return await axios.get('/api/status/delete', {
-                params: {
-                    statusId: targetStatus.id
-                }
+            return this.$store.dispatch('addBoardStatusToIndex', {
+                board: this.currentBoard,
+                newStatus: this.statusTemplate(),
+                targetIndex: targetIndex+1,
             });
+        },
+        async deleteStatus(status) {
+            return this.$store.dispatch('deleteBoardStatus', {status});
         },
     },
     mounted() {

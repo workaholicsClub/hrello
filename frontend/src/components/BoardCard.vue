@@ -10,7 +10,7 @@
                 <span class="dates mb-2" v-if="openedTime">{{ openedTime }} назад</span>
             </v-row>
             <v-row>
-                <v-col class="vacancy-data p-0">
+                <v-col cols="4" class="vacancy-data p-0">
                     <v-list-item>
                         <v-list-item-content>
                             <div v-if="board.city">
@@ -20,15 +20,21 @@
                         </v-list-item-content>
                     </v-list-item>
                 </v-col>
-                <v-col class="d-flex p-0">
-                    <v-list-item class="info-chip">
-                        <h6>{{countTotalCards()}}</h6>
-                        <small>кандидатов</small>
-                    </v-list-item>
-                    <v-list-item class="info-chip" v-for="status in board.statuses" :key="status.id">
-                        <h6>{{countCards(status)}}</h6>
-                        <small>{{status.title.toLocaleLowerCase()}}</small>
-                    </v-list-item>
+                <v-col cols="8" class="p-0">
+                    <v-row no-gutters>
+                        <v-col class="mb-2" cols="3">
+                            <v-list-item class="info-chip">
+                                <h6>{{countTotalCards()}}</h6>
+                                <small>кандидатов</small>
+                            </v-list-item>
+                        </v-col>
+                        <v-col class="mb-2" cols="3"  v-for="status in board.statuses" :key="status.id">
+                            <v-list-item class="info-chip">
+                                <h6>{{countCards(status)}}</h6>
+                                <small>{{status.title.toLocaleLowerCase()}}</small>
+                            </v-list-item>
+                        </v-col>
+                    </v-row>
                 </v-col>
             </v-row>
         </v-card-text>
@@ -108,6 +114,8 @@
         border-radius: 4px;
         margin-right: 8px;
         padding: 8px;
+        word-break: break-word;
+        height: 100%;
     }
 
     .v-card .dates {

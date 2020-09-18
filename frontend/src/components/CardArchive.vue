@@ -15,7 +15,9 @@
                 <v-col><v-text-field outlined label="Поиск" append-icon="mdi-magnify" v-model="query" hide-details></v-text-field></v-col>
             </v-row>
             <v-row align="start" justify="start" class="fill-height">
-                <v-col v-for="card in filteredCards" :key="card.id" cols="12" md="4"><card :card="card" :boards="boards"></card></v-col>
+                <v-col v-for="card in filteredCards" :key="card.id" cols="12" md="4">
+                    <card :card="card" :boards="boards"></card>
+                </v-col>
             </v-row>
         </v-container>
     </v-main>

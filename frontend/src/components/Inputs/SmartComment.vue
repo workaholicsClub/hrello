@@ -116,7 +116,8 @@
                             class="send-button"
                             @click="commitChanges"
                             @shortkey="commitChangesIfFocused"
-                    ><span>Отправить</span><small>(Ctrl+Enter)</small></v-btn>
+                    >Отправить</v-btn>
+                    <v-chip label color="white" text-color="success" :ripple="false">CTRL+Enter</v-chip>
                 </div>
             </div>
 
@@ -1101,5 +1102,9 @@
 
     .send-button .v-btn__content {
         flex-direction: column !important;
+    }
+
+    .comment-container .v-icon {
+        color: #261440!important;
     }
 </style>

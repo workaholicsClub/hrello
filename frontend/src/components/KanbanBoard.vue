@@ -53,7 +53,7 @@
                         @input="updateStatusTitle"
                 ></status>
                 <v-col class="new-status" cols="4">
-                    <v-btn text ><v-icon>mdi-plus</v-icon> Добавить статус</v-btn>
+                    <v-btn text @click="addNewStatus"><v-icon>mdi-plus</v-icon> Добавить этап</v-btn>
                 </v-col>
             </div>
         </div>
@@ -92,6 +92,9 @@
         },
 
         methods: {
+            addNewStatus() {
+                this.$store.dispatch('addBoardStatus', {board: this.board, newStatus: false})
+            },
             sendAddNewCardEvent() {
                 let newCardStatus = this.statuses[0];
                 this.$root.$emit('addCard', newCardStatus);
@@ -172,7 +175,7 @@
     }
 
     .new-status .v-btn {
-        color: #b5d2db;
+        /*color: #b5d2db;*/
         padding: 0 6px;
         font-size: 12px;
         height: 24px;

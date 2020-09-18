@@ -105,6 +105,10 @@
                                 @input="updateStatusTitle"
                         ></status>
                     </div>
+                    <div class="new-status">
+                        <v-btn text @click="addNewStatus"><v-icon>mdi-plus</v-icon> Добавить этап</v-btn>
+                    </div>
+
                 </div>
                 <div v-else>
                     <card v-for="card in filteredCards" :key="card.id"
@@ -184,6 +188,9 @@
             },
         },
         methods: {
+            addNewStatus() {
+                this.$store.dispatch('addBoardStatus', {board: this.board, newStatus: false})
+            },
             reloadFilter() {
                 if (this.group && this.user) {
                     let {filterValues, searchText} = this.getInitialFilter();

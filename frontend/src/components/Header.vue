@@ -1,29 +1,28 @@
 <template>
-    <v-app-bar app fixed flat>
+    <v-app-bar app fixed flat class="top-header">
         <v-app-bar-nav-icon v-if="!isDesktop && !showBack" @click.stop="$emit('drawer')" />
         <v-btn icon v-if="showBack" @click.stop="$emit('back')"><v-icon>mdi-chevron-left</v-icon></v-btn>
-        <v-toolbar-title :class="{'d-flex': isTitleEditing}">
+        <v-toolbar-title class="pl-3" :class="{'d-flex': isTitleEditing}">
             {{ currentTitle || 'Без названия' }}
             <small v-if="$route.name === 'card'" class="text--disabled text-caption d-block">Сохранено {{savedTime}} назад</small>
         </v-toolbar-title>
         <v-spacer/>
 
-        <v-btn v-if="$route.name === 'board'" icon @click="gotoBoardEdit"><v-icon>mdi-pencil</v-icon></v-btn>
-        <v-btn v-if="$route.name === 'board' || $route.name === 'stats'" icon text @click="sendShareBoardEvent"><v-icon>mdi-share-variant</v-icon></v-btn>
+        <board-toolbar v-if="$route.name === 'board'" :board="currentBoard"></board-toolbar>
         <v-btn v-if="$route.name === 'card'" icon text @click="sendShareCardEvent"><v-icon>mdi-share-variant</v-icon></v-btn>
-        <v-btn v-if="$route.name === 'board'" icon text @click="gotoBoardAnalytics"><v-icon>mdi-chart-areaspline</v-icon></v-btn>
+        <v-btn v-if="$route.name === 'stats'" icon text @click="sendShareBoardEvent"><v-icon>mdi-share-variant</v-icon></v-btn>
         <v-btn v-if="$route.name === 'stats'" icon text @click="gotoBoard"><v-icon>mdi-view-grid</v-icon></v-btn>
         <slot name="menu">
             <v-menu bottom left offset-x @click.native.stop.prevent v-if="$route.name === 'card'" class="menu-top">
                 <template v-slot:activator="{ on }">
-                    <v-btn icon text v-on="on" @click.stop><v-icon>mdi-dots-vertical</v-icon></v-btn>
+                    <v-btn icon text v-on="on" @click.stop><v-icon>mdi-dots-horizontal</v-icon></v-btn>
                 </template>
                 <card-menu :card="currentCard"></card-menu>
             </v-menu>
             <div v-else-if="$route.name === 'board' || $route.name === 'stats'">
                 <v-menu bottom left offset-x @click.native.stop.prevent class="menu-top">
                     <template v-slot:activator="{ on }">
-                        <v-btn icon text v-on="on" @click.stop><v-icon>mdi-dots-vertical</v-icon></v-btn>
+                        <v-btn icon text v-on="on" @click.stop><v-icon>mdi-dots-horizontal</v-icon></v-btn>
                     </template>
                     <board-menu
                             :board="currentBoard"
@@ -38,12 +37,14 @@
 <script>
     import CardMenu from "./Menus/CardMenu";
     import BoardMenu from "./Menus/BoardMenu";
+    import BoardToolbar from "@/components/Menus/BoardToolbar";
     import moment from "moment";
 
     export default {
         name: 'Header',
         props: ['isDesktop'],
         components: {
+            BoardToolbar,
             CardMenu,
             BoardMenu,
         },
@@ -59,9 +60,6 @@
             }
         },
         methods: {
-            gotoBoardEdit() {
-                this.$router.push({name: 'vacancy', params: {boardId: this.currentBoard.id}});
-            },
             gotoBoardAnalytics() {
                 this.$router.push({name: 'stats', params: {boardId: this.currentBoard.id}});
             },
@@ -104,8 +102,12 @@
                 return moment.duration( now.diff(savedTime) ).humanize();
             },
             currentTitle() {
-                if (this.$route.title) {
-                    return this.$route.title;
+                if (this.$route.name === 'candidates') {
+                    return 'Все кандидаты';
+                }
+
+                if (this.$route.name === 'home') {
+                    return 'Все вакансии';
                 }
 
                 if (this.$route.name === 'card') {
@@ -125,11 +127,11 @@
                 }
 
                 if (this.$route.name === 'vacancy') {
-                    return this.currentBoard.title + ' - текст вакансии';
+                    return this.currentBoard.title + ' - Редактирование';
                 }
 
                 if (this.$route.name === 'stats') {
-                    return this.currentBoard.title + ' - статистика';
+                    return this.currentBoard.title + ' - Статистика';
                 }
 
                 if (this.$route.name === 'board') {
@@ -143,7 +145,8 @@
                 return false;
             },
             showBack() {
-                return this.$route.name !== 'home';
+                let backRoutes = ['newBoard', 'group', 'vacancy', 'stats', 'card'];
+                return backRoutes.indexOf(this.$route.name) !== -1;
             },
             currentCard() {
                 return this.$store.state.card.currentCard;
@@ -162,6 +165,15 @@
     }
 </script>
 <style>
+    .top-header .v-icon {
+        color: #261440!important;
+    }
+
+    .theme--light.v-app-bar.v-toolbar.v-sheet {
+        background-color: #fff;
+        border-bottom: 1px solid #D3E3E8;
+    }
+
     .menu-top {
         z-index: 1000!important;
     }
