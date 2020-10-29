@@ -95,23 +95,26 @@
                     </v-btn>
                 </template>
                 <v-card>
-                    <v-card-title>
+                    <v-card-title class="headline grey lighten-2 mb-4">
+                        Новое событие или задача
+                    </v-card-title>
+                    <v-card-text>
                         <v-select
-                                :items="['Новое событие', 'Новая задача']"
+                                :items="['Событие', 'Задача']"
+                                label="Тип"
                                 solo
                                 v-model="formTitle"
                         ></v-select>
-                    </v-card-title>
-                    <v-card-text>
                         <v-container>
                             <edit-task v-model="newTask" class="pb-4" v-if="isNewTask"></edit-task>
                             <edit-event v-model="newEvent" :skip-global-switch="true" class="pb-4" v-else></edit-event>
                         </v-container>
                     </v-card-text>
+                    <v-divider></v-divider>
                     <v-card-actions>
                         <v-spacer></v-spacer>
-                        <v-btn text @click="toggleNewEventForm">Отмена</v-btn>
-                        <v-btn color="pink darken-1" dark @click="sendSaveEventEvent">Добавить</v-btn>
+                        <v-btn class="mr-2" rounded text @click="toggleNewEventForm">Отмена</v-btn>
+                        <v-btn color="success" rounded dark @click="sendSaveEventEvent">Добавить</v-btn>
                     </v-card-actions>
                 </v-card>
             </v-dialog>
@@ -157,7 +160,7 @@
             },
             eventIndex(event) {
                 let card = this.eventCard(event);
-                let eventIndex = card.content
+                let eventIndex = card && card.content
                     ? card.content.findIndex(content => content.id === event.id)
                     : false;
                 return eventIndex !== -1 ? eventIndex : false;

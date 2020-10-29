@@ -23,6 +23,11 @@
                 commentMock: {text: this.text}
             }
         },
+        watch: {
+            text() {
+                this.commentMock = {text: this.text};
+            }
+        },
         methods: {
             updateText() {
                 this.$emit('input', this.commentMock.text);

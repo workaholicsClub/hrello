@@ -15,6 +15,15 @@
                             class="mb-4 text-h4"
                             @input="updateFields"
                     ></v-text-field>
+                    <h4 class="mt-12">Заказчик</h4>
+                    <v-text-field
+                            v-model="vacancy.orderedBy"
+                            hide-details
+                            dense
+                            placeholder="Укажите чья это вакансия"
+                            class="mb-4 text-h6"
+                            @input="updateFields"
+                    ></v-text-field>
                     <h4 class="mt-12">Город</h4>
                     <v-text-field
                             v-model="vacancy.city"
@@ -37,7 +46,14 @@
                             persistent-hint
                             hint="Enter для разделения навыков. Используются для поиска и распознования в резюме"
                             multiple
+                            @input="updateFields"
                     ></v-combobox>
+
+                    <h4 class="mt-12">Вид списка кандидатов</h4>
+                    <v-select
+                            v-model="vacancy.type"
+                            :items="boardTypes"
+                    ></v-select>
 
                     <v-btn block lg rounded elevation="0" color="success" class="mt-12" v-if="isNew" @click="addVacancy">
                         Добавить
@@ -72,7 +88,9 @@
         },
         methods: {
             updateVacancyText(vacancyText) {
-                this.$store.commit('updateBoard', {boardId: this.boardId, field: 'vacancyText', value: vacancyText});
+                //this.$store.commit('updateBoard', {boardId: this.boardId, field: 'vacancyText', value: vacancyText});
+                this.vacancy.vacancyText = vacancyText;
+                this.updateFields();
             },
             updateFields() {
                 this.$emit('input', this.vacancy);
@@ -101,6 +119,14 @@
             },
             currentBoard() {
                 return this.$store.getters.boardById(this.boardId);
+            },
+            boardTypes() {
+                return [
+                    {value: 'table', text: 'Таблица'},
+                    {value: 'list', text: 'Список с фильтрами'},
+                    {value: 'kanban', text: 'Канбан'},
+                    {value: 'cli', text: 'Командная строка для гиков'},
+                ]
             }
         }
     }

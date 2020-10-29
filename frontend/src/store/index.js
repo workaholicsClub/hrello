@@ -230,6 +230,17 @@ export default new Vuex.Store({
                 commit('updateFullBoard', updatedBoard);
             }
         },
+        updatePinnedField({commit}, {board, field}) {
+            let updatedBoard = clone(board);
+            let fieldIndex = updatedBoard.pinnedFields
+                ? updatedBoard.pinnedFields.findIndex( pinnedField => pinnedField.id === field.id)
+                : -1;
+
+            if (fieldIndex !== -1) {
+                updatedBoard.pinnedFields[fieldIndex] = field;
+                commit('updateFullBoard', updatedBoard);
+            }
+        },
         hidePinned({commit}, {board, field}) {
             let updatedBoard = clone(board);
             let fieldIndex = updatedBoard.pinnedFields

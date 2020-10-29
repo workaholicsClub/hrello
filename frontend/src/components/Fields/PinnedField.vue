@@ -1,17 +1,21 @@
 <template>
     <v-row>
-        <v-col cols="1" class="middle-col py-2">
-            <v-icon v-if="icon">{{icon}}</v-icon>
+        <v-col cols="1" class="middle-col py-2" v-if="icon">
+            <v-icon>{{icon}}</v-icon>
         </v-col>
-        <v-col cols="5" class="middle-col edit-on-hover py-2">
-            <v-text-field v-if="isTitleEditing" v-model="name" placeholder="Название поля" hide-details dense></v-text-field>
-            <span v-else>{{name}}</span>
+        <v-col :cols="icon ? 5 : 6" class="middle-col edit-on-hover py-2">
+            <v-text-field v-if="isTitleEditing" v-model="name" placeholder="Название поля" hide-details dense @input="updateNameForNew">
+                <template v-slot:append>
+                    <v-btn x-small icon @click="resetName" class="ml-2"><v-icon>mdi-close</v-icon></v-btn>
+                    <v-btn x-small icon @click="updateName" class="ml-2"><v-icon>mdi-check</v-icon></v-btn>
+                </template>
+            </v-text-field>
+            <span v-else>{{name || 'Без названия'}}</span>
 
-            <v-btn v-if="isTitleEditing" small icon @click="updateName" class="ml-2"><v-icon>mdi-check</v-icon></v-btn>
-            <div v-else>
-                <v-btn small icon @click="isTitleEditing = true" class="ml-2 edit-btn"><v-icon>mdi-pencil</v-icon></v-btn>
-                <v-btn v-if="isDeletable" small icon @click="deleteField" class="ml-2 edit-btn"><v-icon>mdi-delete</v-icon></v-btn>
-                <v-btn v-else small icon @click="hideField" class="ml-2 edit-btn"><v-icon>mdi-eye-off</v-icon></v-btn>
+            <div v-if="!isTitleEditing">
+                <v-btn x-small icon @click="isTitleEditing = true" class="ml-2 edit-btn"><v-icon>mdi-pencil</v-icon></v-btn>
+                <v-btn v-if="isDeletable" x-small icon @click="deleteField" class="ml-2 edit-btn"><v-icon>mdi-delete</v-icon></v-btn>
+                <v-btn v-else x-small icon @click="hideField" class="ml-2 edit-btn"><v-icon>mdi-eye-off</v-icon></v-btn>
             </div>
         </v-col>
         <v-col cols="6" class="py-2">
@@ -27,6 +31,7 @@
         data() {
             return {
                 isTitleEditing: !this.field.name,
+                isNameEmpty: this.field.name === "",
                 name: this.field.name,
                 value: this.field.value
             }
@@ -83,10 +88,29 @@
             }
         },
         methods: {
+            updateNameForNew() {
+                if (this.isNameEmpty) {
+                    let board = this.board;
+                    this.$store.dispatch('updatePinnedName', {board, field: this.field, newName: this.name});
+                    this.emitStateChange();
+                }
+            },
+            resetName() {
+                if (this.isNameEmpty) {
+                    this.deleteField();
+                }
+                else {
+                    this.name = this.field.name;
+                }
+
+                this.isNameEmpty = false;
+                this.isTitleEditing = false;
+            },
             updateName() {
                 let board = this.board;
                 this.$store.dispatch('updatePinnedName', {board, field: this.field, newName: this.name});
                 this.isTitleEditing = false;
+                this.isNameEmpty = false;
                 this.emitStateChange();
             },
             updateValue() {

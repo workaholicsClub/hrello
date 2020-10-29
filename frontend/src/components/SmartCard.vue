@@ -2,11 +2,11 @@
     <v-container
             fluid
             class="card-details fill-height p-0"
-            :class="{'is-desktop': !$vuetify.breakpoint.mobile, 'is-mobile': $vuetify.breakpoint.mobile}"
+            :class="{'is-desktop': !$vuetify.breakpoint.mobile, 'is-mobile': $vuetify.breakpoint.mobile, 'transparent-bg': inPopup, 'in-popup': inPopup}"
     >
-        <v-main app fluid class="content">
-            <v-container fluid class="fixed-header">
-                <v-container class="header-fields overflow">
+        <v-main app fluid class="content" :class="{'transparent-bg': false}">
+            <v-container fluid class="fixed-header" :class="{'transparent-bg': inPopup}">
+                <v-container class="header-fields overflow" :class="{'transparent-bg': inPopup}">
                     <v-text-field
                             v-model="card.name"
                             hide-details
@@ -16,8 +16,8 @@
                             @input="$root.$emit('cardInput', card)"
                     ></v-text-field>
 
-                    <v-row :key="fieldRedrawIndex">
-                        <v-col cols="12" md="6" :key="field.id + fieldRedrawIndex" class="my-0 py-0" v-for="field in pinnedFields">
+                    <v-row>
+                        <v-col cols="12" md="6" :key="field.id ? field.id : field.fieldId" class="my-0 py-0" v-for="field in pinnedFields">
                             <pinned-field :field="field" :card="card" @state="updateRedrawIndex"></pinned-field>
                         </v-col>
                     </v-row>
@@ -47,13 +47,17 @@
     import SmartComment from "./Inputs/SmartComment";
     import SmartCommentView from "./Fields/View/SmartCommentView";
     import PinnedField from "./Fields/PinnedField";
+    // import {VSheet, VMain} from "vuetify/lib";
 
     export default {
         name: "SmartCard",
+        props: ['inPopup'],
         components: {
             SmartCommentView,
             SmartComment,
-            PinnedField
+            PinnedField,
+            // VSheet,
+            // VMain
         },
         data() {
             return {
@@ -92,6 +96,9 @@
             }
         },
         computed: {
+            mainComponent() {
+                return this.inPopup ? 'VSheet' : 'VMain';
+            },
             pinnedFields() {
                 return this.$store.getters.getPinnedFieldsWithValues(this.card, this.fieldRedrawIndex);
             },
@@ -152,6 +159,13 @@
         overflow-y: auto;
     }
 
+    .in-popup {
+        /*padding-top: 64px!important;*/
+        overflow-y: auto;
+        height: 100vh;
+        /*background: white;*/
+    }
+
     .add-pinned-field {
         color: #16d1a5 !important;
         caret-color: #16d1a5 !important;
@@ -160,12 +174,21 @@
 
     .content {
         position: relative;
+        width: 100%;
+    }
+
+    .in-popup .content {
+        min-height: 100%;
     }
 
     .fixed-toc {
         position: fixed;
         left: 0;
         top: 0;
+    }
+
+    .transparent-bg {
+        background: transparent!important;
     }
 
     @media (min-width: 960px) {
@@ -196,6 +219,11 @@
     .card-toolbar .v-toolbar__content {
         width: 300px;
         justify-content: space-around;
+    }
+
+    .card-details .v-main__wrap {
+        background: #fff;
+        margin-bottom: -50px;
     }
 
     .v-tooltip__content {

@@ -16,7 +16,7 @@ module.exports = {
     "vuetify"
   ],
   "configureWebpack": {
-    "devtool": 'eval-source-map',
+    //"devtool": 'eval-source-map',
     "optimization": {
       "splitChunks": false
     }

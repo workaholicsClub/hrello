@@ -34,6 +34,11 @@
             EditorContent,
             EditorMenuBar,
         },
+        watch: {
+            value() {
+                this.editor.setContent(this.value.text);
+            }
+        },
         data() {
             return {
                 newComment: false,

@@ -50,7 +50,16 @@ export default {
 
                 try {
                     let board = this.$store.getters.boardByCard(foundCard);
-                    await this.$router.push({name: 'card', params: {boardId: board.id, cardId: newCardId}});
+                    let matchedRouteParams = this.$route.matched[0].regex.keys;
+                    let routeHasCardParameter = matchedRouteParams.findIndex((item) => item.name === 'cardId') !== -1;
+
+                    if (routeHasCardParameter) {
+                        let newParams = {...this.$route.params, cardId: newCardId};
+                        await this.$router.push({name: this.$route.name, params: newParams});
+                    }
+                    else {
+                        await this.$router.push({name: 'card', params: {boardId: board.id, cardId: newCardId}});
+                    }
                 }
                 catch (error) {
                     return false;

@@ -1,5 +1,5 @@
 <template>
-    <v-app id="hrello" v-resize="watchResize">
+    <v-app id="recrutto" v-resize="watchResize">
         <v-alert type="error" v-model="showError" dismissible tile class="global-error">{{appError}}</v-alert>
 
         <v-container fill-height fluid v-if="!initFinished">
@@ -51,14 +51,16 @@
                 @changeBoard="changeBoard"
                 @logout="logout"
             ></Sidebar>
-            <Header
+            <Header v-if="!showCardPopup"
                     :is-desktop="isDesktop"
                     @drawer="toggleDrawer"
                     @back="goBack"
                     @input="setBoardTitle"
             ></Header>
 
-            <router-view></router-view>
+            <router-view :class="{'no-scroll': showCardPopup}"></router-view>
+
+            <card-popup v-if="showCardPopup" @back="goBack"></card-popup>
         </v-container>
 
         <v-dialog v-model="shareDialog" persistent max-width="600px">
@@ -101,6 +103,7 @@
     import Header from './components/Header.vue';
     import Sidebar from './components/Sidebar.vue';
     import Login from "./components/Login";
+    import CardPopup from "@/components/CardPopup";
 
     import CardsMixin from "./mixins/cards";
     import BoardsMixin from "./mixins/boards";
@@ -120,6 +123,7 @@
             Header,
             Sidebar,
             Login,
+            CardPopup,
         },
         mixins: [
             CardsMixin,
@@ -269,6 +273,9 @@
             boardShareLink() {
                 return this.shareBoard ? location.origin + '/b#!/invite/board/'+this.shareBoard.id : false;
             },
+            showCardPopup() {
+                return Boolean(this.$route.params.cardId);
+            },
         },
         async created() {
             moment.locale('ru');
@@ -301,7 +308,7 @@
 </script>
 
 <style>
-    #hrello {
+    #recrutto {
         background-color: #e7f2f5;
     }
 
@@ -344,5 +351,10 @@
 
     .theme--light.v-btn.success {
         color: #fff;
+    }
+
+    .no-scroll {
+        max-height: 100vh;
+        overflow: hidden;
     }
 </style>

@@ -5,12 +5,14 @@
             <v-divider vertical></v-divider>
             <v-btn small icon @click="sendChangeBoardTypeEvent('list')"><v-icon>mdi-view-list</v-icon></v-btn>
             <v-divider vertical></v-divider>
+            <v-btn small icon @click="sendChangeBoardTypeEvent('table')"><v-icon>mdi-table</v-icon></v-btn>
+            <v-divider vertical></v-divider>
             <v-btn small icon @click="sendChangeBoardTypeEvent('cli')"><v-icon>mdi-console-line</v-icon></v-btn>
         </v-btn-toggle>
         <v-menu bottom left offset-x @click.native.stop.prevent class="menu-top">
             <template v-slot:activator="{ on }">
                 <v-btn v-on="on" text class="ml-2">
-                    Вид
+                    Вид списка и карточек
                     <v-icon right>mdi-menu-swap</v-icon>
                 </v-btn>
             </template>
@@ -56,7 +58,7 @@
         },
         computed: {
             typeIndex() {
-                return ['kanban', 'list', 'cli'].indexOf( this.board.type );
+                return ['kanban', 'list', 'table', 'cli'].indexOf( this.board.type );
             }
         }
     }

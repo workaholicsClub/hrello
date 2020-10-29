@@ -1,5 +1,5 @@
 <template>
-    <v-main class="fill-height" @click="activateRecord(null)">
+    <component :is="mainComponent" class="fill-height" @click="activateRecord(null)">
         <v-navigation-drawer v-if="!isDesktop"
                 v-model="editDrawer"
                 absolute
@@ -89,7 +89,7 @@
             <v-icon v-else-if="activeRecord">mdi-settings</v-icon>
             <v-icon v-else>mdi-plus</v-icon>
         </v-btn>
-    </v-main>
+    </component>
 </template>
 
 <script>
@@ -105,6 +105,7 @@
             CardDetailsMenu,
             draggable
         },
+        props: ['inPopup'],
         data() {
             return {
                 editorType: false,
@@ -204,6 +205,9 @@
             },
         },
         computed: {
+            mainComponent() {
+                return this.inPopup ? 'v-card' : 'v-main';
+            },
             card() {
                 return this.$store.state.card.currentCard;
             },

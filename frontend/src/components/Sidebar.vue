@@ -62,44 +62,6 @@
                                 </template>
                                 <span>Список дел</span>
                             </v-tooltip>
-
-                            <v-tooltip right>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-list-item class="p-0"
-                                            v-ripple="false"
-                                            v-on="on"
-                                            v-bind="attrs"
-                                    >
-                                        <v-list-item-action>
-                                            <v-btn icon disabled>
-                                                <v-icon>mdi-chart-areaspline</v-icon>
-                                            </v-btn>
-                                        </v-list-item-action>
-                                    </v-list-item>
-                                </template>
-                                <span>Скоро будет расширеная аналитика</span>
-                            </v-tooltip>
-
-                            <v-tooltip right>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-list-item class="p-0"
-                                            v-ripple="false"
-                                            v-on="on"
-                                            v-bind="attrs"
-                                    >
-                                        <v-list-item-action>
-                                            <v-btn icon disabled>
-                                                <v-icon>mdi-toy-brick-plus</v-icon>
-                                            </v-btn>
-                                        </v-list-item-action>
-                                    </v-list-item>
-                                </template>
-                                <span>Скоро будут приложения</span>
-                            </v-tooltip>
-
-                        </v-list>
-                        <v-spacer class="fill" />
-                        <v-list>
                             <v-tooltip right>
                                 <template v-slot:activator="{ on, attrs }">
                                     <v-list-item class="p-0"
@@ -120,6 +82,169 @@
                                 </template>
                                 <span>Показать резерв</span>
                             </v-tooltip>
+
+                            <v-tooltip right>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-list-item class="p-0"
+                                            v-ripple="false"
+                                            v-on="on"
+                                            v-bind="attrs"
+                                    >
+                                        <v-list-item-action>
+                                            <v-btn icon disabled>
+                                                <v-icon>mdi-account-group</v-icon>
+                                            </v-btn>
+                                        </v-list-item-action>
+                                    </v-list-item>
+                                </template>
+                                <span>Скоро будут новые инструменты для команды</span>
+                            </v-tooltip>
+                            <v-tooltip right>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-list-item class="p-0"
+                                            v-ripple="false"
+                                            v-on="on"
+                                            v-bind="attrs"
+                                    >
+                                        <v-list-item-action>
+                                            <v-btn icon disabled>
+                                                <v-icon>mdi-chart-areaspline</v-icon>
+                                            </v-btn>
+                                        </v-list-item-action>
+                                    </v-list-item>
+                                </template>
+                                <span>Скоро будет расширеная аналитика</span>
+                            </v-tooltip>
+                            <v-tooltip right>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-list-item class="p-0"
+                                            v-ripple="false"
+                                            v-on="on"
+                                            v-bind="attrs"
+                                    >
+                                        <v-list-item-action>
+                                            <v-btn icon disabled>
+                                                <v-icon>mdi-account-cash</v-icon>
+                                            </v-btn>
+                                        </v-list-item-action>
+                                    </v-list-item>
+                                </template>
+                                <span>Скоро будет рынок кандидатов</span>
+                            </v-tooltip>
+                            <v-tooltip right>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-list-item class="p-0"
+                                            v-ripple="false"
+                                            v-on="on"
+                                            v-bind="attrs"
+                                    >
+                                        <v-list-item-action>
+                                            <v-btn icon disabled>
+                                                <v-icon>mdi-toy-brick-plus</v-icon>
+                                            </v-btn>
+                                        </v-list-item-action>
+                                    </v-list-item>
+                                </template>
+                                <span>Скоро будут приложения</span>
+                            </v-tooltip>
+
+                        </v-list>
+                        <v-spacer class="fill" />
+                        <v-list>
+                            <v-dialog
+                                    v-model="feedbackDialog"
+                                    width="500"
+                            >
+                                <template v-slot:activator="dialogData">
+                                    <v-tooltip right>
+                                        <template v-slot:activator="tooltipData">
+                                            <v-list-item class="p-0"
+                                                    @click="feedbackDialog = !feedbackDialog"
+                                                    :class="{'active': feedbackDialog}"
+                                                    v-ripple="false"
+                                                    v-on="() => tooltipData.on() && dialogData.on()"
+                                                    v-bind="dialogData.attrs"
+                                            >
+                                                <v-list-item-action>
+                                                    <v-btn icon :rounded="feedbackDialog">
+                                                        <v-icon>mdi-message-text-outline</v-icon>
+                                                    </v-btn>
+                                                </v-list-item-action>
+                                                <v-list-item-title class="font-weight-light">
+                                                    Обратная связь
+                                                </v-list-item-title>
+                                            </v-list-item>
+                                        </template>
+                                        <span>Обратная связь</span>
+                                    </v-tooltip>
+                                </template>
+
+                                <v-card>
+                                    <v-card-title class="headline grey lighten-2 mb-4">
+                                        Обратная связь
+                                    </v-card-title>
+
+                                    <v-card-text>
+                                        <p>Контакты для благодарностей, вопросов, идей, багов и конструктивной критики:</p>
+                                    </v-card-text>
+                                    <v-card-title>
+                                        Аленсандр Павлов
+                                    </v-card-title>
+                                    <v-card-text>
+                                        <v-list>
+                                            <v-list-item>
+                                                <v-list-item-icon><v-icon>mdi-telegram</v-icon></v-list-item-icon>
+
+                                                <v-list-item-content>
+                                                    <v-list-item-title><v-btn text href="https://t.me/reflexum" target="_blank">Telegram</v-btn></v-list-item-title>
+                                                </v-list-item-content>
+                                            </v-list-item>
+                                            <v-list-item>
+                                                <v-list-item-icon><v-icon>mdi-vk</v-icon></v-list-item-icon>
+
+                                                <v-list-item-content>
+                                                    <v-list-item-title><v-btn text href="https://vk.com/id86202805" target="_blank">ВКонтакте</v-btn></v-list-item-title>
+                                                </v-list-item-content>
+                                            </v-list-item>
+                                            <v-list-item>
+                                                <v-list-item-icon><v-icon>mdi-facebook</v-icon></v-list-item-icon>
+
+                                                <v-list-item-content>
+                                                    <v-list-item-title><v-btn text href="https://m.me/lup.mail" target="_blank">Facebook</v-btn></v-list-item-title>
+                                                </v-list-item-content>
+                                            </v-list-item>
+                                            <v-list-item>
+                                                <v-list-item-icon><v-icon>mdi-whatsapp</v-icon></v-list-item-icon>
+
+                                                <v-list-item-content>
+                                                    <v-list-item-title><v-btn text href="https://wa.me/79264240454" target="_blank">WhatsApp</v-btn></v-list-item-title>
+                                                </v-list-item-content>
+                                            </v-list-item>
+                                            <v-list-item>
+                                                <v-list-item-icon><v-icon>mdi-phone</v-icon></v-list-item-icon>
+
+                                                <v-list-item-content>
+                                                    <v-list-item-title><v-btn text href="tel:+79264240454" target="_blank">+7 926 424-04-54</v-btn></v-list-item-title>
+                                                </v-list-item-content>
+                                            </v-list-item>
+                                        </v-list>
+                                    </v-card-text>
+
+                                    <v-divider></v-divider>
+
+                                    <v-card-actions>
+                                        <v-spacer></v-spacer>
+                                        <v-btn
+                                                color="success"
+                                                rounded
+                                                text
+                                                @click="feedbackDialog = false"
+                                        >
+                                            Отлично
+                                        </v-btn>
+                                    </v-card-actions>
+                                </v-card>
+                            </v-dialog>
                             <v-divider/>
                             <v-tooltip right>
                                 <template v-slot:activator="{ on, attrs }">
@@ -295,6 +420,7 @@
             return {
                 isDrawerVisible: false,
                 localActiveItem: this.activeItem,
+                feedbackDialog: false,
                 logo,
             }
         },

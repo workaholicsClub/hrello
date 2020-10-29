@@ -115,10 +115,14 @@
         },
         methods: {
             focusField() {
-                this.$refs.input.focus();
+                if (this.$refs.input) {
+                    this.$refs.input.focus();
+                }
             },
             focusEditor() {
-                this.view.focus();
+                if (this.view) {
+                    this.view.focus();
+                }
             },
             passFocusOrChangeValue(event) {
                 switch (event.key) {

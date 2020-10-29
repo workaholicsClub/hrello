@@ -53,7 +53,7 @@ export default {
 
                 return activePinnedFields.map( pinnedField => {
                     let value = card.pinnedFieldValues
-                        ? card.pinnedFieldValues.find( fieldValue => fieldValue.fieldName === pinnedField.name )
+                        ? card.pinnedFieldValues.find( fieldValue => fieldValue.fieldId === pinnedField.id )
                         : {value: ''};
 
                     return Object.assign(pinnedField, value);

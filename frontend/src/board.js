@@ -11,6 +11,8 @@ import routes from './routes';
 
 import BoardPage from './BoardPage.vue';
 
+import ru from 'vuetify/es5/locale/ru';
+
 const useGoogleServices = false;
 const isProduction = /localhost|127\.0\.0/.test(location.href) || false;
 
@@ -80,6 +82,10 @@ const router = new VueRouter({
 
 vueInstance = new Vue({
     vuetify: new Vuetify({
+        lang: {
+            locales: { ru },
+            current: 'ru'
+        },
         theme: {
             options: {
                 customProperties: true,
