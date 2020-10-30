@@ -22,7 +22,7 @@
                         </v-col>
                     </v-row>
                 </v-container>
-                <v-container class="header-fields">
+                <v-container class="header-fields" v-if="$route">
                     <v-btn fab icon outlined absolute class="add-pinned-field" @click="addPinnedField"><v-icon large>mdi-plus</v-icon></v-btn>
                 </v-container>
             </v-container>
@@ -51,7 +51,7 @@
 
     export default {
         name: "SmartCard",
-        props: ['inPopup'],
+        props: ['inPopup', 'inputCard'],
         components: {
             SmartCommentView,
             SmartComment,
@@ -106,7 +106,7 @@
                 return this.card.content ? this.card.content.slice().reverse() : [];
             },
             card() {
-                return this.$store.state.card.currentCard;
+                return this.inputCard ? this.inputCard : this.$store.state.card.currentCard;
             },
             user() {
                 return this.$store.state.user.currentUser;

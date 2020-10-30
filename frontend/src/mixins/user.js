@@ -149,9 +149,14 @@ export default {
             }
         },
         async processInvitation() {
-            let [,, inviteType, targetId] = location.hash.split('/');
+            let [, inviteType, targetId] = location.hash.match(/\/invite\/(.*?)\/(.*)/);
             await axios.post(`/api/invite/${inviteType}`, {userId: this.user.id, targetId: targetId});
-            await this.changeUrlAndAvoidResetByVue('!/'+targetId);
+            if (inviteType === 'board') {
+                this.$router.push({name: 'board', params: {boardId: targetId}});
+            }
+            else {
+                await this.changeUrlAndAvoidResetByVue('!/' + targetId);
+            }
         },
         async loadTeammates() {
             if (!this.user) {

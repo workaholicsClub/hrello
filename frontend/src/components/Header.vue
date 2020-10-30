@@ -4,16 +4,16 @@
         <v-btn icon v-if="showBack" @click.stop="$emit('back')"><v-icon>mdi-chevron-left</v-icon></v-btn>
         <v-toolbar-title class="pl-3" :class="{'d-flex': isTitleEditing}">
             {{ currentTitle || 'Без названия' }}
-            <small v-if="$route.name === 'card'" class="text--disabled text-caption d-block">Сохранено {{savedTime}} назад</small>
+            <small v-if="$route && $route.name === 'card'" class="text--disabled text-caption d-block">Сохранено {{savedTime}} назад</small>
         </v-toolbar-title>
         <v-spacer/>
 
-        <board-toolbar v-if="$route.name === 'board'" :board="currentBoard"></board-toolbar>
-        <v-btn v-if="$route.name === 'card'" icon text @click="sendShareCardEvent"><v-icon>mdi-share-variant</v-icon></v-btn>
-        <v-btn v-if="$route.name === 'stats'" icon text @click="sendShareBoardEvent"><v-icon>mdi-share-variant</v-icon></v-btn>
-        <v-btn v-if="$route.name === 'stats'" icon text @click="gotoBoard"><v-icon>mdi-view-grid</v-icon></v-btn>
+        <board-toolbar v-if="$route && $route.name === 'board'" :board="currentBoard"></board-toolbar>
+        <v-btn v-if="(!$route) || ($route && $route.name === 'card')" icon text @click="sendShareCardEvent"><v-icon>mdi-share-variant</v-icon></v-btn>
+        <v-btn v-if="$route && $route.name === 'stats'" icon text @click="sendShareBoardEvent"><v-icon>mdi-share-variant</v-icon></v-btn>
+        <v-btn v-if="$route && $route.name === 'stats'" icon text @click="gotoBoard"><v-icon>mdi-view-grid</v-icon></v-btn>
         <slot name="menu">
-            <v-menu bottom left offset-x @click.native.stop.prevent v-if="$route.name === 'card'" class="menu-top">
+            <v-menu bottom left offset-x @click.native.stop.prevent v-if="(!$route) || ($route && $route.name === 'card')" class="menu-top">
                 <template v-slot:activator="{ on }">
                     <v-btn icon text v-on="on" @click.stop><v-icon>mdi-dots-horizontal</v-icon></v-btn>
                 </template>
@@ -102,6 +102,10 @@
                 return moment.duration( now.diff(savedTime) ).humanize();
             },
             currentTitle() {
+                if (!this.$route) {
+                    return this.currentCard.name;
+                }
+
                 if (this.$route.name === 'candidates') {
                     return 'Все кандидаты';
                 }
@@ -145,6 +149,10 @@
                 return false;
             },
             showBack() {
+                if (!this.$route) {
+                    return false;
+                }
+
                 let backRoutes = ['newBoard', 'group', 'vacancy', 'stats', 'card'];
                 return backRoutes.indexOf(this.$route.name) !== -1;
             },

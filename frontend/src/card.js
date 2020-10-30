@@ -5,6 +5,8 @@ import VueGoogleApi from 'vue-google-api'
 import Rollbar from 'vue-rollbar'
 import Sticky from 'vue-sticky-directive'
 
+import store from './store';
+
 const useGoogleServices = false;
 const isProduction = /localhost|127\.0\.0/.test(location.href) || false;
 
@@ -74,6 +76,7 @@ new Vue({
     propsData: {
         useGoogleServices: useGoogleServices
     },
+    store,
     render: createElement => createElement(CardPage, {
                 props: {
                     'use-google-services': useGoogleServices

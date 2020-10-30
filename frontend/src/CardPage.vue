@@ -1,5 +1,5 @@
 <template>
-    <v-app id="hrello">
+    <v-app id="recrutto">
         <v-container fill-height fluid v-if="!initFinished">
             <v-row align="center" justify="center">
                 <v-progress-circular
@@ -42,14 +42,13 @@
                 </template>
 
             </Header>
-            <CardDetails v-if="currentCard" :card="currentCard" :key="cardRedrawIndex" :user="user" :skip-global="true"></CardDetails>
+            <smart-card v-if="currentCard" :input-card="currentCard" :key="cardRedrawIndex"></smart-card>
         </v-container>
     </v-app>
 </template>
 
 <script>
     import Header from './components/Header.vue'
-    import CardDetails from "./components/CardDetails";
     import Login from "./components/Login";
 
     import UserMixin from "./mixins/user";
@@ -58,14 +57,16 @@
     import FieldsMixin from "./mixins/fields";
     import NavigationMixin from "./mixins/navigation";
 
+    import SmartCard from "@/components/SmartCard";
+
     import moment from "moment";
 
     export default {
         name: "CardPage",
         props: ['useGoogleServices'],
         components: {
+            SmartCard,
             Header,
-            CardDetails,
             Login,
         },
         mixins: [
