@@ -103,7 +103,9 @@
                 return this.$store.getters.getPinnedFieldsWithValues(this.card, this.fieldRedrawIndex);
             },
             sortedFields() {
-                return this.card.content ? this.card.content.slice().reverse() : [];
+                return this.card.content
+                    ? this.card.content.filter(item => !item.hidden).reverse()
+                    : [];
             },
             card() {
                 return this.inputCard ? this.inputCard : this.$store.state.card.currentCard;
