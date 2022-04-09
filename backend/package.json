@@ -21,7 +21,7 @@
   "dependencies": {
     "express": "^4.17.1",
     "express-fileupload": "^1.1.6",
-    "moment": "^2.24.0",
+    "moment": "^2.29.2",
     "mongodb": "^3.3.0-beta2",
     "shortid": "^2.2.14"
   }
