@@ -25,7 +25,7 @@
     "vue-rollbar": "^1.0.0",
     "vue-sticky-directive": "0.0.10",
     "vuedraggable": "^2.23.2",
-    "vuetify": "^2.1.0",
+    "vuetify": "^2.6.10",
     "vuetify-datetime-picker": "^2.1.1",
     "vuex": "^3.4.0"
   },
